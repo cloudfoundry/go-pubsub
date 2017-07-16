@@ -1,13 +1,15 @@
 package pubsub
 
 import (
+	"sync"
 	"unsafe"
 )
 
 type PubSub struct {
-	b TreeBuilder
-	t TreeTraverser
-	n *node
+	mu sync.RWMutex
+	b  TreeBuilder
+	t  TreeTraverser
+	n  *node
 }
 
 type Data unsafe.Pointer
@@ -33,10 +35,14 @@ type Subscription interface {
 }
 
 func (s *PubSub) Subscribe(subscription Subscription) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.traverseSubscribe(subscription, s.n, nil)
 }
 
 func (s *PubSub) Publish(d Data) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	s.traversePublish(d, s.n, nil)
 }
 
@@ -63,6 +69,14 @@ func (n *node) addChild(key string) *node {
 	child := newNode()
 	n.children[key] = child
 	return child
+}
+
+func (n *node) addSubscription(s Subscription) {
+	if n == nil {
+		return
+	}
+
+	n.subscriptions = append(n.subscriptions, s)
 }
 
 func (n *node) fetchChild(key string) *node {
@@ -100,7 +114,7 @@ func (s *PubSub) traversePublish(d Data, n *node, l []string) {
 func (s *PubSub) traverseSubscribe(ss Subscription, n *node, l []string) {
 	child, ok := s.b.PlaceSubscription(ss, l)
 	if !ok {
-		n.subscriptions = append(n.subscriptions, ss)
+		n.addSubscription(ss)
 		return
 	}
 

@@ -3,6 +3,7 @@ package pubsub_test
 import (
 	"log"
 	"strings"
+	"sync"
 	"testing"
 	"unsafe"
 
@@ -182,6 +183,7 @@ func (s *spyTreeBuilder) PlaceSubscription(sub pubsub.Subscription, location []s
 }
 
 type spySubscription struct {
+	mu   sync.Mutex
 	data []pubsub.Data
 }
 
@@ -190,5 +192,7 @@ func newSpySubscrption() *spySubscription {
 }
 
 func (s *spySubscription) Write(data pubsub.Data) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.data = append(s.data, data)
 }
