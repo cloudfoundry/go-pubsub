@@ -10,7 +10,7 @@ import (
 )
 
 func BenchmarkSubscriptions(b *testing.B) {
-	p := pubsub.New(&randTreeBuilder{}, &staticTreeTraverser{})
+	p := pubsub.New(&randSubscriptionEnroller{}, &staticDataAssigner{})
 	b.RunParallel(func(b *testing.PB) {
 		for b.Next() {
 			unsub := p.Subscribe(newSpySubscrption())
@@ -20,7 +20,7 @@ func BenchmarkSubscriptions(b *testing.B) {
 }
 
 func BenchmarkPublishing(b *testing.B) {
-	p := pubsub.New(&randTreeBuilder{}, &staticTreeTraverser{})
+	p := pubsub.New(&randSubscriptionEnroller{}, &staticDataAssigner{})
 	for i := 0; i < 100; i++ {
 		p.Subscribe(newSpySubscrption())
 	}
@@ -35,7 +35,7 @@ func BenchmarkPublishing(b *testing.B) {
 }
 
 func BenchmarkPublishingWhileSubscribing(b *testing.B) {
-	p := pubsub.New(&randTreeBuilder{}, &staticTreeTraverser{})
+	p := pubsub.New(&randSubscriptionEnroller{}, &staticDataAssigner{})
 
 	b.RunParallel(func(b *testing.PB) {
 		buf := make([]byte, 256)
@@ -54,10 +54,10 @@ func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 	})
 }
 
-type randTreeBuilder struct {
+type randSubscriptionEnroller struct {
 }
 
-func (r *randTreeBuilder) PlaceSubscription(sub pubsub.Subscription, location []string) (key string, ok bool) {
+func (r *randSubscriptionEnroller) Enroll(sub pubsub.Subscription, location []string) (key string, ok bool) {
 	i := rand.Intn(4)
 	if i == 0 {
 		return "", false
@@ -66,8 +66,8 @@ func (r *randTreeBuilder) PlaceSubscription(sub pubsub.Subscription, location []
 	return fmt.Sprintf("%d", i), true
 }
 
-type staticTreeTraverser struct{}
+type staticDataAssigner struct{}
 
-func (r *staticTreeTraverser) Traverse(data pubsub.Data, location []string) (keys []string) {
+func (r *staticDataAssigner) Assign(data pubsub.Data, location []string) (keys []string) {
 	return []string{"1", "2", "3", "4"}[:4-len(location)]
 }

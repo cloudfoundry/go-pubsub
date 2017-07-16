@@ -16,8 +16,8 @@ import (
 type TPS struct {
 	*testing.T
 	p             *pubsub.PubSub
-	treeBuilder   *spyTreeBuilder
-	treeTraverser *spyTreeTraverser
+	treeBuilder   *spySubscriptionEnroller
+	treeTraverser *spyDataAssigner
 	subscription  *spySubscription
 }
 
@@ -25,8 +25,8 @@ func TestPubSub(t *testing.T) {
 	o := onpar.New()
 	defer o.Run(t)
 	o.BeforeEach(func(t *testing.T) TPS {
-		spyB := newSpyTreeBuilder()
-		spyT := newSpyTreeTraverser()
+		spyB := newSpySubscriptionEnroller()
+		spyT := newSpyDataAssigner()
 
 		return TPS{
 			T:             t,
@@ -37,7 +37,7 @@ func TestPubSub(t *testing.T) {
 		}
 	})
 
-	o.Spec("it invokes the TreeBuilder for each level of a subscription", func(t TPS) {
+	o.Spec("it invokes the SubscriptionEnroller for each level of a subscription", func(t TPS) {
 		t.treeBuilder.keys = map[string]string{
 			"":    "a",
 			"a":   "b",
@@ -55,7 +55,7 @@ func TestPubSub(t *testing.T) {
 		}
 	})
 
-	o.Spec("it invokes the TreeTraverser for each level", func(t TPS) {
+	o.Spec("it invokes the DataAssigner for each level", func(t TPS) {
 		t.treeTraverser.keys = map[string][]string{
 			"":      []string{"a", "b"},
 			"a":     []string{"a", "b"},
@@ -146,17 +146,17 @@ func readData(d pubsub.Data) string {
 	return string(*(*[]byte)(unsafe.Pointer(d)))
 }
 
-type spyTreeTraverser struct {
+type spyDataAssigner struct {
 	keys      map[string][]string
 	locations []string
 	data      []pubsub.Data
 }
 
-func newSpyTreeTraverser() *spyTreeTraverser {
-	return &spyTreeTraverser{}
+func newSpyDataAssigner() *spyDataAssigner {
+	return &spyDataAssigner{}
 }
 
-func (s *spyTreeTraverser) Traverse(data pubsub.Data, location []string) []string {
+func (s *spyDataAssigner) Assign(data pubsub.Data, location []string) []string {
 	s.data = append(s.data, data)
 
 	key := strings.Join(location, "-")
@@ -169,17 +169,17 @@ func (s *spyTreeTraverser) Traverse(data pubsub.Data, location []string) []strin
 	return result
 }
 
-type spyTreeBuilder struct {
+type spySubscriptionEnroller struct {
 	keys      map[string]string
 	subs      []pubsub.Subscription
 	locations []string
 }
 
-func newSpyTreeBuilder() *spyTreeBuilder {
-	return &spyTreeBuilder{}
+func newSpySubscriptionEnroller() *spySubscriptionEnroller {
+	return &spySubscriptionEnroller{}
 }
 
-func (s *spyTreeBuilder) PlaceSubscription(sub pubsub.Subscription, location []string) (string, bool) {
+func (s *spySubscriptionEnroller) Enroll(sub pubsub.Subscription, location []string) (string, bool) {
 	s.subs = append(s.subs, sub)
 
 	key := strings.Join(location, "-")

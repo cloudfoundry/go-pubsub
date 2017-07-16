@@ -7,25 +7,25 @@ import (
 
 type PubSub struct {
 	mu sync.RWMutex
-	b  TreeBuilder
-	t  TreeTraverser
+	e  SubscriptionEnroller
+	a  DataAssigner
 	n  *node
 }
 
 type Data unsafe.Pointer
 
-type TreeBuilder interface {
-	PlaceSubscription(sub Subscription, location []string) (key string, ok bool)
+type SubscriptionEnroller interface {
+	Enroll(sub Subscription, location []string) (key string, ok bool)
 }
 
-type TreeTraverser interface {
-	Traverse(data Data, location []string) (keys []string)
+type DataAssigner interface {
+	Assign(data Data, location []string) (keys []string)
 }
 
-func New(b TreeBuilder, t TreeTraverser) *PubSub {
+func New(e SubscriptionEnroller, a DataAssigner) *PubSub {
 	return &PubSub{
-		b: b,
-		t: t,
+		e: e,
+		a: a,
 		n: newNode(),
 	}
 }
@@ -110,7 +110,7 @@ func (s *PubSub) traversePublish(d Data, n *node, l []string) {
 		ss.Write(d)
 	})
 
-	children := s.t.Traverse(d, l)
+	children := s.a.Assign(d, l)
 
 	for _, child := range children {
 		s.traversePublish(d, n.fetchChild(child), append(l, child))
@@ -118,7 +118,7 @@ func (s *PubSub) traversePublish(d Data, n *node, l []string) {
 }
 
 func (s *PubSub) traverseSubscribe(ss Subscription, n *node, l []string) Unsubscriber {
-	child, ok := s.b.PlaceSubscription(ss, l)
+	child, ok := s.e.Enroll(ss, l)
 	if !ok {
 		n.addSubscription(ss)
 		return func() {
