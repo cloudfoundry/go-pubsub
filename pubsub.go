@@ -34,10 +34,12 @@ type Subscription interface {
 	Write(data Data)
 }
 
-func (s *PubSub) Subscribe(subscription Subscription) {
+type Unsubscriber func()
+
+func (s *PubSub) Subscribe(subscription Subscription) Unsubscriber {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.traverseSubscribe(subscription, s.n, nil)
+	return s.traverseSubscribe(subscription, s.n, nil)
 }
 
 func (s *PubSub) Publish(d Data) {
@@ -48,12 +50,13 @@ func (s *PubSub) Publish(d Data) {
 
 type node struct {
 	children      map[string]*node
-	subscriptions []Subscription
+	subscriptions map[Subscription]struct{}
 }
 
 func newNode() *node {
 	return &node{
-		children: make(map[string]*node),
+		children:      make(map[string]*node),
+		subscriptions: make(map[Subscription]struct{}),
 	}
 }
 
@@ -76,7 +79,8 @@ func (n *node) addSubscription(s Subscription) {
 		return
 	}
 
-	n.subscriptions = append(n.subscriptions, s)
+	// TODO Check for the same subscription twice
+	n.subscriptions[s] = struct{}{}
 }
 
 func (n *node) fetchChild(key string) *node {
@@ -91,18 +95,20 @@ func (n *node) fetchChild(key string) *node {
 	return nil
 }
 
-func (n *node) listSubscriptions() []Subscription {
+func (n *node) forEachSubscription(f func(s Subscription)) {
 	if n == nil {
-		return nil
+		return
 	}
 
-	return n.subscriptions
+	for s, _ := range n.subscriptions {
+		f(s)
+	}
 }
 
 func (s *PubSub) traversePublish(d Data, n *node, l []string) {
-	for _, sub := range n.listSubscriptions() {
-		sub.Write(d)
-	}
+	n.forEachSubscription(func(ss Subscription) {
+		ss.Write(d)
+	})
 
 	children := s.t.Traverse(d, l)
 
@@ -111,12 +117,20 @@ func (s *PubSub) traversePublish(d Data, n *node, l []string) {
 	}
 }
 
-func (s *PubSub) traverseSubscribe(ss Subscription, n *node, l []string) {
+func (s *PubSub) traverseSubscribe(ss Subscription, n *node, l []string) Unsubscriber {
 	child, ok := s.b.PlaceSubscription(ss, l)
 	if !ok {
 		n.addSubscription(ss)
-		return
+		return func() {
+			s.mu.Lock()
+			defer s.mu.Unlock()
+			current := s.n
+			for _, ll := range l {
+				current = current.fetchChild(ll)
+			}
+			delete(current.subscriptions, ss)
+		}
 	}
 
-	s.traverseSubscribe(ss, n.addChild(child), append(l, child))
+	return s.traverseSubscribe(ss, n.addChild(child), append(l, child))
 }

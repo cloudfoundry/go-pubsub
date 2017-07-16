@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/apoydence/pubsub"
 )
@@ -12,7 +13,8 @@ func BenchmarkSubscriptions(b *testing.B) {
 	p := pubsub.New(&randTreeBuilder{}, &staticTreeTraverser{})
 	b.RunParallel(func(b *testing.PB) {
 		for b.Next() {
-			p.Subscribe(newSpySubscrption())
+			unsub := p.Subscribe(newSpySubscrption())
+			unsub()
 		}
 	})
 }
@@ -42,7 +44,11 @@ func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 			p.Publish(Data(string(buf)))
 
 			for i := 0; i < 10; i++ {
-				p.Subscribe(newSpySubscrption())
+				unsub := p.Subscribe(newSpySubscrption())
+				go func() {
+					time.Sleep(time.Duration(rand.Intn(int(time.Millisecond))))
+					unsub()
+				}()
 			}
 		}
 	})

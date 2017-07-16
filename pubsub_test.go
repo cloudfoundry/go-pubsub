@@ -120,6 +120,21 @@ func TestPubSub(t *testing.T) {
 		Expect(t, readData(sub1.data[0])).To(Equal("some-data"))
 		Expect(t, readData(sub3.data[0])).To(Equal("some-data"))
 	})
+
+	o.Spec("it does not write to a subscription after it unsubscribes", func(t TPS) {
+		sub := newSpySubscrption()
+		t.treeBuilder.keys = map[string]string{
+			"": "",
+		}
+		t.treeTraverser.keys = map[string][]string{
+			"": nil,
+		}
+
+		unsubscribe := t.p.Subscribe(sub)
+		unsubscribe()
+		t.p.Publish(Data("some-data"))
+		Expect(t, sub.data).To(HaveLen(0))
+	})
 }
 
 func Data(s string) pubsub.Data {
