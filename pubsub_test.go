@@ -21,6 +21,7 @@ type TPS struct {
 }
 
 func TestPubSub(t *testing.T) {
+	t.Parallel()
 	o := onpar.New()
 	defer o.Run(t)
 	o.BeforeEach(func(t *testing.T) TPS {

@@ -30,23 +30,6 @@ func (n *Node) AddChild(key string) *Node {
 	return child
 }
 
-func (n *Node) AddSubscription(s Subscription) {
-	if n == nil {
-		return
-	}
-
-	// TODO Check for the same subscription twice
-	n.subscriptions[s] = struct{}{}
-}
-
-func (n *Node) DeleteSubscription(s Subscription) {
-	if n == nil {
-		return
-	}
-
-	delete(n.subscriptions, s)
-}
-
 func (n *Node) FetchChild(key string) *Node {
 	if n == nil {
 		return nil
@@ -57,6 +40,26 @@ func (n *Node) FetchChild(key string) *Node {
 	}
 
 	return nil
+}
+
+func (n *Node) AddSubscription(s Subscription) {
+	if n == nil {
+		return
+	}
+
+	if _, ok := n.subscriptions[s]; ok {
+		panic("Subscription has already been added")
+	}
+
+	n.subscriptions[s] = struct{}{}
+}
+
+func (n *Node) DeleteSubscription(s Subscription) {
+	if n == nil {
+		return
+	}
+
+	delete(n.subscriptions, s)
 }
 
 func (n *Node) ForEachSubscription(f func(s Subscription)) {
