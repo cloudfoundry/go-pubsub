@@ -29,7 +29,7 @@ func BenchmarkPublishing(b *testing.B) {
 		buf := make([]byte, 256)
 		for b.Next() {
 			rand.Read(buf)
-			p.Publish(Data(string(buf)))
+			p.Publish(string(buf))
 		}
 	})
 }
@@ -41,7 +41,7 @@ func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 		buf := make([]byte, 256)
 		for b.Next() {
 			rand.Read(buf)
-			p.Publish(Data(string(buf)))
+			p.Publish(string(buf))
 
 			for i := 0; i < 10; i++ {
 				unsub := p.Subscribe(newSpySubscrption())
@@ -68,6 +68,6 @@ func (r *randSubscriptionEnroller) Enroll(sub pubsub.Subscription, location []st
 
 type staticDataAssigner struct{}
 
-func (r *staticDataAssigner) Assign(data pubsub.Data, location []string) (keys []string) {
+func (r *staticDataAssigner) Assign(data interface{}, location []string) (keys []string) {
 	return []string{"1", "2", "3", "4"}[:4-len(location)]
 }

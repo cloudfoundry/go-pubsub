@@ -2,7 +2,6 @@ package pubsub
 
 import (
 	"sync"
-	"unsafe"
 )
 
 type PubSub struct {
@@ -12,14 +11,12 @@ type PubSub struct {
 	n  *node
 }
 
-type Data unsafe.Pointer
-
 type SubscriptionEnroller interface {
 	Enroll(sub Subscription, location []string) (key string, ok bool)
 }
 
 type DataAssigner interface {
-	Assign(data Data, location []string) (keys []string)
+	Assign(data interface{}, location []string) (keys []string)
 }
 
 func New(e SubscriptionEnroller, a DataAssigner) *PubSub {
@@ -31,7 +28,7 @@ func New(e SubscriptionEnroller, a DataAssigner) *PubSub {
 }
 
 type Subscription interface {
-	Write(data Data)
+	Write(data interface{})
 }
 
 type Unsubscriber func()
@@ -42,7 +39,7 @@ func (s *PubSub) Subscribe(subscription Subscription) Unsubscriber {
 	return s.traverseSubscribe(subscription, s.n, nil)
 }
 
-func (s *PubSub) Publish(d Data) {
+func (s *PubSub) Publish(d interface{}) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	s.traversePublish(d, s.n, nil)
@@ -105,7 +102,7 @@ func (n *node) forEachSubscription(f func(s Subscription)) {
 	}
 }
 
-func (s *PubSub) traversePublish(d Data, n *node, l []string) {
+func (s *PubSub) traversePublish(d interface{}, n *node, l []string) {
 	n.forEachSubscription(func(ss Subscription) {
 		ss.Write(d)
 	})

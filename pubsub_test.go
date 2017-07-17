@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"unsafe"
 
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
@@ -68,7 +67,7 @@ func TestPubSub(t *testing.T) {
 			"a-a-b": nil,
 		}
 
-		t.p.Publish(Data("x"))
+		t.p.Publish("x")
 
 		Expect(t, t.treeTraverser.locations).To(HaveLen(9))
 		for k := range t.treeTraverser.keys {
@@ -111,14 +110,14 @@ func TestPubSub(t *testing.T) {
 			"a-b-z": nil,
 			"a-b-c": nil,
 		}
-		t.p.Publish(Data("some-data"))
+		t.p.Publish("some-data")
 
 		Expect(t, sub1.data).To(HaveLen(1))
 		Expect(t, sub2.data).To(HaveLen(0))
 		Expect(t, sub3.data).To(HaveLen(1))
 
-		Expect(t, readData(sub1.data[0])).To(Equal("some-data"))
-		Expect(t, readData(sub3.data[0])).To(Equal("some-data"))
+		Expect(t, sub1.data[0]).To(Equal("some-data"))
+		Expect(t, sub3.data[0]).To(Equal("some-data"))
 	})
 
 	o.Spec("it does not write to a subscription after it unsubscribes", func(t TPS) {
@@ -132,31 +131,22 @@ func TestPubSub(t *testing.T) {
 
 		unsubscribe := t.p.Subscribe(sub)
 		unsubscribe()
-		t.p.Publish(Data("some-data"))
+		t.p.Publish("some-data")
 		Expect(t, sub.data).To(HaveLen(0))
 	})
-}
-
-func Data(s string) pubsub.Data {
-	b := []byte(s)
-	return pubsub.Data(unsafe.Pointer(&b))
-}
-
-func readData(d pubsub.Data) string {
-	return string(*(*[]byte)(unsafe.Pointer(d)))
 }
 
 type spyDataAssigner struct {
 	keys      map[string][]string
 	locations []string
-	data      []pubsub.Data
+	data      []interface{}
 }
 
 func newSpyDataAssigner() *spyDataAssigner {
 	return &spyDataAssigner{}
 }
 
-func (s *spyDataAssigner) Assign(data pubsub.Data, location []string) []string {
+func (s *spyDataAssigner) Assign(data interface{}, location []string) []string {
 	s.data = append(s.data, data)
 
 	key := strings.Join(location, "-")
@@ -199,14 +189,14 @@ func (s *spySubscriptionEnroller) Enroll(sub pubsub.Subscription, location []str
 
 type spySubscription struct {
 	mu   sync.Mutex
-	data []pubsub.Data
+	data []interface{}
 }
 
 func newSpySubscrption() *spySubscription {
 	return &spySubscription{}
 }
 
-func (s *spySubscription) Write(data pubsub.Data) {
+func (s *spySubscription) Write(data interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data = append(s.data, data)
