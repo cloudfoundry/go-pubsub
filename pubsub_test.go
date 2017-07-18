@@ -1,6 +1,7 @@
 package pubsub_test
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"sync"
@@ -127,6 +128,28 @@ func TestPubSub(t *testing.T) {
 		t.p.Publish("some-data", t.treeTraverser)
 		Expect(t, sub.data).To(HaveLen(0))
 	})
+}
+
+func ExamplePubSub() {
+	ps := pubsub.New()
+	subscription := func(name string) pubsub.SubscriptionFunc {
+		return func(data interface{}) {
+			fmt.Printf("%s -> %v\n", name, data)
+		}
+	}
+
+	ps.Subscribe(subscription("sub-1"), []string{"a", "b", "c"})
+	ps.Subscribe(subscription("sub-2"), []string{"a", "b", "d"})
+	ps.Subscribe(subscription("sub-3"), []string{"a", "b", "e"})
+
+	ps.Publish("data-1", pubsub.LinearDataAssigner([]string{"a", "b"}))
+	ps.Publish("data-2", pubsub.LinearDataAssigner([]string{"a", "b", "c"}))
+	ps.Publish("data-3", pubsub.LinearDataAssigner([]string{"a", "b", "d"}))
+	ps.Publish("data-3", pubsub.LinearDataAssigner([]string{"x", "y"}))
+
+	// Output:
+	// sub-1 -> data-2
+	// sub-2 -> data-3
 }
 
 type spyDataAssigner struct {
