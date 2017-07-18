@@ -31,7 +31,7 @@ func TestPubSub(t *testing.T) {
 		return TPS{
 			T:             t,
 			subscription:  newSpySubscrption(),
-			p:             pubsub.New(spyB, spyT),
+			p:             pubsub.New(),
 			treeBuilder:   spyB,
 			treeTraverser: spyT,
 		}
@@ -43,7 +43,7 @@ func TestPubSub(t *testing.T) {
 			"a":   "b",
 			"a-b": "",
 		}
-		t.p.Subscribe(t.subscription)
+		t.p.Subscribe(t.subscription, t.treeBuilder)
 
 		Expect(t, t.treeBuilder.locations).To(HaveLen(3))
 
@@ -68,7 +68,7 @@ func TestPubSub(t *testing.T) {
 			"a-a-b": nil,
 		}
 
-		t.p.Publish("x")
+		t.p.Publish("x", t.treeTraverser)
 
 		Expect(t, t.treeTraverser.locations).To(HaveLen(9))
 		for k := range t.treeTraverser.keys {
@@ -86,7 +86,7 @@ func TestPubSub(t *testing.T) {
 			"a-b":   "c",
 			"a-b-c": "",
 		}
-		t.p.Subscribe(sub1)
+		t.p.Subscribe(sub1, t.treeBuilder)
 
 		t.treeBuilder.keys = map[string]string{
 			"":      "a",
@@ -94,13 +94,13 @@ func TestPubSub(t *testing.T) {
 			"a-b":   "d",
 			"a-b-d": "",
 		}
-		t.p.Subscribe(sub2)
+		t.p.Subscribe(sub2, t.treeBuilder)
 
 		t.treeBuilder.keys = map[string]string{
 			"":  "a",
 			"a": "",
 		}
-		t.p.Subscribe(sub3)
+		t.p.Subscribe(sub3, t.treeBuilder)
 
 		t.treeTraverser.keys = map[string][]string{
 			"":      []string{"a", "x"},
@@ -111,7 +111,7 @@ func TestPubSub(t *testing.T) {
 			"a-b-z": nil,
 			"a-b-c": nil,
 		}
-		t.p.Publish("some-data")
+		t.p.Publish("some-data", t.treeTraverser)
 
 		Expect(t, sub1.data).To(HaveLen(1))
 		Expect(t, sub2.data).To(HaveLen(0))
@@ -130,9 +130,9 @@ func TestPubSub(t *testing.T) {
 			"": nil,
 		}
 
-		unsubscribe := t.p.Subscribe(sub)
+		unsubscribe := t.p.Subscribe(sub, t.treeBuilder)
 		unsubscribe()
-		t.p.Publish("some-data")
+		t.p.Publish("some-data", t.treeTraverser)
 		Expect(t, sub.data).To(HaveLen(0))
 	})
 }

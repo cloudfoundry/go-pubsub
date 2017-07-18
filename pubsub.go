@@ -24,8 +24,6 @@ import (
 // constructed with New().
 type PubSub struct {
 	mu sync.RWMutex
-	e  SubscriptionEnroller
-	a  DataAssigner
 	n  *node.Node
 }
 
@@ -65,43 +63,41 @@ type Subscription interface {
 type Unsubscriber func()
 
 // New constructs a new PubSub.
-func New(e SubscriptionEnroller, a DataAssigner) *PubSub {
+func New() *PubSub {
 	return &PubSub{
-		e: e,
-		a: a,
 		n: node.New(),
 	}
 }
 
 // Subscribe will add a subscription using the SubscriptionEnroller to
 // the PubSub. It returns a function that can be used to unsubscribe.
-func (s *PubSub) Subscribe(subscription Subscription) Unsubscriber {
+func (s *PubSub) Subscribe(subscription Subscription, e SubscriptionEnroller) Unsubscriber {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.traverseSubscribe(subscription, s.n, nil)
+	return s.traverseSubscribe(subscription, e, s.n, nil)
 }
 
 // Publish writes data using the DataAssigner to the interested subscriptions.
-func (s *PubSub) Publish(d interface{}) {
+func (s *PubSub) Publish(d interface{}, a DataAssigner) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	s.traversePublish(d, s.n, nil)
+	s.traversePublish(d, a, s.n, nil)
 }
 
-func (s *PubSub) traversePublish(d interface{}, n *node.Node, l []string) {
+func (s *PubSub) traversePublish(d interface{}, a DataAssigner, n *node.Node, l []string) {
 	n.ForEachSubscription(func(ss node.Subscription) {
 		ss.Write(d)
 	})
 
-	children := s.a.Assign(d, l)
+	children := a.Assign(d, l)
 
 	for _, child := range children {
-		s.traversePublish(d, n.FetchChild(child), append(l, child))
+		s.traversePublish(d, a, n.FetchChild(child), append(l, child))
 	}
 }
 
-func (s *PubSub) traverseSubscribe(ss Subscription, n *node.Node, l []string) Unsubscriber {
-	child, ok := s.e.Enroll(ss, l)
+func (s *PubSub) traverseSubscribe(ss Subscription, e SubscriptionEnroller, n *node.Node, l []string) Unsubscriber {
+	child, ok := e.Enroll(ss, l)
 	if !ok {
 		n.AddSubscription(ss)
 		return func() {
@@ -116,5 +112,5 @@ func (s *PubSub) traverseSubscribe(ss Subscription, n *node.Node, l []string) Un
 		}
 	}
 
-	return s.traverseSubscribe(ss, n.AddChild(child), append(l, child))
+	return s.traverseSubscribe(ss, e, n.AddChild(child), append(l, child))
 }
