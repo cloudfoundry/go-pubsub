@@ -37,7 +37,7 @@ func TestNode(t *testing.T) {
 		Expect(t, n == nil).To(BeTrue())
 	})
 
-	o.Spec("returns nil for unknown child", func(t TN) {
+	o.Spec("returns child", func(t TN) {
 		n1 := t.n.AddChild("a")
 		n2 := t.n.FetchChild("a")
 		Expect(t, n1).To(Equal(n2))
@@ -47,10 +47,11 @@ func TestNode(t *testing.T) {
 		s1 := spySubscription{id: "a"}
 		s2 := spySubscription{id: "b"}
 		s3 := spySubscription{id: "c"}
-		t.n.AddSubscription(s1)
+		id1 := t.n.AddSubscription(s1)
+
 		t.n.AddSubscription(s2)
 		t.n.AddSubscription(s3)
-		t.n.DeleteSubscription(s1)
+		t.n.DeleteSubscription(id1)
 
 		var ss []node.Subscription
 		t.n.ForEachSubscription(func(s node.Subscription) {
@@ -59,17 +60,6 @@ func TestNode(t *testing.T) {
 		Expect(t, ss).To(HaveLen(2))
 		Expect(t, ss).To(Contain(s2))
 		Expect(t, ss).To(Contain(s3))
-	})
-
-	o.Spec("it panics on Subscription collision", func(t TN) {
-		s := spySubscription{id: "a"}
-		t.n.AddSubscription(s)
-
-		defer func() {
-			err := recover()
-			Expect(t, err == nil).To(BeFalse())
-		}()
-		t.n.AddSubscription(s)
 	})
 }
 

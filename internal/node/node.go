@@ -1,18 +1,20 @@
 package node
 
+import "math/rand"
+
 type Subscription interface {
 	Write(data interface{})
 }
 
 type Node struct {
 	children      map[string]*Node
-	subscriptions map[Subscription]struct{}
+	subscriptions map[int64]Subscription
 }
 
 func New() *Node {
 	return &Node{
 		children:      make(map[string]*Node),
-		subscriptions: make(map[Subscription]struct{}),
+		subscriptions: make(map[int64]Subscription),
 	}
 }
 
@@ -42,24 +44,29 @@ func (n *Node) FetchChild(key string) *Node {
 	return nil
 }
 
-func (n *Node) AddSubscription(s Subscription) {
+func (n *Node) AddSubscription(s Subscription) int64 {
 	if n == nil {
-		return
+		return 0
 	}
 
-	if _, ok := n.subscriptions[s]; ok {
-		panic("Subscription has already been added")
+	var id int64
+	for {
+		id = rand.Int63()
+		if _, ok := n.subscriptions[id]; !ok {
+			break
+		}
 	}
 
-	n.subscriptions[s] = struct{}{}
+	n.subscriptions[id] = s
+	return id
 }
 
-func (n *Node) DeleteSubscription(s Subscription) {
+func (n *Node) DeleteSubscription(id int64) {
 	if n == nil {
 		return
 	}
 
-	delete(n.subscriptions, s)
+	delete(n.subscriptions, id)
 }
 
 func (n *Node) ForEachSubscription(f func(s Subscription)) {
@@ -67,7 +74,7 @@ func (n *Node) ForEachSubscription(f func(s Subscription)) {
 		return
 	}
 
-	for s, _ := range n.subscriptions {
+	for _, s := range n.subscriptions {
 		f(s)
 	}
 }

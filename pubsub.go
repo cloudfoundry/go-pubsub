@@ -64,7 +64,7 @@ func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
 	for _, p := range path {
 		n = n.AddChild(p)
 	}
-	n.AddSubscription(sub)
+	id := n.AddSubscription(sub)
 
 	return func() {
 		// TODO: Delete empty nodes
@@ -74,7 +74,7 @@ func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
 		for _, p := range path {
 			current = current.FetchChild(p)
 		}
-		current.DeleteSubscription(sub)
+		current.DeleteSubscription(id)
 	}
 }
 
