@@ -15,7 +15,6 @@ import (
 type TPS struct {
 	*testing.T
 	p             *pubsub.PubSub
-	treeBuilder   *spySubscriptionEnroller
 	treeTraverser *spyDataAssigner
 	subscription  *spySubscription
 }
@@ -25,33 +24,13 @@ func TestPubSub(t *testing.T) {
 	o := onpar.New()
 	defer o.Run(t)
 	o.BeforeEach(func(t *testing.T) TPS {
-		spyB := newSpySubscriptionEnroller()
 		spyT := newSpyDataAssigner()
 
 		return TPS{
 			T:             t,
 			subscription:  newSpySubscrption(),
 			p:             pubsub.New(),
-			treeBuilder:   spyB,
 			treeTraverser: spyT,
-		}
-	})
-
-	o.Spec("it invokes the SubscriptionEnroller for each level of a subscription", func(t TPS) {
-		t.treeBuilder.keys = map[string]string{
-			"":    "a",
-			"a":   "b",
-			"a-b": "",
-		}
-		t.p.Subscribe(t.subscription, t.treeBuilder)
-
-		Expect(t, t.treeBuilder.locations).To(HaveLen(3))
-
-		for k := range t.treeBuilder.keys {
-			Expect(t, t.treeBuilder.locations).To(Contain(k))
-		}
-		for _, s := range t.treeBuilder.subs {
-			Expect(t, s).To(Equal(t.subscription))
 		}
 	})
 
@@ -80,27 +59,9 @@ func TestPubSub(t *testing.T) {
 		sub1 := newSpySubscrption()
 		sub2 := newSpySubscrption()
 		sub3 := newSpySubscrption()
-		t.treeBuilder.keys = map[string]string{
-			"":      "a",
-			"a":     "b",
-			"a-b":   "c",
-			"a-b-c": "",
-		}
-		t.p.Subscribe(sub1, t.treeBuilder)
-
-		t.treeBuilder.keys = map[string]string{
-			"":      "a",
-			"a":     "b",
-			"a-b":   "d",
-			"a-b-d": "",
-		}
-		t.p.Subscribe(sub2, t.treeBuilder)
-
-		t.treeBuilder.keys = map[string]string{
-			"":  "a",
-			"a": "",
-		}
-		t.p.Subscribe(sub3, t.treeBuilder)
+		t.p.Subscribe(sub1, []string{"a", "b", "c"})
+		t.p.Subscribe(sub2, []string{"a", "b", "d"})
+		t.p.Subscribe(sub3, []string{"a"})
 
 		t.treeTraverser.keys = map[string][]string{
 			"":      []string{"a", "x"},
@@ -123,14 +84,11 @@ func TestPubSub(t *testing.T) {
 
 	o.Spec("it does not write to a subscription after it unsubscribes", func(t TPS) {
 		sub := newSpySubscrption()
-		t.treeBuilder.keys = map[string]string{
-			"": "",
-		}
 		t.treeTraverser.keys = map[string][]string{
 			"": nil,
 		}
 
-		unsubscribe := t.p.Subscribe(sub, t.treeBuilder)
+		unsubscribe := t.p.Subscribe(sub, nil)
 		unsubscribe()
 		t.p.Publish("some-data", t.treeTraverser)
 		Expect(t, sub.data).To(HaveLen(0))

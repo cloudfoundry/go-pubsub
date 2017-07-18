@@ -27,20 +27,6 @@ type PubSub struct {
 	n  *node.Node
 }
 
-// SubscriptionEnroller enrolls each subscription. Enroll is called until
-// keepTraversing is false. When this happens, path is ignored and the
-// subscription is saved at the current level of the tree. Otherwise path
-// is used to assign where the subscription is stored.
-//
-// The passed in subscription will be the same instance. currentPath is a
-// slice of paths built up from the returned path value for each level.
-// (e.g., currentPath = ["A", "B"] and path = "C". Then the next currentPath
-// will be ["A", "B", "C"])
-type SubscriptionEnroller interface {
-	// Enroll is invoked until keepTraversing is false.
-	Enroll(sub Subscription, currentPath []string) (path string, keepTraversing bool)
-}
-
 // DataAssigner assigns published data to the correct subscriptions. Each
 // data point can be assigned to several subscriptions. As the data traverses
 // the given paths, it will write to any subscribers that are assigned there.
@@ -69,18 +55,18 @@ func New() *PubSub {
 	}
 }
 
-// Subscribe will add a subscription using the SubscriptionEnroller to
+// Subscribe will add a subscription using the given path to
 // the PubSub. It returns a function that can be used to unsubscribe.
-func (s *PubSub) Subscribe(ss Subscription, e SubscriptionEnroller) Unsubscriber {
+// Path is used to describe the placement of the subscription.
+func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	n := s.n
-	path := s.enrollToPath(ss, e, nil)
 	for _, p := range path {
 		n = n.AddChild(p)
 	}
-	n.AddSubscription(ss)
+	n.AddSubscription(sub)
 
 	return func() {
 		// TODO: Delete empty nodes
@@ -90,7 +76,7 @@ func (s *PubSub) Subscribe(ss Subscription, e SubscriptionEnroller) Unsubscriber
 		for _, p := range path {
 			current = current.FetchChild(p)
 		}
-		current.DeleteSubscription(ss)
+		current.DeleteSubscription(sub)
 	}
 }
 
@@ -111,13 +97,4 @@ func (s *PubSub) traversePublish(d interface{}, a DataAssigner, n *node.Node, l 
 	for _, child := range children {
 		s.traversePublish(d, a, n.FetchChild(child), append(l, child))
 	}
-}
-
-func (s *PubSub) enrollToPath(ss Subscription, e SubscriptionEnroller, path []string) []string {
-	child, ok := e.Enroll(ss, path)
-	if !ok {
-		return path
-	}
-
-	return s.enrollToPath(ss, e, append(path, child))
 }
