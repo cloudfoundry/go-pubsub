@@ -71,10 +71,27 @@ func New() *PubSub {
 
 // Subscribe will add a subscription using the SubscriptionEnroller to
 // the PubSub. It returns a function that can be used to unsubscribe.
-func (s *PubSub) Subscribe(subscription Subscription, e SubscriptionEnroller) Unsubscriber {
+func (s *PubSub) Subscribe(ss Subscription, e SubscriptionEnroller) Unsubscriber {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.traverseSubscribe(subscription, e, s.n, nil)
+
+	n := s.n
+	path := s.enrollToPath(ss, e, nil)
+	for _, p := range path {
+		n = n.AddChild(p)
+	}
+	n.AddSubscription(ss)
+
+	return func() {
+		// TODO: Delete empty nodes
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		current := s.n
+		for _, p := range path {
+			current = current.FetchChild(p)
+		}
+		current.DeleteSubscription(ss)
+	}
 }
 
 // Publish writes data using the DataAssigner to the interested subscriptions.
@@ -96,21 +113,11 @@ func (s *PubSub) traversePublish(d interface{}, a DataAssigner, n *node.Node, l 
 	}
 }
 
-func (s *PubSub) traverseSubscribe(ss Subscription, e SubscriptionEnroller, n *node.Node, l []string) Unsubscriber {
-	child, ok := e.Enroll(ss, l)
+func (s *PubSub) enrollToPath(ss Subscription, e SubscriptionEnroller, path []string) []string {
+	child, ok := e.Enroll(ss, path)
 	if !ok {
-		n.AddSubscription(ss)
-		return func() {
-			// TODO: Delete empty nodes
-			s.mu.Lock()
-			defer s.mu.Unlock()
-			current := s.n
-			for _, ll := range l {
-				current = current.FetchChild(ll)
-			}
-			current.DeleteSubscription(ss)
-		}
+		return path
 	}
 
-	return s.traverseSubscribe(ss, e, n.AddChild(child), append(l, child))
+	return s.enrollToPath(ss, e, append(path, child))
 }
