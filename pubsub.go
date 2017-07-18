@@ -32,10 +32,15 @@ type PubSub struct {
 // the given paths, it will write to any subscribers that are assigned there.
 // Data can go down multiple paths (i.e., len(paths) > 1).
 //
+// Data is set by the previously returned next. This is done as a courtesy
+// for the DataAssigner implementation. The value is not used by the pubsub
+// library in any way and the Subscriber will always receive the original
+// data value.
+
 // Traversing a path ends when the return len(paths) == 0. If
 // len(paths) > 1, then each path will be traversed.
 type DataAssigner interface {
-	Assign(data interface{}, currentPath []string) (paths []string)
+	Assign(data interface{}, currentPath []string) (paths []string, next interface{})
 }
 
 // Subscription is a subscription that will have cooresponding data written
@@ -84,17 +89,17 @@ func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
 func (s *PubSub) Publish(d interface{}, a DataAssigner) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	s.traversePublish(d, a, s.n, nil)
+	s.traversePublish(d, d, a, s.n, nil)
 }
 
-func (s *PubSub) traversePublish(d interface{}, a DataAssigner, n *node.Node, l []string) {
+func (s *PubSub) traversePublish(d, next interface{}, a DataAssigner, n *node.Node, l []string) {
 	n.ForEachSubscription(func(ss node.Subscription) {
 		ss.Write(d)
 	})
 
-	children := a.Assign(d, l)
+	children, next := a.Assign(next, l)
 
 	for _, child := range children {
-		s.traversePublish(d, a, n.FetchChild(child), append(l, child))
+		s.traversePublish(d, next, a, n.FetchChild(child), append(l, child))
 	}
 }

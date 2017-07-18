@@ -61,7 +61,7 @@ func TestPubSub(t *testing.T) {
 		sub3 := newSpySubscrption()
 		t.p.Subscribe(sub1, []string{"a", "b", "c"})
 		t.p.Subscribe(sub2, []string{"a", "b", "d"})
-		t.p.Subscribe(sub3, []string{"a"})
+		t.p.Subscribe(sub3, []string{"a", "b"})
 
 		t.treeTraverser.keys = map[string][]string{
 			"":      []string{"a", "x"},
@@ -80,6 +80,9 @@ func TestPubSub(t *testing.T) {
 
 		Expect(t, sub1.data[0]).To(Equal("some-data"))
 		Expect(t, sub3.data[0]).To(Equal("some-data"))
+
+		Expect(t, t.treeTraverser.data).To(HaveLen(len(t.treeTraverser.keys)))
+		Expect(t, t.treeTraverser.data[1]).To(Equal("ome-data"))
 	})
 
 	o.Spec("it does not write to a subscription after it unsubscribes", func(t TPS) {
@@ -105,7 +108,7 @@ func newSpyDataAssigner() *spyDataAssigner {
 	return &spyDataAssigner{}
 }
 
-func (s *spyDataAssigner) Assign(data interface{}, location []string) []string {
+func (s *spyDataAssigner) Assign(data interface{}, location []string) ([]string, interface{}) {
 	s.data = append(s.data, data)
 
 	key := strings.Join(location, "-")
@@ -115,35 +118,11 @@ func (s *spyDataAssigner) Assign(data interface{}, location []string) []string {
 		log.Panicf("unknown location: %s", key)
 	}
 
-	return result
-}
-
-type spySubscriptionEnroller struct {
-	keys      map[string]string
-	subs      []pubsub.Subscription
-	locations []string
-}
-
-func newSpySubscriptionEnroller() *spySubscriptionEnroller {
-	return &spySubscriptionEnroller{}
-}
-
-func (s *spySubscriptionEnroller) Enroll(sub pubsub.Subscription, location []string) (string, bool) {
-	s.subs = append(s.subs, sub)
-
-	key := strings.Join(location, "-")
-	s.locations = append(s.locations, key)
-	result, ok := s.keys[key]
-
-	if !ok {
-		log.Panicf("unknown location: %s", key)
+	if len(data.(string)) == 0 {
+		return result, data
 	}
 
-	if result == "" {
-		return "", false
-	}
-
-	return result, true
+	return result, data.(string)[1:]
 }
 
 type spySubscription struct {
