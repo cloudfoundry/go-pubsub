@@ -40,6 +40,15 @@ type Subscription interface {
 	Write(data interface{})
 }
 
+// SubscriptionFuncis an adapter to allow ordinary functions to be a
+// Subscription.
+type SubscriptionFunc func(data interface{})
+
+// Write implements Subscription.
+func (f SubscriptionFunc) Write(data interface{}) {
+	f(data)
+}
+
 // Unsubscriber is returned by Subscribe. It should be invoked to
 // remove a subscription from the PubSub.
 type Unsubscriber func()
