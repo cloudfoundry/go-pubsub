@@ -59,9 +59,11 @@ func TestPubSub(t *testing.T) {
 		sub1 := newSpySubscrption()
 		sub2 := newSpySubscrption()
 		sub3 := newSpySubscrption()
+		sub4 := newSpySubscrption()
 		t.p.Subscribe(sub1, []string{"a", "b", "c"})
 		t.p.Subscribe(sub2, []string{"a", "b", "d"})
 		t.p.Subscribe(sub3, []string{"a", "b"})
+		t.p.Subscribe(sub4, []string{"j", "k"})
 
 		t.treeTraverser.keys = map[string][]string{
 			"":      []string{"a", "x"},
@@ -73,13 +75,16 @@ func TestPubSub(t *testing.T) {
 			"a-b-c": nil,
 		}
 		t.p.Publish("some-data", t.treeTraverser)
+		t.p.Publish("some-other-data", pubsub.LinearDataAssigner([]string{"j", "k"}))
 
 		Expect(t, sub1.data).To(HaveLen(1))
 		Expect(t, sub2.data).To(HaveLen(0))
 		Expect(t, sub3.data).To(HaveLen(1))
+		Expect(t, sub4.data).To(HaveLen(1))
 
 		Expect(t, sub1.data[0]).To(Equal("some-data"))
 		Expect(t, sub3.data[0]).To(Equal("some-data"))
+		Expect(t, sub4.data[0]).To(Equal("some-other-data"))
 
 		Expect(t, t.treeTraverser.data).To(HaveLen(len(t.treeTraverser.keys)))
 		Expect(t, t.treeTraverser.data[1]).To(Equal("some-data"))

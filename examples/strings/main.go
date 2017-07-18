@@ -41,6 +41,9 @@ func main() {
 
 	ps.Publish("a-b-cd", StringSplitter("-"))
 	ps.Publish("ax-y-z", StringSplitter("-"))
+
+	ps.Publish("linear-1", pubsub.LinearDataAssigner([]string{"a", "b", "c"}))
+	ps.Publish("linear-2", pubsub.LinearDataAssigner([]string{"a", "b", "d"}))
 }
 
 // Subscription writes any results to stderr

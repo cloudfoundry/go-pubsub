@@ -89,6 +89,25 @@ func (f DataAssignerFunc) Assign(data interface{}, currentPath []string) Assigne
 	return f(data, currentPath)
 }
 
+// LinearDataAssigner implements DataAssigner on behalf of a slice of paths.
+// If the data does not traverse multiple paths, then this works well.
+type LinearDataAssigner []string
+
+// Assign implements DataAssigner.
+func (a LinearDataAssigner) Assign(data interface{}, currentPath []string) AssignedPaths {
+	return a.buildDataAssigner(a)(data, currentPath)
+}
+
+func (a LinearDataAssigner) buildDataAssigner(remainingPath []string) DataAssignerFunc {
+	return func(data interface{}, currentPath []string) AssignedPaths {
+		if len(remainingPath) == 0 {
+			return Paths(nil)
+		}
+
+		return NewPathsWithAssigner(Paths([]string{remainingPath[0]}), a.buildDataAssigner(remainingPath[1:]))
+	}
+}
+
 // AssignedPaths is returned by a DataAssigner. It describes how the data is
 // both assigned and how to continue to analyze it.
 type AssignedPaths interface {
