@@ -71,6 +71,27 @@ func (p Paths) At(idx int) (string, DataAssigner, bool) {
 	return p[idx], nil, true
 }
 
+// PathsWithAssigner implements AssignedPaths for both a slice of paths and
+// a single DataAssigner. Each path will return the given DataAssigner.
+// It shoudl be constructed with NewPathsWithAssigner().
+type PathsWithAssigner struct {
+	a DataAssigner
+	p []string
+}
+
+func NewPathsWithAssigner(paths []string, a DataAssigner) PathsWithAssigner {
+	return PathsWithAssigner{a: a, p: paths}
+}
+
+// At implements AssignedPaths.
+func (a PathsWithAssigner) At(idx int) (string, DataAssigner, bool) {
+	if idx >= len(a.p) {
+		return "", nil, false
+	}
+
+	return a.p[idx], a.a, true
+}
+
 // Subscription is a subscription that will have cooresponding data written
 // to it.
 type Subscription interface {
