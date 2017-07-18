@@ -27,6 +27,48 @@ type PubSub struct {
 	n  *node.Node
 }
 
+// New constructs a new PubSub.
+func New() *PubSub {
+	return &PubSub{
+		n: node.New(),
+	}
+}
+
+// Subscription is a subscription that will have cooresponding data written
+// to it.
+type Subscription interface {
+	Write(data interface{})
+}
+
+// Unsubscriber is returned by Subscribe. It should be invoked to
+// remove a subscription from the PubSub.
+type Unsubscriber func()
+
+// Subscribe will add a subscription using the given path to
+// the PubSub. It returns a function that can be used to unsubscribe.
+// Path is used to describe the placement of the subscription.
+func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	n := s.n
+	for _, p := range path {
+		n = n.AddChild(p)
+	}
+	n.AddSubscription(sub)
+
+	return func() {
+		// TODO: Delete empty nodes
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		current := s.n
+		for _, p := range path {
+			current = current.FetchChild(p)
+		}
+		current.DeleteSubscription(sub)
+	}
+}
+
 // DataAssigner assigns published data to the correct subscriptions. Each
 // data point can be assigned to several subscriptions. As the data traverses
 // the given paths, it will write to any subscribers that are assigned there.
@@ -79,6 +121,7 @@ type PathsWithAssigner struct {
 	p []string
 }
 
+// NewPathsWithAssigner creates a new PathsWithAssigner.
 func NewPathsWithAssigner(paths []string, a DataAssigner) PathsWithAssigner {
 	return PathsWithAssigner{a: a, p: paths}
 }
@@ -90,48 +133,6 @@ func (a PathsWithAssigner) At(idx int) (string, DataAssigner, bool) {
 	}
 
 	return a.p[idx], a.a, true
-}
-
-// Subscription is a subscription that will have cooresponding data written
-// to it.
-type Subscription interface {
-	Write(data interface{})
-}
-
-// Unsubscriber is returned by Subscribe. It should be invoked to
-// remove a subscription from the PubSub.
-type Unsubscriber func()
-
-// New constructs a new PubSub.
-func New() *PubSub {
-	return &PubSub{
-		n: node.New(),
-	}
-}
-
-// Subscribe will add a subscription using the given path to
-// the PubSub. It returns a function that can be used to unsubscribe.
-// Path is used to describe the placement of the subscription.
-func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	n := s.n
-	for _, p := range path {
-		n = n.AddChild(p)
-	}
-	n.AddSubscription(sub)
-
-	return func() {
-		// TODO: Delete empty nodes
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		current := s.n
-		for _, p := range path {
-			current = current.FetchChild(p)
-		}
-		current.DeleteSubscription(sub)
-	}
 }
 
 // Publish writes data using the DataAssigner to the interested subscriptions.
