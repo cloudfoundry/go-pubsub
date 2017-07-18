@@ -69,6 +69,6 @@ func randPath() []string {
 
 type staticDataAssigner struct{}
 
-func (r *staticDataAssigner) Assign(data interface{}, location []string) (keys []string, next interface{}) {
-	return []string{"1", "2", "3", "4"}[:4-len(location)], data
+func (r *staticDataAssigner) Assign(data interface{}, location []string) pubsub.AssignedPaths {
+	return pubsub.Paths([]string{"1", "2", "3", "4"}[:4-len(location)])
 }

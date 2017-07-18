@@ -82,7 +82,33 @@ func TestPubSub(t *testing.T) {
 		Expect(t, sub3.data[0]).To(Equal("some-data"))
 
 		Expect(t, t.treeTraverser.data).To(HaveLen(len(t.treeTraverser.keys)))
-		Expect(t, t.treeTraverser.data[1]).To(Equal("ome-data"))
+		Expect(t, t.treeTraverser.data[1]).To(Equal("some-data"))
+	})
+
+	o.Spec("it uses the new DataAssigner when given one", func(t TPS) {
+		sub := newSpySubscrption()
+		t.p.Subscribe(sub, []string{"a", "b", "c"})
+
+		f := &fakeAssignedPaths{}
+
+		t.treeTraverser.ret = func(s *spyDataAssigner, results []string) pubsub.AssignedPaths {
+			f.a = s
+			f.paths = results
+			return f
+		}
+
+		t.treeTraverser.keys = map[string][]string{
+			"":      []string{"a", "x"},
+			"x":     nil,
+			"a":     []string{"b", "y"},
+			"a-y":   nil,
+			"a-b":   []string{"c", "z"},
+			"a-b-z": nil,
+			"a-b-c": nil,
+		}
+		t.p.Publish("some-data", t.treeTraverser)
+
+		Expect(t, f.ids).To(Contain(2))
 	})
 
 	o.Spec("it does not write to a subscription after it unsubscribes", func(t TPS) {
@@ -102,13 +128,19 @@ type spyDataAssigner struct {
 	keys      map[string][]string
 	locations []string
 	data      []interface{}
+	id        int
+	ret       func(*spyDataAssigner, []string) pubsub.AssignedPaths
 }
 
 func newSpyDataAssigner() *spyDataAssigner {
-	return &spyDataAssigner{}
+	return &spyDataAssigner{
+		ret: func(s *spyDataAssigner, results []string) pubsub.AssignedPaths {
+			return pubsub.Paths(results)
+		},
+	}
 }
 
-func (s *spyDataAssigner) Assign(data interface{}, location []string) ([]string, interface{}) {
+func (s *spyDataAssigner) Assign(data interface{}, location []string) pubsub.AssignedPaths {
 	s.data = append(s.data, data)
 
 	key := strings.Join(location, "-")
@@ -118,11 +150,7 @@ func (s *spyDataAssigner) Assign(data interface{}, location []string) ([]string,
 		log.Panicf("unknown location: %s", key)
 	}
 
-	if len(data.(string)) == 0 {
-		return result, data
-	}
-
-	return result, data.(string)[1:]
+	return s.ret(s, result)
 }
 
 type spySubscription struct {
@@ -138,4 +166,26 @@ func (s *spySubscription) Write(data interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data = append(s.data, data)
+}
+
+type fakeAssignedPaths struct {
+	paths []string
+	a     *spyDataAssigner
+	ids   []int
+}
+
+func (s *fakeAssignedPaths) At(idx int) (path string, nextAssigner pubsub.DataAssigner, ok bool) {
+	if len(s.paths) <= idx {
+		return "", nil, false
+	}
+
+	s.ids = append(s.ids, s.a.id)
+
+	return s.paths[idx], &spyDataAssigner{
+		keys:      s.a.keys,
+		locations: s.a.locations,
+		data:      s.a.data,
+		ret:       s.a.ret,
+		id:        s.a.id + 1,
+	}, true
 }

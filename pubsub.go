@@ -32,15 +32,43 @@ type PubSub struct {
 // the given paths, it will write to any subscribers that are assigned there.
 // Data can go down multiple paths (i.e., len(paths) > 1).
 //
-// Data is set by the previously returned next. This is done as a courtesy
-// for the DataAssigner implementation. The value is not used by the pubsub
-// library in any way and the Subscriber will always receive the original
-// data value.
-
 // Traversing a path ends when the return len(paths) == 0. If
 // len(paths) > 1, then each path will be traversed.
 type DataAssigner interface {
-	Assign(data interface{}, currentPath []string) (paths []string, next interface{})
+	Assign(data interface{}, currentPath []string) AssignedPaths
+}
+
+// DataAssignerFunc is an adapter to allow ordinary functions to be a
+// DataAssigner.
+type DataAssignerFunc func(data interface{}, currentPath []string) AssignedPaths
+
+// Assign implements DataAssigner.
+func (f DataAssignerFunc) Assign(data interface{}, currentPath []string) AssignedPaths {
+	return f(data, currentPath)
+}
+
+// AssignedPaths is returned by a DataAssigner. It describes how the data is
+// both assigned and how to continue to analyze it.
+type AssignedPaths interface {
+	// At will be called with idx ranging from [0, n] where n is the number
+	// of valid paths. This means that the AssignedPaths needs to be prepared
+	// for an idx that is greater than it has valid data for.
+	//
+	// If nextAssigner is nil, then the previous DataAssigner is used.
+	At(idx int) (path string, nextAssigner DataAssigner, ok bool)
+}
+
+// Paths implements AssignedPaths for a slice of paths. It
+// returns nil for all nextAssigner meaning to use the given DataAssigner.
+type Paths []string
+
+// At implements AssignedPaths.
+func (p Paths) At(idx int) (string, DataAssigner, bool) {
+	if idx >= len(p) {
+		return "", nil, false
+	}
+
+	return p[idx], nil, true
 }
 
 // Subscription is a subscription that will have cooresponding data written
@@ -97,9 +125,18 @@ func (s *PubSub) traversePublish(d, next interface{}, a DataAssigner, n *node.No
 		ss.Write(d)
 	})
 
-	children, next := a.Assign(next, l)
+	paths := a.Assign(next, l)
 
-	for _, child := range children {
-		s.traversePublish(d, next, a, n.FetchChild(child), append(l, child))
+	for i := 0; ; i++ {
+		child, nextA, ok := paths.At(i)
+		if !ok {
+			return
+		}
+
+		if nextA == nil {
+			nextA = a
+		}
+
+		s.traversePublish(d, next, nextA, n.FetchChild(child), append(l, child))
 	}
 }

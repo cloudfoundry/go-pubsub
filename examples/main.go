@@ -40,8 +40,10 @@ func main() {
 	ps.Publish("data-2", StaticAssigner(dataMap2))
 }
 
+// Subscription writes any results to stderr
 type Subscription string
 
+// Write implements pubsub.Subscription
 func (s Subscription) Write(data interface{}) {
 	log.Printf("%s <- %s", s, data)
 }
@@ -51,13 +53,12 @@ func (s Subscription) Write(data interface{}) {
 // Only the given path.
 type StaticAssigner map[string][]string
 
-func (a StaticAssigner) Assign(data interface{}, currentPath []string) (paths []string, next interface{}) {
+func (a StaticAssigner) Assign(data interface{}, currentPath []string) pubsub.AssignedPaths {
 	path := strings.Join(currentPath, "-")
 	ps, ok := a[path]
 	if !ok {
 		log.Panicf("Unknown path: '%s'", path)
 	}
 
-	// We can return nil because we aren't looking at the data anyways
-	return ps, nil
+	return pubsub.Paths(ps)
 }
