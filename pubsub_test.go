@@ -35,7 +35,7 @@ func TestPubSub(t *testing.T) {
 		}
 	})
 
-	o.Spec("it invokes the TreeTraverser for each level", func(t TPS) {
+	o.Spec("it stops traversing upon reaching an empty node", func(t TPS) {
 		t.treeTraverser.keys = map[string][]string{
 			"":      []string{"a", "b"},
 			"a":     []string{"a", "b"},
@@ -49,11 +49,13 @@ func TestPubSub(t *testing.T) {
 		}
 
 		t.p.Publish("x", t.treeTraverser)
+		Expect(t, t.treeTraverser.locations).To(HaveLen(1))
 
-		Expect(t, t.treeTraverser.locations).To(HaveLen(9))
-		for k := range t.treeTraverser.keys {
-			Expect(t, t.treeTraverser.locations).To(Contain(k))
-		}
+		t.p.Subscribe(newSpySubscrption(), []string{"a", "b"})
+		t.treeTraverser.locations = nil
+		t.p.Publish("x", t.treeTraverser)
+		Expect(t, t.treeTraverser.locations).To(HaveLen(3))
+		Expect(t, t.treeTraverser.locations).To(Contain("", "a", "a-b"))
 	})
 
 	o.Spec("it writes to the correct subscription", func(t TPS) {
@@ -87,7 +89,7 @@ func TestPubSub(t *testing.T) {
 		Expect(t, sub3.data[0]).To(Equal("some-data"))
 		Expect(t, sub4.data[0]).To(Equal("some-other-data"))
 
-		Expect(t, t.treeTraverser.data).To(HaveLen(len(t.treeTraverser.keys)))
+		Expect(t, t.treeTraverser.data).To(HaveLen(4))
 		Expect(t, t.treeTraverser.data[1]).To(Equal("some-data"))
 	})
 

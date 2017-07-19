@@ -182,6 +182,10 @@ func (s *PubSub) Publish(d interface{}, a TreeTraverser) {
 }
 
 func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.Node, l []string) {
+	if n == nil {
+		return
+	}
+
 	n.ForEachSubscription(func(ss node.Subscription) {
 		ss.Write(d)
 	})
