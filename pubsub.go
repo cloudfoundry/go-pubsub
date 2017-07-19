@@ -67,14 +67,24 @@ func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
 	id := n.AddSubscription(sub)
 
 	return func() {
-		// TODO: Delete empty nodes
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		current := s.n
-		for _, p := range path {
-			current = current.FetchChild(p)
-		}
-		current.DeleteSubscription(id)
+
+		s.cleanupSubscriptionTree(s.n, id, path)
+	}
+}
+
+func (s *PubSub) cleanupSubscriptionTree(n *node.Node, id int64, p []string) {
+	if len(p) == 0 {
+		n.DeleteSubscription(id)
+		return
+	}
+
+	child := n.FetchChild(p[0])
+	s.cleanupSubscriptionTree(child, id, p[1:])
+
+	if child.ChildLen() == 0 && child.SubscriptionLen() == 0 {
+		n.DeleteChild(p[0])
 	}
 }
 

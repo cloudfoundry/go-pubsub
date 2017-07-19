@@ -41,6 +41,10 @@ func TestNode(t *testing.T) {
 		n1 := t.n.AddChild("a")
 		n2 := t.n.FetchChild("a")
 		Expect(t, n1).To(Equal(n2))
+		Expect(t, t.n.ChildLen()).To(Equal(1))
+
+		t.n.DeleteChild("a")
+		Expect(t, t.n.FetchChild("a") == nil).To(BeTrue())
 	})
 
 	o.Spec("returns all subscriptions", func(t TN) {
@@ -60,6 +64,7 @@ func TestNode(t *testing.T) {
 		Expect(t, ss).To(HaveLen(2))
 		Expect(t, ss).To(Contain(s2))
 		Expect(t, ss).To(Contain(s3))
+		Expect(t, t.n.SubscriptionLen()).To(Equal(2))
 	})
 }
 

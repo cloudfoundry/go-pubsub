@@ -44,6 +44,18 @@ func (n *Node) FetchChild(key string) *Node {
 	return nil
 }
 
+func (n *Node) DeleteChild(key string) {
+	if n == nil {
+		return
+	}
+
+	delete(n.children, key)
+}
+
+func (n *Node) ChildLen() int {
+	return len(n.children)
+}
+
 func (n *Node) AddSubscription(s Subscription) int64 {
 	if n == nil {
 		return 0
@@ -67,6 +79,10 @@ func (n *Node) DeleteSubscription(id int64) {
 	}
 
 	delete(n.subscriptions, id)
+}
+
+func (n *Node) SubscriptionLen() int {
+	return len(n.subscriptions)
 }
 
 func (n *Node) ForEachSubscription(f func(s Subscription)) {

@@ -120,10 +120,11 @@ func TestPubSub(t *testing.T) {
 	o.Spec("it does not write to a subscription after it unsubscribes", func(t TPS) {
 		sub := newSpySubscrption()
 		t.treeTraverser.keys = map[string][]string{
-			"": nil,
+			"":  []string{"a"},
+			"a": nil,
 		}
 
-		unsubscribe := t.p.Subscribe(sub, nil)
+		unsubscribe := t.p.Subscribe(sub, pubsub.LinearTreeTraverser([]string{"a"}))
 		unsubscribe()
 		t.p.Publish("some-data", t.treeTraverser)
 		Expect(t, sub.data).To(HaveLen(0))
