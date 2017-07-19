@@ -6,7 +6,7 @@
 // to find its place in the tree. The "SubscriptionEnroller" is used to
 // analyze the "Subscription" and find the correct node to store it in.
 //
-// As data is published, the "DataAssigner" analyzes the data to determine
+// As data is published, the "TreeTraverser" analyzes the data to determine
 // what nodes the data belongs to. Data can belong to multiple nodes on the
 // same level. This means that when data is published, the system can
 // traverse multiple paths for the data.
@@ -19,7 +19,7 @@ import (
 )
 
 // PubSub uses the given SubscriptionEnroller to  create the subscription
-// tree. It also uses the DataAssigner to then write to the subscriber. All
+// tree. It also uses the TreeTraverser to then write to the subscriber. All
 // of PubSub's methods safe to access concurrently. PubSub should be
 // constructed with New().
 type PubSub struct {
@@ -78,62 +78,63 @@ func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
 	}
 }
 
-// DataAssigner assigns published data to the correct subscriptions. Each
-// data point can be assigned to several subscriptions. As the data traverses
+// TreeTraverser publishes data to the correct subscriptions. Each
+// data point can be published to several subscriptions. As the data traverses
 // the given paths, it will write to any subscribers that are assigned there.
 // Data can go down multiple paths (i.e., len(paths) > 1).
 //
 // Traversing a path ends when the return len(paths) == 0. If
 // len(paths) > 1, then each path will be traversed.
-type DataAssigner interface {
-	Assign(data interface{}, currentPath []string) AssignedPaths
+type TreeTraverser interface {
+	// Traverse is used to traverse the subscription tree.
+	Traverse(data interface{}, currentPath []string) Paths
 }
 
-// DataAssignerFunc is an adapter to allow ordinary functions to be a
-// DataAssigner.
-type DataAssignerFunc func(data interface{}, currentPath []string) AssignedPaths
+// TreeTraverserFunc is an adapter to allow ordinary functions to be a
+// TreeTraverser.
+type TreeTraverserFunc func(data interface{}, currentPath []string) Paths
 
-// Assign implements DataAssigner.
-func (f DataAssignerFunc) Assign(data interface{}, currentPath []string) AssignedPaths {
+// Traverse implements TreeTraverser.
+func (f TreeTraverserFunc) Traverse(data interface{}, currentPath []string) Paths {
 	return f(data, currentPath)
 }
 
-// LinearDataAssigner implements DataAssigner on behalf of a slice of paths.
+// LinearTreeTraverser implements TreeTraverser on behalf of a slice of paths.
 // If the data does not traverse multiple paths, then this works well.
-type LinearDataAssigner []string
+type LinearTreeTraverser []string
 
-// Assign implements DataAssigner.
-func (a LinearDataAssigner) Assign(data interface{}, currentPath []string) AssignedPaths {
-	return a.buildDataAssigner(a)(data, currentPath)
+// Traverse implements TreeTraverser.
+func (a LinearTreeTraverser) Traverse(data interface{}, currentPath []string) Paths {
+	return a.buildTreeTraverser(a)(data, currentPath)
 }
 
-func (a LinearDataAssigner) buildDataAssigner(remainingPath []string) DataAssignerFunc {
-	return func(data interface{}, currentPath []string) AssignedPaths {
+func (a LinearTreeTraverser) buildTreeTraverser(remainingPath []string) TreeTraverserFunc {
+	return func(data interface{}, currentPath []string) Paths {
 		if len(remainingPath) == 0 {
-			return Paths(nil)
+			return FlatPaths(nil)
 		}
 
-		return NewPathsWithAssigner(Paths([]string{remainingPath[0]}), a.buildDataAssigner(remainingPath[1:]))
+		return NewPathsWithTraverser(FlatPaths([]string{remainingPath[0]}), a.buildTreeTraverser(remainingPath[1:]))
 	}
 }
 
-// AssignedPaths is returned by a DataAssigner. It describes how the data is
+// Paths is returned by a TreeTraverser. It describes how the data is
 // both assigned and how to continue to analyze it.
-type AssignedPaths interface {
+type Paths interface {
 	// At will be called with idx ranging from [0, n] where n is the number
-	// of valid paths. This means that the AssignedPaths needs to be prepared
+	// of valid paths. This means that the Paths needs to be prepared
 	// for an idx that is greater than it has valid data for.
 	//
-	// If nextAssigner is nil, then the previous DataAssigner is used.
-	At(idx int) (path string, nextAssigner DataAssigner, ok bool)
+	// If nextTraverser is nil, then the previous TreeTraverser is used.
+	At(idx int) (path string, nextTraverser TreeTraverser, ok bool)
 }
 
-// Paths implements AssignedPaths for a slice of paths. It
-// returns nil for all nextAssigner meaning to use the given DataAssigner.
-type Paths []string
+// FlatPaths implements Paths for a slice of paths. It
+// returns nil for all nextTraverser meaning to use the given TreeTraverser.
+type FlatPaths []string
 
-// At implements AssignedPaths.
-func (p Paths) At(idx int) (string, DataAssigner, bool) {
+// At implements Paths.
+func (p FlatPaths) At(idx int) (string, TreeTraverser, bool) {
 	if idx >= len(p) {
 		return "", nil, false
 	}
@@ -141,21 +142,21 @@ func (p Paths) At(idx int) (string, DataAssigner, bool) {
 	return p[idx], nil, true
 }
 
-// PathsWithAssigner implements AssignedPaths for both a slice of paths and
-// a single DataAssigner. Each path will return the given DataAssigner.
-// It shoudl be constructed with NewPathsWithAssigner().
-type PathsWithAssigner struct {
-	a DataAssigner
+// PathsWithTraverser implements Paths for both a slice of paths and
+// a single TreeTraverser. Each path will return the given TreeTraverser.
+// It shoudl be constructed with NewPathsWithTraverser().
+type PathsWithTraverser struct {
+	a TreeTraverser
 	p []string
 }
 
-// NewPathsWithAssigner creates a new PathsWithAssigner.
-func NewPathsWithAssigner(paths []string, a DataAssigner) PathsWithAssigner {
-	return PathsWithAssigner{a: a, p: paths}
+// NewPathsWithTraverser creates a new PathsWithTraverser.
+func NewPathsWithTraverser(paths []string, a TreeTraverser) PathsWithTraverser {
+	return PathsWithTraverser{a: a, p: paths}
 }
 
-// At implements AssignedPaths.
-func (a PathsWithAssigner) At(idx int) (string, DataAssigner, bool) {
+// At implements Paths.
+func (a PathsWithTraverser) At(idx int) (string, TreeTraverser, bool) {
 	if idx >= len(a.p) {
 		return "", nil, false
 	}
@@ -163,19 +164,19 @@ func (a PathsWithAssigner) At(idx int) (string, DataAssigner, bool) {
 	return a.p[idx], a.a, true
 }
 
-// Publish writes data using the DataAssigner to the interested subscriptions.
-func (s *PubSub) Publish(d interface{}, a DataAssigner) {
+// Publish writes data using the TreeTraverser to the interested subscriptions.
+func (s *PubSub) Publish(d interface{}, a TreeTraverser) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	s.traversePublish(d, d, a, s.n, nil)
 }
 
-func (s *PubSub) traversePublish(d, next interface{}, a DataAssigner, n *node.Node, l []string) {
+func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.Node, l []string) {
 	n.ForEachSubscription(func(ss node.Subscription) {
 		ss.Write(d)
 	})
 
-	paths := a.Assign(next, l)
+	paths := a.Traverse(next, l)
 
 	for i := 0; ; i++ {
 		child, nextA, ok := paths.At(i)

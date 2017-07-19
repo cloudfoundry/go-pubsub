@@ -29,7 +29,7 @@ func main() {
 		"a-b-c": nil,
 		"a-b-d": nil,
 	}
-	ps.Publish("data-1", StaticAssigner(dataMap1))
+	ps.Publish("data-1", StaticTraverser(dataMap1))
 
 	dataMap2 := map[string][]string{
 		"":      []string{"x"},
@@ -37,13 +37,13 @@ func main() {
 		"x-y":   []string{"z"},
 		"x-y-z": nil,
 	}
-	ps.Publish("data-2", StaticAssigner(dataMap2))
+	ps.Publish("data-2", StaticTraverser(dataMap2))
 
 	ps.Publish("a-b-cd", StringSplitter("-"))
 	ps.Publish("ax-y-z", StringSplitter("-"))
 
-	ps.Publish("linear-1", pubsub.LinearDataAssigner([]string{"a", "b", "c"}))
-	ps.Publish("linear-2", pubsub.LinearDataAssigner([]string{"a", "b", "d"}))
+	ps.Publish("linear-1", pubsub.LinearTreeTraverser([]string{"a", "b", "c"}))
+	ps.Publish("linear-2", pubsub.LinearTreeTraverser([]string{"a", "b", "d"}))
 }
 
 // Subscription writes any results to stderr
@@ -54,29 +54,29 @@ func (s Subscription) Write(data interface{}) {
 	log.Printf("%s <- %s", s, data)
 }
 
-// StaticAssigner assigns data based on its underlying map and not the data.
+// StaticTraverser publishes data based on its underlying map and not the data.
 // Therefore, it does not look at the data to decide where the data belongs.
 // Only the given path.
-type StaticAssigner map[string][]string
+type StaticTraverser map[string][]string
 
-func (a StaticAssigner) Assign(data interface{}, currentPath []string) pubsub.AssignedPaths {
+func (a StaticTraverser) Traverse(data interface{}, currentPath []string) pubsub.Paths {
 	path := strings.Join(currentPath, "-")
 	ps, ok := a[path]
 	if !ok {
 		log.Panicf("Unknown path: '%s'", path)
 	}
 
-	return pubsub.Paths(ps)
+	return pubsub.FlatPaths(ps)
 }
 
 // StringSplitter splits on the given string. It then breaks each word up into
 // single char strings.
 type StringSplitter string
 
-// Assign implements pubsub.DataAssigner. It demonstrates how complex/powerful
-// a AssignedPaths can be. In this case, it builds new DataAssigners for
-// each part of the split.
-func (s StringSplitter) Assign(data interface{}, currentPath []string) pubsub.AssignedPaths {
+// Traverse implements pubsub.TreeTraverser. It demonstrates how complex/powerful
+// Paths can be. In this case, it builds new TreeTraversers for each
+// part of the split.
+func (s StringSplitter) Traverse(data interface{}, currentPath []string) pubsub.Paths {
 	splits := strings.Split(data.(string), string(s))
 
 	// Remove the sepearator
@@ -88,17 +88,17 @@ func (s StringSplitter) Assign(data interface{}, currentPath []string) pubsub.As
 		stripped = append(stripped, split)
 	}
 
-	return buildSplitAssigner(stripped)(data, currentPath)
+	return buildSplitTraverser(stripped)(data, currentPath)
 }
 
-func buildSplitAssigner(splits []string) pubsub.DataAssignerFunc {
-	return func(data interface{}, currentPath []string) pubsub.AssignedPaths {
+func buildSplitTraverser(splits []string) pubsub.TreeTraverserFunc {
+	return func(data interface{}, currentPath []string) pubsub.Paths {
 		if len(splits) == 0 {
-			return pubsub.Paths(nil)
+			return pubsub.FlatPaths(nil)
 		}
 
 		paths := strings.Split(splits[0], "")
-		f := buildSplitAssigner(splits[1:])
-		return pubsub.NewPathsWithAssigner(paths, pubsub.DataAssignerFunc(f))
+		f := buildSplitTraverser(splits[1:])
+		return pubsub.NewPathsWithTraverser(paths, pubsub.TreeTraverserFunc(f))
 	}
 }

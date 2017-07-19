@@ -21,7 +21,7 @@ func BenchmarkSubscriptions(b *testing.B) {
 
 func BenchmarkPublishing(b *testing.B) {
 	p := pubsub.New()
-	a := &staticDataAssigner{}
+	a := &staticTreeTraverser{}
 	for i := 0; i < 100; i++ {
 		p.Subscribe(newSpySubscrption(), randPath())
 	}
@@ -37,7 +37,7 @@ func BenchmarkPublishing(b *testing.B) {
 
 func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 	p := pubsub.New()
-	a := &staticDataAssigner{}
+	a := &staticTreeTraverser{}
 
 	b.RunParallel(func(b *testing.PB) {
 		buf := make([]byte, 256)
@@ -67,8 +67,8 @@ func randPath() []string {
 	}
 }
 
-type staticDataAssigner struct{}
+type staticTreeTraverser struct{}
 
-func (r *staticDataAssigner) Assign(data interface{}, location []string) pubsub.AssignedPaths {
-	return pubsub.Paths([]string{"1", "2", "3", "4"}[:4-len(location)])
+func (r *staticTreeTraverser) Traverse(data interface{}, location []string) pubsub.Paths {
+	return pubsub.FlatPaths([]string{"1", "2", "3", "4"}[:4-len(location)])
 }

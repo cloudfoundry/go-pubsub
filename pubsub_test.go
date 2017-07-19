@@ -16,7 +16,7 @@ import (
 type TPS struct {
 	*testing.T
 	p             *pubsub.PubSub
-	treeTraverser *spyDataAssigner
+	treeTraverser *spyTreeTraverser
 	subscription  *spySubscription
 }
 
@@ -25,7 +25,7 @@ func TestPubSub(t *testing.T) {
 	o := onpar.New()
 	defer o.Run(t)
 	o.BeforeEach(func(t *testing.T) TPS {
-		spyT := newSpyDataAssigner()
+		spyT := newSpyTreeTraverser()
 
 		return TPS{
 			T:             t,
@@ -35,7 +35,7 @@ func TestPubSub(t *testing.T) {
 		}
 	})
 
-	o.Spec("it invokes the DataAssigner for each level", func(t TPS) {
+	o.Spec("it invokes the TreeTraverser for each level", func(t TPS) {
 		t.treeTraverser.keys = map[string][]string{
 			"":      []string{"a", "b"},
 			"a":     []string{"a", "b"},
@@ -76,7 +76,7 @@ func TestPubSub(t *testing.T) {
 			"a-b-c": nil,
 		}
 		t.p.Publish("some-data", t.treeTraverser)
-		t.p.Publish("some-other-data", pubsub.LinearDataAssigner([]string{"j", "k"}))
+		t.p.Publish("some-other-data", pubsub.LinearTreeTraverser([]string{"j", "k"}))
 
 		Expect(t, sub1.data).To(HaveLen(1))
 		Expect(t, sub2.data).To(HaveLen(0))
@@ -91,13 +91,13 @@ func TestPubSub(t *testing.T) {
 		Expect(t, t.treeTraverser.data[1]).To(Equal("some-data"))
 	})
 
-	o.Spec("it uses the new DataAssigner when given one", func(t TPS) {
+	o.Spec("it uses the new TreeTraverser when given one", func(t TPS) {
 		sub := newSpySubscrption()
 		t.p.Subscribe(sub, []string{"a", "b", "c"})
 
-		f := &fakeAssignedPaths{}
+		f := &fakePaths{}
 
-		t.treeTraverser.ret = func(s *spyDataAssigner, results []string) pubsub.AssignedPaths {
+		t.treeTraverser.ret = func(s *spyTreeTraverser, results []string) pubsub.Paths {
 			f.a = s
 			f.paths = results
 			return f
@@ -142,33 +142,33 @@ func ExamplePubSub() {
 	ps.Subscribe(subscription("sub-2"), []string{"a", "b", "d"})
 	ps.Subscribe(subscription("sub-3"), []string{"a", "b", "e"})
 
-	ps.Publish("data-1", pubsub.LinearDataAssigner([]string{"a", "b"}))
-	ps.Publish("data-2", pubsub.LinearDataAssigner([]string{"a", "b", "c"}))
-	ps.Publish("data-3", pubsub.LinearDataAssigner([]string{"a", "b", "d"}))
-	ps.Publish("data-3", pubsub.LinearDataAssigner([]string{"x", "y"}))
+	ps.Publish("data-1", pubsub.LinearTreeTraverser([]string{"a", "b"}))
+	ps.Publish("data-2", pubsub.LinearTreeTraverser([]string{"a", "b", "c"}))
+	ps.Publish("data-3", pubsub.LinearTreeTraverser([]string{"a", "b", "d"}))
+	ps.Publish("data-3", pubsub.LinearTreeTraverser([]string{"x", "y"}))
 
 	// Output:
 	// sub-1 -> data-2
 	// sub-2 -> data-3
 }
 
-type spyDataAssigner struct {
+type spyTreeTraverser struct {
 	keys      map[string][]string
 	locations []string
 	data      []interface{}
 	id        int
-	ret       func(*spyDataAssigner, []string) pubsub.AssignedPaths
+	ret       func(*spyTreeTraverser, []string) pubsub.Paths
 }
 
-func newSpyDataAssigner() *spyDataAssigner {
-	return &spyDataAssigner{
-		ret: func(s *spyDataAssigner, results []string) pubsub.AssignedPaths {
-			return pubsub.Paths(results)
+func newSpyTreeTraverser() *spyTreeTraverser {
+	return &spyTreeTraverser{
+		ret: func(s *spyTreeTraverser, results []string) pubsub.Paths {
+			return pubsub.FlatPaths(results)
 		},
 	}
 }
 
-func (s *spyDataAssigner) Assign(data interface{}, location []string) pubsub.AssignedPaths {
+func (s *spyTreeTraverser) Traverse(data interface{}, location []string) pubsub.Paths {
 	s.data = append(s.data, data)
 
 	key := strings.Join(location, "-")
@@ -196,20 +196,20 @@ func (s *spySubscription) Write(data interface{}) {
 	s.data = append(s.data, data)
 }
 
-type fakeAssignedPaths struct {
+type fakePaths struct {
 	paths []string
-	a     *spyDataAssigner
+	a     *spyTreeTraverser
 	ids   []int
 }
 
-func (s *fakeAssignedPaths) At(idx int) (path string, nextAssigner pubsub.DataAssigner, ok bool) {
+func (s *fakePaths) At(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool) {
 	if len(s.paths) <= idx {
 		return "", nil, false
 	}
 
 	s.ids = append(s.ids, s.a.id)
 
-	return s.paths[idx], &spyDataAssigner{
+	return s.paths[idx], &spyTreeTraverser{
 		keys:      s.a.keys,
 		locations: s.a.locations,
 		data:      s.a.data,

@@ -17,7 +17,7 @@ type x struct {
 	j string
 }
 
-// Here we demonstrate how powerful a DataAssigner can be. We define a
+// Here we demonstrate how powerful a TreeTraverser can be. We define a
 // StructTraverser that reads each field. Fields can be left blank upon
 // subscription meaning the field is optinal.
 func main() {
@@ -49,37 +49,37 @@ func (s Subscription) Write(data interface{}) {
 // StructTraverser traverses type SomeType.
 type StructTraverser struct{}
 
-// Assign implements pubsub.DataAssigner. It demonstrates how complex/powerful
-// a AssignedPaths can be. In this case, it builds new DataAssigners for
-// each part of the struct. This demonstrates how flexible a DataAssigner
+// Traverse implements pubsub.TreeTraverser. It demonstrates how complex/powerful
+// Paths can be. In this case, it builds new TreeTraversers for
+// each part of the struct. This demonstrates how flexible a TreeTraverser
 // can be.
 //
 // In this case, each field (e.g. a or b) are optional.
-func (s StructTraverser) Assign(data interface{}, currentPath []string) pubsub.AssignedPaths {
+func (s StructTraverser) Traverse(data interface{}, currentPath []string) pubsub.Paths {
 	// a
-	return pubsub.NewPathsWithAssigner([]string{"", data.(*someType).a}, pubsub.DataAssignerFunc(s.b))
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).a}, pubsub.TreeTraverserFunc(s.b))
 }
 
-func (s StructTraverser) b(data interface{}, currentPath []string) pubsub.AssignedPaths {
-	return pubsub.NewPathsWithAssigner([]string{"", data.(*someType).b}, pubsub.DataAssignerFunc(s.x))
+func (s StructTraverser) b(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).b}, pubsub.TreeTraverserFunc(s.x))
 }
 
-func (s StructTraverser) x(data interface{}, currentPath []string) pubsub.AssignedPaths {
+func (s StructTraverser) x(data interface{}, currentPath []string) pubsub.Paths {
 	if data.(*someType).x == nil {
-		return pubsub.NewPathsWithAssigner([]string{""}, pubsub.DataAssignerFunc(s.done))
+		return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
 	}
 
-	return pubsub.NewPathsWithAssigner([]string{"x"}, pubsub.DataAssignerFunc(s.xi))
+	return pubsub.NewPathsWithTraverser([]string{"x"}, pubsub.TreeTraverserFunc(s.xi))
 }
 
-func (s StructTraverser) xi(data interface{}, currentPath []string) pubsub.AssignedPaths {
-	return pubsub.NewPathsWithAssigner([]string{"", data.(*someType).x.i}, pubsub.DataAssignerFunc(s.xj))
+func (s StructTraverser) xi(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).x.i}, pubsub.TreeTraverserFunc(s.xj))
 }
 
-func (s StructTraverser) xj(data interface{}, currentPath []string) pubsub.AssignedPaths {
-	return pubsub.NewPathsWithAssigner([]string{"", data.(*someType).x.j}, pubsub.DataAssignerFunc(s.done))
+func (s StructTraverser) xj(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).x.j}, pubsub.TreeTraverserFunc(s.done))
 }
 
-func (s StructTraverser) done(data interface{}, currentPath []string) pubsub.AssignedPaths {
-	return pubsub.Paths(nil)
+func (s StructTraverser) done(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.FlatPaths(nil)
 }
