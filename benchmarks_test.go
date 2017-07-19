@@ -3,72 +3,106 @@ package pubsub_test
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/apoydence/pubsub"
 )
 
-func BenchmarkSubscriptions(b *testing.B) {
+func BenchmarkPublishing(b *testing.B) {
+	b.StopTimer()
 	p := pubsub.New()
+	for i := 0; i < 100; i++ {
+		p.Subscribe(newSpySubscrption(), randPath())
+	}
+	data := randData()
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		p.Publish("data", pubsub.LinearTreeTraverser(data[i%len(data)]))
+	}
+}
+
+func BenchmarkSubscriptions(b *testing.B) {
+	b.StopTimer()
+	p := pubsub.New()
+	data := randData()
+	b.StartTimer()
+
 	b.RunParallel(func(b *testing.PB) {
+		i := rand.Int()
 		for b.Next() {
-			unsub := p.Subscribe(newSpySubscrption(), randPath())
+			unsub := p.Subscribe(newSpySubscrption(), data[i%len(data)])
 			unsub()
+			i++
 		}
 	})
 }
 
-func BenchmarkPublishing(b *testing.B) {
+func BenchmarkPublishingParallel(b *testing.B) {
+	b.StopTimer()
 	p := pubsub.New()
-	a := &staticTreeTraverser{}
 	for i := 0; i < 100; i++ {
 		p.Subscribe(newSpySubscrption(), randPath())
 	}
+	data := randData()
+	b.StartTimer()
 
 	b.RunParallel(func(b *testing.PB) {
-		buf := make([]byte, 256)
+		i := rand.Int()
 		for b.Next() {
-			rand.Read(buf)
-			p.Publish(string(buf), a)
+			p.Publish("data", pubsub.LinearTreeTraverser(data[i%len(data)]))
+			i++
 		}
 	})
 }
 
 func BenchmarkPublishingWhileSubscribing(b *testing.B) {
+	b.StopTimer()
 	p := pubsub.New()
-	a := &staticTreeTraverser{}
+	data := randData()
+
+	var wg sync.WaitGroup
+	for x := 0; x < 5; x++ {
+		wg.Add(1)
+		go func() {
+			wg.Done()
+			for i := 0; ; i++ {
+				unsub := p.Subscribe(newSpySubscrption(), data[i%len(data)])
+				if i%2 == 0 {
+					unsub()
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+	b.StartTimer()
 
 	b.RunParallel(func(b *testing.PB) {
-		buf := make([]byte, 256)
+		i := rand.Int()
 		for b.Next() {
-			rand.Read(buf)
-			p.Publish(string(buf), a)
-
-			for i := 0; i < 10; i++ {
-				unsub := p.Subscribe(newSpySubscrption(), randPath())
-				go func() {
-					time.Sleep(time.Duration(rand.Intn(int(time.Millisecond))))
-					unsub()
-				}()
-			}
+			p.Publish("data", pubsub.LinearTreeTraverser(data[i%len(data)]))
+			i++
 		}
 	})
 }
 
 func randPath() []string {
 	var r []string
-	for {
-		i := rand.Intn(4)
-		if i == 0 {
-			return r
-		}
-		r = append(r, fmt.Sprintf("%d", i))
+	for i := 0; i < 10; i++ {
+		r = append(r, fmt.Sprintf("%d", rand.Intn(10)))
 	}
+	return r
 }
 
-type staticTreeTraverser struct{}
-
-func (r *staticTreeTraverser) Traverse(data interface{}, location []string) pubsub.Paths {
-	return pubsub.FlatPaths([]string{"1", "2", "3", "4"}[:4-len(location)])
+func randData() [][]string {
+	var r [][]string
+	for i := 0; i < 100000; i++ {
+		r = append(r, nil)
+		for j := 0; j < 10; j++ {
+			r[i] = append(r[i], fmt.Sprintf("%d", rand.Intn(10)))
+		}
+	}
+	return r
 }
