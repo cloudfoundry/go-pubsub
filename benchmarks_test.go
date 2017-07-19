@@ -176,7 +176,13 @@ func randData() [][]string {
 type someType struct {
 	a string
 	b string
+	w *w
 	x *x
+}
+
+type w struct {
+	i string
+	j string
 }
 
 type x struct {
@@ -211,7 +217,42 @@ func (s StructTraverser) Traverse(data interface{}, currentPath []string) pubsub
 }
 
 func (s StructTraverser) b(data interface{}, currentPath []string) pubsub.Paths {
-	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).b}, pubsub.TreeTraverserFunc(s.x))
+	return pubsub.PathAndTraversers(
+		[]pubsub.PathAndTraverser{
+			{
+				Path:      "",
+				Traverser: pubsub.TreeTraverserFunc(s.w),
+			},
+			{
+				Path:      data.(*someType).b,
+				Traverser: pubsub.TreeTraverserFunc(s.w),
+			},
+			{
+				Path:      "",
+				Traverser: pubsub.TreeTraverserFunc(s.x),
+			},
+			{
+				Path:      data.(*someType).b,
+				Traverser: pubsub.TreeTraverserFunc(s.x),
+			},
+		},
+	)
+}
+
+func (s StructTraverser) w(data interface{}, currentPath []string) pubsub.Paths {
+	if data.(*someType).w == nil {
+		return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
+	}
+
+	return pubsub.NewPathsWithTraverser([]string{"w"}, pubsub.TreeTraverserFunc(s.wi))
+}
+
+func (s StructTraverser) wi(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).w.i}, pubsub.TreeTraverserFunc(s.wj))
+}
+
+func (s StructTraverser) wj(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).w.j}, pubsub.TreeTraverserFunc(s.done))
 }
 
 func (s StructTraverser) x(data interface{}, currentPath []string) pubsub.Paths {

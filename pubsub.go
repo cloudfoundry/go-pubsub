@@ -174,6 +174,25 @@ func (a PathsWithTraverser) At(idx int) (string, TreeTraverser, bool) {
 	return a.p[idx], a.a, true
 }
 
+// PathAndTraverser is a path and traverser pair.
+type PathAndTraverser struct {
+	Path      string
+	Traverser TreeTraverser
+}
+
+// PathsWithTraverser implement Paths and allow a TreeTraverser to have
+// multiple paths with multiple traversers.
+type PathAndTraversers []PathAndTraverser
+
+// At implements Paths.
+func (t PathAndTraversers) At(idx int) (string, TreeTraverser, bool) {
+	if idx >= len(t) {
+		return "", nil, false
+	}
+
+	return t[idx].Path, t[idx].Traverser, true
+}
+
 // Publish writes data using the TreeTraverser to the interested subscriptions.
 func (s *PubSub) Publish(d interface{}, a TreeTraverser) {
 	s.mu.RLock()

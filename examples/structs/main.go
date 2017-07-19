@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/apoydence/pubsub"
@@ -9,7 +10,13 @@ import (
 type someType struct {
 	a string
 	b string
+	w *w
 	x *x
+}
+
+type w struct {
+	i string
+	j string
 }
 
 type x struct {
@@ -23,11 +30,13 @@ type x struct {
 func main() {
 	ps := pubsub.New()
 
+	ps.Subscribe(Subscription("sub-0"), []string{"a", "b", "w", "w.i", "w.j"})
 	ps.Subscribe(Subscription("sub-1"), []string{"a", "b", "x", "x.i", "x.j"})
 	ps.Subscribe(Subscription("sub-2"), []string{"", "b", "x", "x.i", "x.j"})
 	ps.Subscribe(Subscription("sub-3"), []string{"", "", "x", "x.i", "x.j"})
 	ps.Subscribe(Subscription("sub-4"), []string{""})
 
+	ps.Publish(&someType{a: "a", b: "b", w: &w{i: "w.i", j: "w.j"}, x: &x{i: "x.i", j: "x.j"}}, StructTraverser{})
 	ps.Publish(&someType{a: "a", b: "b", x: &x{i: "x.i", j: "x.j"}}, StructTraverser{})
 	ps.Publish(&someType{a: "a'", b: "b'", x: &x{i: "x.i", j: "x.j"}}, StructTraverser{})
 	ps.Publish(&someType{a: "a", b: "b"}, StructTraverser{})
@@ -39,11 +48,16 @@ type Subscription string
 // Write implements pubsub.Subscription
 func (s Subscription) Write(data interface{}) {
 	d := data.(*someType)
-	if d.x == nil {
-		log.Printf("%s <- {a:%s b:%s}", s, d.a, d.b)
-		return
+	var w string
+	if d.w != nil {
+		w = fmt.Sprintf("w:{i:%s j:%s}", d.w.i, d.w.j)
 	}
-	log.Printf("%s <- {a:%s b:%s x:{i:%s j:%s}}", s, d.a, d.b, d.x.i, d.x.j)
+
+	var x string
+	if d.x != nil {
+		x = fmt.Sprintf("x:{i:%s j:%s}", d.x.i, d.x.j)
+	}
+	log.Printf("%s <- {a:%s b:%s %s %s", s, d.a, d.b, w, x)
 }
 
 // StructTraverser traverses type SomeType.
@@ -61,7 +75,42 @@ func (s StructTraverser) Traverse(data interface{}, currentPath []string) pubsub
 }
 
 func (s StructTraverser) b(data interface{}, currentPath []string) pubsub.Paths {
-	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).b}, pubsub.TreeTraverserFunc(s.x))
+	return pubsub.PathAndTraversers(
+		[]pubsub.PathAndTraverser{
+			{
+				Path:      "",
+				Traverser: pubsub.TreeTraverserFunc(s.w),
+			},
+			{
+				Path:      data.(*someType).b,
+				Traverser: pubsub.TreeTraverserFunc(s.w),
+			},
+			{
+				Path:      "",
+				Traverser: pubsub.TreeTraverserFunc(s.x),
+			},
+			{
+				Path:      data.(*someType).b,
+				Traverser: pubsub.TreeTraverserFunc(s.x),
+			},
+		},
+	)
+}
+
+func (s StructTraverser) w(data interface{}, currentPath []string) pubsub.Paths {
+	if data.(*someType).w == nil {
+		return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
+	}
+
+	return pubsub.NewPathsWithTraverser([]string{"w"}, pubsub.TreeTraverserFunc(s.wi))
+}
+
+func (s StructTraverser) wi(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).w.i}, pubsub.TreeTraverserFunc(s.wj))
+}
+
+func (s StructTraverser) wj(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).w.j}, pubsub.TreeTraverserFunc(s.done))
 }
 
 func (s StructTraverser) x(data interface{}, currentPath []string) pubsub.Paths {
