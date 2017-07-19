@@ -23,6 +23,21 @@ func BenchmarkPublishing(b *testing.B) {
 	}
 }
 
+func BenchmarkPublishingStructs(b *testing.B) {
+	b.StopTimer()
+	p := pubsub.New()
+	for i := 0; i < 100; i++ {
+		p.Subscribe(newSpySubscrption(), randPath())
+	}
+	data := randStructs()
+	st := StructTraverser{}
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		p.Publish(data[i%len(data)], st)
+	}
+}
+
 func BenchmarkSubscriptions(b *testing.B) {
 	b.StopTimer()
 	p := pubsub.New()
@@ -52,6 +67,25 @@ func BenchmarkPublishingParallel(b *testing.B) {
 		i := rand.Int()
 		for b.Next() {
 			p.Publish("data", pubsub.LinearTreeTraverser(data[i%len(data)]))
+			i++
+		}
+	})
+}
+
+func BenchmarkPublishingParallelStructs(b *testing.B) {
+	b.StopTimer()
+	p := pubsub.New()
+	for i := 0; i < 100; i++ {
+		p.Subscribe(newSpySubscrption(), randPath())
+	}
+	data := randStructs()
+	st := StructTraverser{}
+	b.StartTimer()
+
+	b.RunParallel(func(b *testing.PB) {
+		i := rand.Int()
+		for b.Next() {
+			p.Publish(data[i%len(data)], st)
 			i++
 		}
 	})
@@ -88,6 +122,38 @@ func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 	})
 }
 
+func BenchmarkPublishingWhileSubscribingStructs(b *testing.B) {
+	b.StopTimer()
+	p := pubsub.New()
+	data := randStructs()
+
+	var wg sync.WaitGroup
+	for x := 0; x < 5; x++ {
+		wg.Add(1)
+		go func() {
+			wg.Done()
+			for i := 0; ; i++ {
+				unsub := p.Subscribe(newSpySubscrption(), randPath())
+				if i%2 == 0 {
+					unsub()
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+	st := StructTraverser{}
+	b.StartTimer()
+
+	b.RunParallel(func(b *testing.PB) {
+		i := rand.Int()
+		for b.Next() {
+			p.Publish(data[i%len(data)], st)
+			i++
+		}
+	})
+}
+
 func randPath() []string {
 	var r []string
 	for i := 0; i < 10; i++ {
@@ -105,4 +171,65 @@ func randData() [][]string {
 		}
 	}
 	return r
+}
+
+type someType struct {
+	a string
+	b string
+	x *x
+}
+
+type x struct {
+	i string
+	j string
+}
+
+func randNum(i int) string {
+	return fmt.Sprintf("%d", rand.Intn(i))
+}
+
+func randStructs() []*someType {
+	var r []*someType
+	for i := 0; i < 100000; i++ {
+		r = append(r, &someType{
+			a: randNum(10),
+			b: randNum(10),
+			x: &x{
+				i: randNum(10),
+				j: randNum(10),
+			},
+		})
+	}
+	return r
+}
+
+type StructTraverser struct{}
+
+func (s StructTraverser) Traverse(data interface{}, currentPath []string) pubsub.Paths {
+	// a
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).a}, pubsub.TreeTraverserFunc(s.b))
+}
+
+func (s StructTraverser) b(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).b}, pubsub.TreeTraverserFunc(s.x))
+}
+
+func (s StructTraverser) x(data interface{}, currentPath []string) pubsub.Paths {
+	if data.(*someType).x == nil {
+		return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
+	}
+
+	return pubsub.NewPathsWithTraverser([]string{"x"}, pubsub.TreeTraverserFunc(s.xi))
+}
+
+func (s StructTraverser) xi(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).x.i}, pubsub.TreeTraverserFunc(s.xj))
+}
+
+func (s StructTraverser) xj(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).x.j}, pubsub.TreeTraverserFunc(s.done))
+}
+
+func (s StructTraverser) done(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.FlatPaths(nil)
 }
