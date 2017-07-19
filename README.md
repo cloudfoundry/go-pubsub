@@ -41,5 +41,5 @@ This means if the `DataAssigner` intends to look at field A, then B, and then fi
 ### Subscriptions
 A `Subscription` is used when publishing data. The given path is used to determine it's placement in the subscription tree.
 
-[go-doc-badge]:             https://godoc.org/github.com/apoydence?status.svg
-[go-doc]:                   https://godoc.org/github.com/apoydence
+[go-doc-badge]:             https://godoc.org/github.com/apoydence/pubsub?status.svg
+[go-doc]:                   https://godoc.org/github.com/apoydence/pubsub
