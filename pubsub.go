@@ -2,13 +2,13 @@
 // model. Subscriptions can subscribe to complex data patterns and data
 // will be published to all subscribers that fit the criteria.
 //
-// Each Subscription when subscribing will walk the underlying decision tree
-// to find its place in the tree. The "SubscriptionEnroller" is used to
-// analyze the "Subscription" and find the correct node to store it in.
+// Each Subscription when subscribing will walk the underlying subscription
+// tree to find its place in the tree. The given path when subscribing is used
+// to analyze the Subscription and find the correct node to store it in.
 //
-// As data is published, the "TreeTraverser" analyzes the data to determine
-// what nodes the data belongs to. Data can belong to multiple nodes on the
-// same level. This means that when data is published, the system can
+// As data is published, the TreeTraverser analyzes the data to determine
+// what nodes the data belongs to. Data is written to multiple subscriptions.
+// This means that when data is published, the system can
 // traverse multiple paths for the data.
 package pubsub
 
