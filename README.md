@@ -1,5 +1,5 @@
 # pubsub
-[![GoDoc][go-doc-badge]][go-doc]
+[![GoDoc][go-doc-badge]][go-doc][![travis][travis-badge]][travis]
 
 A tree based PubSub library for data in Go.
 
@@ -124,3 +124,5 @@ A `Subscription` is used when publishing data. The given path is used to determi
 
 [go-doc-badge]:             https://godoc.org/github.com/apoydence/pubsub?status.svg
 [go-doc]:                   https://godoc.org/github.com/apoydence/pubsub
+[travis-badge]:             https://travis-ci.org/apoydence/pubsub.svg?branch=master
+[travis]:                   https://travis-ci.org/apoydence/pubsub?branch=master
