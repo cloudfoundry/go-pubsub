@@ -56,6 +56,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	linker := inspector.NewLinker()
+	linker.Link(m)
+
 	g := generator.New()
 	src, err := g.Generate(m, *packageName, *traverserName, structName, *isPtr)
 	if err != nil {

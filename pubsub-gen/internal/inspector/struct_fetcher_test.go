@@ -28,7 +28,7 @@ func TestStructFetcher(t *testing.T) {
 		}
 	})
 
-	o.Group("primitive fields", func() {
+	o.Group("normal types", func() {
 		o.Spec("it parses and returns a single struct", func(t TSF) {
 			src := `
 package p
@@ -77,6 +77,35 @@ type y struct {
 			Expect(t, s).To(HaveLen(2))
 			Expect(t, s[0].Name).To(Equal("x"))
 			Expect(t, s[1].Name).To(Equal("y"))
+		})
+	})
+
+	o.Group("pointer type", func() {
+		o.Spec("it parses and returns a single struct", func(t TSF) {
+			src := `
+package p
+type x struct {
+	i string
+	j *Y
+}
+`
+			fset := token.NewFileSet()
+			n, err := parser.ParseFile(fset, "src.go", src, 0)
+			Expect(t, err == nil).To(BeTrue())
+
+			s, err := t.f.Parse(n)
+			Expect(t, err == nil).To(BeTrue())
+			Expect(t, s).To(HaveLen(1))
+			Expect(t, s[0].Name).To(Equal("x"))
+			Expect(t, s[0].Fields).To(HaveLen(2))
+
+			Expect(t, s[0].Fields[0].Name).To(Equal("i"))
+			Expect(t, s[0].Fields[0].Type).To(Equal("string"))
+			Expect(t, s[0].Fields[0].Ptr).To(BeFalse())
+
+			Expect(t, s[0].Fields[1].Name).To(Equal("j"))
+			Expect(t, s[0].Fields[1].Type).To(Equal("Y"))
+			Expect(t, s[0].Fields[1].Ptr).To(BeTrue())
 		})
 	})
 }

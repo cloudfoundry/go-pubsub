@@ -7,12 +7,13 @@ import (
 type Field struct {
 	Name string
 	Type string
-	// Ptr  bool
+	Ptr  bool
 }
 
 type Struct struct {
-	Name   string
-	Fields []Field
+	Name           string
+	Fields         []Field
+	PeerTypeFields []Field
 }
 
 type StructFetcher struct{}
@@ -44,9 +45,11 @@ func (f StructFetcher) extractFields(n ast.Node) []Field {
 	ast.Inspect(n, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.Field:
+			name, ptr := f.extractType(x.Type)
 			f := Field{
 				Name: x.Names[0].Name,
-				Type: f.extractType(x.Type),
+				Type: name,
+				Ptr:  ptr,
 			}
 
 			if f.Name != "" || f.Type != "" {
@@ -58,11 +61,13 @@ func (f StructFetcher) extractFields(n ast.Node) []Field {
 	return fields
 }
 
-func (f StructFetcher) extractType(n ast.Node) string {
+func (f StructFetcher) extractType(n ast.Node) (string, bool) {
 	switch x := n.(type) {
 	case *ast.Ident:
-		return x.Name
+		return x.Name, false
+	case *ast.StarExpr:
+		return x.X.(*ast.Ident).Name, true
 	}
 
-	return ""
+	return "", false
 }
