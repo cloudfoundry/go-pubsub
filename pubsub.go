@@ -210,6 +210,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 	})
 
 	paths := a.Traverse(next, l)
+	history := make(map[*node.Node]bool)
 
 	for i := 0; ; i++ {
 		child, nextA, ok := paths.At(i)
@@ -221,6 +222,12 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 			nextA = a
 		}
 
-		s.traversePublish(d, next, nextA, n.FetchChild(child), append(l, child))
+		c := n.FetchChild(child)
+		if _, ok := history[c]; ok {
+			continue
+		}
+		history[c] = true
+
+		s.traversePublish(d, next, nextA, c, append(l, child))
 	}
 }
