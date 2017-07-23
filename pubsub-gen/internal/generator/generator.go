@@ -63,7 +63,6 @@ func (s %s) done(data interface{}, currentPath []string) pubsub.Paths {
 		"",
 		fmt.Sprintf("data.(%s%s)", ptr, structName),
 		false,
-		"done",
 		m,
 	)
 }
@@ -76,7 +75,6 @@ func (g Generator) generateStructFns(
 	parentFieldName string,
 	castTypeName string,
 	isPtr bool,
-	doneName string,
 	m map[string]inspector.Struct,
 ) (string, error) {
 	s, ok := m[structName]
@@ -93,9 +91,9 @@ func (g Generator) generateStructFns(
 		if isPtr {
 			nilCheck = fmt.Sprintf(`
   if %s == nil {
-    return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.%s))
+    return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
   }
-		`, castTypeName, doneName)
+		`, castTypeName)
 		}
 
 		src = fmt.Sprintf(`%s
@@ -116,9 +114,9 @@ func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
 	if len(s.PeerTypeFields) == 0 {
 		src = fmt.Sprintf(`%s
 func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
-  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s.%s)}, pubsub.TreeTraverserFunc(s.%s))
+  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s.%s)}, pubsub.TreeTraverserFunc(s.done))
 }
-`, src, traverserName, prefix, s.Fields[len(s.Fields)-1].Name, castTypeName, s.Fields[len(s.Fields)-1].Name, doneName)
+`, src, traverserName, prefix, s.Fields[len(s.Fields)-1].Name, castTypeName, s.Fields[len(s.Fields)-1].Name)
 
 		return src, nil
 	}
@@ -144,12 +142,7 @@ func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
 }
 `, src, traverserName, prefix, s.Fields[len(s.Fields)-1].Name, peers)
 
-	for i, field := range s.PeerTypeFields {
-		done := doneName
-		if i != len(s.PeerTypeFields)-1 {
-			done = fmt.Sprintf("%s_%s", prefix, s.PeerTypeFields[i+1].Name)
-		}
-
+	for _, field := range s.PeerTypeFields {
 		var err error
 		src, err = g.generateStructFns(
 			src,
@@ -159,7 +152,6 @@ func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
 			field.Name,
 			fmt.Sprintf("%s.%s", castTypeName, field.Name),
 			field.Ptr,
-			done,
 			m,
 		)
 		if err != nil {
