@@ -26,7 +26,7 @@ func TestEnd2End(t *testing.T) {
 		ps.Subscribe(sub1, []string{""})
 		ps.Subscribe(sub2, []string{"1", "", "y1", "1", "a"})
 		ps.Subscribe(sub3, []string{"", "", "y1", "", "b"})
-		ps.Subscribe(sub4, []string{"", "", "", "", "", "y2"})
+		ps.Subscribe(sub4, []string{"", "", "y2"})
 
 		ps.Publish(&X{i: 1, j: "a", y1: Y{i: 1, j: "a"}, y2: &Y{i: 1, j: "a"}}, traverser)
 		ps.Publish(&X{i: 1, j: "a", y1: Y{i: 2, j: "b"}, y2: &Y{i: 1, j: "a"}}, traverser)
@@ -35,7 +35,7 @@ func TestEnd2End(t *testing.T) {
 		Expect(t, sub1.callCount).To(Equal(3))
 		Expect(t, sub2.callCount).To(Equal(1))
 		Expect(t, sub3.callCount).To(Equal(2))
-		Expect(t, sub3.callCount).To(Equal(2))
+		Expect(t, sub4.callCount).To(Equal(2))
 	})
 }
 

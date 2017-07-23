@@ -197,20 +197,22 @@ func (t PathAndTraversers) At(idx int) (string, TreeTraverser, bool) {
 func (s *PubSub) Publish(d interface{}, a TreeTraverser) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	s.traversePublish(d, d, a, s.n, nil)
+	s.traversePublish(d, d, a, s.n, nil, make(map[*node.Node]bool))
 }
 
-func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.Node, l []string) {
+func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.Node, l []string, history map[*node.Node]bool) {
 	if n == nil {
 		return
 	}
 
-	n.ForEachSubscription(func(ss node.Subscription) {
-		ss.Write(d)
-	})
+	if _, ok := history[n]; !ok {
+		n.ForEachSubscription(func(ss node.Subscription) {
+			ss.Write(d)
+		})
+		history[n] = true
+	}
 
 	paths := a.Traverse(next, l)
-	history := make(map[*node.Node]bool)
 
 	for i := 0; ; i++ {
 		child, nextA, ok := paths.At(i)
@@ -223,11 +225,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 		}
 
 		c := n.FetchChild(child)
-		if _, ok := history[c]; ok {
-			continue
-		}
-		history[c] = true
 
-		s.traversePublish(d, next, nextA, c, append(l, child))
+		s.traversePublish(d, next, nextA, c, append(l, child), history)
 	}
 }

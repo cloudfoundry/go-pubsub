@@ -2,6 +2,7 @@ package end2end_test
 
 import (
 	"fmt"
+
 	"github.com/apoydence/pubsub"
 )
 
@@ -52,7 +53,7 @@ func (s StructTraverser) _y1_i(data interface{}, currentPath []string) pubsub.Pa
 }
 
 func (s StructTraverser) _y1_j(data interface{}, currentPath []string) pubsub.Paths {
-	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*X).y1.j)}, pubsub.TreeTraverserFunc(s.done))
+	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*X).y1.j)}, pubsub.TreeTraverserFunc(s._y2))
 }
 
 func (s StructTraverser) _y2(data interface{}, currentPaht []string) pubsub.Paths {
