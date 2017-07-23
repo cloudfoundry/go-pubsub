@@ -34,7 +34,7 @@ func New() *PubSub {
 	}
 }
 
-// Subscription is a subscription that will have cooresponding data written
+// Subscription is a subscription that will have corresponding data written
 // to it.
 type Subscription interface {
 	Write(data interface{})
@@ -154,7 +154,7 @@ func (p FlatPaths) At(idx int) (string, TreeTraverser, bool) {
 
 // PathsWithTraverser implements Paths for both a slice of paths and
 // a single TreeTraverser. Each path will return the given TreeTraverser.
-// It shoudl be constructed with NewPathsWithTraverser().
+// It should be constructed with NewPathsWithTraverser().
 type PathsWithTraverser struct {
 	a TreeTraverser
 	p []string
