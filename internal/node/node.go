@@ -1,6 +1,8 @@
 package node
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 type Subscription interface {
 	Write(data interface{})

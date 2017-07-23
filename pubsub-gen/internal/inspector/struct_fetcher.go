@@ -47,7 +47,7 @@ func (f StructFetcher) extractFields(n ast.Node) []Field {
 		case *ast.Field:
 			name, ptr := f.extractType(x.Type)
 			f := Field{
-				Name: x.Names[0].Name,
+				Name: f.firstName(x.Names),
 				Type: name,
 				Ptr:  ptr,
 			}
@@ -61,12 +61,22 @@ func (f StructFetcher) extractFields(n ast.Node) []Field {
 	return fields
 }
 
+func (f StructFetcher) firstName(names []*ast.Ident) string {
+	if len(names) == 0 {
+		return ""
+	}
+
+	return names[0].Name
+}
+
 func (f StructFetcher) extractType(n ast.Node) (string, bool) {
 	switch x := n.(type) {
 	case *ast.Ident:
 		return x.Name, false
 	case *ast.StarExpr:
-		return x.X.(*ast.Ident).Name, true
+		if n, ok := x.X.(*ast.Ident); ok {
+			return n.Name, true
+		}
 	}
 
 	return "", false
