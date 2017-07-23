@@ -7,7 +7,7 @@ func NewLinker() Linker {
 }
 
 func (l Linker) Link(m map[string]Struct) {
-	for n, _ := range m {
+	for n := range m {
 		l.linkFields(n, m)
 	}
 }

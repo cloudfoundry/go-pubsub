@@ -37,10 +37,10 @@ func TestPubSub(t *testing.T) {
 
 	o.Spec("it stops traversing upon reaching an empty node", func(t TPS) {
 		t.treeTraverser.keys = map[string][]string{
-			"":      []string{"a", "b"},
-			"a":     []string{"a", "b"},
-			"b":     []string{"a", "b"},
-			"a-a":   []string{"a", "b"},
+			"":      {"a", "b"},
+			"a":     {"a", "b"},
+			"b":     {"a", "b"},
+			"a-a":   {"a", "b"},
 			"a-b":   nil,
 			"b-a":   nil,
 			"b-b":   nil,
@@ -69,11 +69,11 @@ func TestPubSub(t *testing.T) {
 		t.p.Subscribe(sub4, []string{"j", "k"})
 
 		t.treeTraverser.keys = map[string][]string{
-			"":      []string{"a", "x"},
+			"":      {"a", "x"},
 			"x":     nil,
-			"a":     []string{"b", "y"},
+			"a":     {"b", "y"},
 			"a-y":   nil,
-			"a-b":   []string{"c", "z"},
+			"a-b":   {"c", "z"},
 			"a-b-z": nil,
 			"a-b-c": nil,
 		}
@@ -98,7 +98,7 @@ func TestPubSub(t *testing.T) {
 		t.p.Subscribe(sub, []string{"a"})
 
 		t.treeTraverser.keys = map[string][]string{
-			"":  []string{"a", "a"},
+			"":  {"a", "a"},
 			"a": nil,
 		}
 		t.p.Publish("some-data", t.treeTraverser)
@@ -120,11 +120,11 @@ func TestPubSub(t *testing.T) {
 		}
 
 		t.treeTraverser.keys = map[string][]string{
-			"":      []string{"a", "x"},
+			"":      {"a", "x"},
 			"x":     nil,
-			"a":     []string{"b", "y"},
+			"a":     {"b", "y"},
 			"a-y":   nil,
-			"a-b":   []string{"c", "z"},
+			"a-b":   {"c", "z"},
 			"a-b-z": nil,
 			"a-b-c": nil,
 		}
@@ -136,7 +136,7 @@ func TestPubSub(t *testing.T) {
 	o.Spec("it does not write to a subscription after it unsubscribes", func(t TPS) {
 		sub := newSpySubscrption()
 		t.treeTraverser.keys = map[string][]string{
-			"":  []string{"a"},
+			"":  {"a"},
 			"a": nil,
 		}
 

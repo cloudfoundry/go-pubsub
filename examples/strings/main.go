@@ -23,18 +23,18 @@ func main() {
 	ps.Subscribe(Subscription("sub-6"), []string{"x", "y", "z"})
 
 	dataMap1 := map[string][]string{
-		"":      []string{"a"},
-		"a":     []string{"b"},
-		"a-b":   []string{"c", "d"},
+		"":      {"a"},
+		"a":     {"b"},
+		"a-b":   {"c", "d"},
 		"a-b-c": nil,
 		"a-b-d": nil,
 	}
 	ps.Publish("data-1", StaticTraverser(dataMap1))
 
 	dataMap2 := map[string][]string{
-		"":      []string{"x"},
-		"x":     []string{"y"},
-		"x-y":   []string{"z"},
+		"":      {"x"},
+		"x":     {"y"},
+		"x-y":   {"z"},
 		"x-y-z": nil,
 	}
 	ps.Publish("data-2", StaticTraverser(dataMap2))
