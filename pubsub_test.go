@@ -147,7 +147,7 @@ func TestPubSub(t *testing.T) {
 	})
 }
 
-func ExampleNew() {
+func Example() {
 	ps := pubsub.New()
 	subscription := func(name string) pubsub.SubscriptionFunc {
 		return func(data interface{}) {
