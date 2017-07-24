@@ -6,7 +6,7 @@ import (
 	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
 )
 
-type CodeWriter interface {
+type Writer interface {
 	Package(name string) string
 	Imports(names []string) string
 	DefineType(travName string) string
@@ -21,12 +21,12 @@ type CodeWriter interface {
 }
 
 type Generator struct {
-	writer CodeWriter
+	writer Writer
 }
 
-func New() Generator {
+func New(w Writer) Generator {
 	return Generator{
-		writer: codeWriter{},
+		writer: w,
 	}
 }
 

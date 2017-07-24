@@ -59,7 +59,7 @@ func main() {
 	linker := inspector.NewLinker()
 	linker.Link(m)
 
-	g := generator.New()
+	g := generator.New(generator.CodeWriter{})
 	src, err := g.Generate(m, *packageName, *traverserName, structName, *isPtr)
 	if err != nil {
 		log.Fatal(err)

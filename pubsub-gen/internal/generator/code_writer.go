@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-type codeWriter struct{}
+type CodeWriter struct{}
 
-func (w codeWriter) Package(name string) string {
+func (w CodeWriter) Package(name string) string {
 	return fmt.Sprintf("package %s\n\n", name)
 }
 
-func (w codeWriter) Imports(names []string) string {
+func (w CodeWriter) Imports(names []string) string {
 	result := "import (\n"
 	for _, n := range names {
 		result += fmt.Sprintf("  \"%s\"\n", n)
@@ -19,15 +19,15 @@ func (w codeWriter) Imports(names []string) string {
 	return fmt.Sprintf("%s)\n", result)
 }
 
-func (w codeWriter) DefineType(travName string) string {
+func (w CodeWriter) DefineType(travName string) string {
 	return fmt.Sprintf("type %s struct{}\n", travName)
 }
 
-func (w codeWriter) Constructor(travName string) string {
+func (w CodeWriter) Constructor(travName string) string {
 	return fmt.Sprintf(" func New%s()%s{ return %s{} }\n", strings.Title(travName), travName, travName)
 }
 
-func (w codeWriter) Traverse(travName, firstField string) string {
+func (w CodeWriter) Traverse(travName, firstField string) string {
 	return fmt.Sprintf(`
 func (s %s) Traverse(data interface{}, currentPath []string) pubsub.Paths {
 	return s._%s(data, currentPath)
@@ -35,7 +35,7 @@ func (s %s) Traverse(data interface{}, currentPath []string) pubsub.Paths {
 `, travName, firstField)
 }
 
-func (w codeWriter) Done(travName string) string {
+func (w CodeWriter) Done(travName string) string {
 	return fmt.Sprintf(`
 	func (s %s) done(data interface{}, currentPath []string) pubsub.Paths {
 	return pubsub.FlatPaths(nil)
@@ -43,7 +43,7 @@ func (w codeWriter) Done(travName string) string {
 `, travName)
 }
 
-func (w codeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string {
+func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string {
 	if parentFieldName == "" {
 		return ""
 	}
@@ -64,7 +64,7 @@ func(s %s) %s(data interface{}, currentPaht []string) pubsub.Paths {
 `, travName, prefix, nilCheck, parentFieldName, prefix, fieldName)
 }
 
-func (w codeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string) string {
+func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string) string {
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
   return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s.%s)}, pubsub.TreeTraverserFunc(s.%s_%s))
@@ -72,7 +72,7 @@ func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
 `, travName, prefix, fieldName, castTypeName, fieldName, prefix, nextFieldName)
 }
 
-func (w codeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName string) string {
+func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName string) string {
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
   return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s.%s)}, pubsub.TreeTraverserFunc(s.done))
@@ -80,7 +80,7 @@ func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
 `, travName, prefix, fieldName, castTypeName, fieldName)
 }
 
-func (w codeWriter) FieldPeersBodyEntry(prefix, name, castTypeName, fieldName string) string {
+func (w CodeWriter) FieldPeersBodyEntry(prefix, name, castTypeName, fieldName string) string {
 	return fmt.Sprintf(`
 {
   Path:      "",
@@ -93,7 +93,7 @@ func (w codeWriter) FieldPeersBodyEntry(prefix, name, castTypeName, fieldName st
 `, prefix, name, castTypeName, fieldName, prefix, name)
 }
 
-func (w codeWriter) FieldPeersFunc(travName, prefix, fieldName, body string) string {
+func (w CodeWriter) FieldPeersFunc(travName, prefix, fieldName, body string) string {
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
   return pubsub.PathAndTraversers(
