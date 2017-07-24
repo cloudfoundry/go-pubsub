@@ -18,6 +18,8 @@ type Writer interface {
 	FieldStructFuncLast(travName, prefix, fieldName, castTypeName string) string
 	FieldPeersBodyEntry(prefix, name, castTypeName, fieldName string) string
 	FieldPeersFunc(travName, prefix, fieldName, body string) string
+	InterfaceTypeBodyEntry(prefix, castTypeName, fieldName string, implementers []string) string
+	InterfaceTypeFieldsFunc(travName, prefix, fieldName, body string) string
 }
 
 type Generator struct {
@@ -90,14 +92,16 @@ func (g Generator) generateStructFns(
 		return "", fmt.Errorf("structs with no fields are not yet supported")
 	}
 
-	src += g.writer.FieldStartStruct(
-		traverserName,
-		prefix,
-		s.Fields[0].Name,
-		parentFieldName,
-		castTypeName,
-		isPtr,
-	)
+	if parentFieldName != "" {
+		src += g.writer.FieldStartStruct(
+			traverserName,
+			prefix,
+			s.Fields[0].Name,
+			parentFieldName,
+			castTypeName,
+			isPtr,
+		)
+	}
 
 	for i, f := range s.Fields[:len(s.Fields)-1] {
 		src += g.writer.FieldStructFunc(
@@ -109,7 +113,7 @@ func (g Generator) generateStructFns(
 		)
 	}
 
-	if len(s.PeerTypeFields) == 0 {
+	if len(s.PeerTypeFields) == 0 && len(s.InterfaceTypeFields) == 0 {
 		return src + g.writer.FieldStructFuncLast(
 			traverserName,
 			prefix,
@@ -123,6 +127,15 @@ func (g Generator) generateStructFns(
 		peers += g.writer.FieldPeersBodyEntry(
 			prefix,
 			pf.Name,
+			castTypeName,
+			s.Fields[len(s.Fields)-1].Name,
+		)
+	}
+
+	for field, _ := range s.InterfaceTypeFields {
+		peers += g.writer.FieldPeersBodyEntry(
+			prefix,
+			field.Name,
 			castTypeName,
 			s.Fields[len(s.Fields)-1].Name,
 		)
@@ -149,6 +162,30 @@ func (g Generator) generateStructFns(
 		)
 		if err != nil {
 			return "", err
+		}
+	}
+
+	for field, implementers := range s.InterfaceTypeFields {
+		body := g.writer.InterfaceTypeBodyEntry(prefix, castTypeName, field.Name, implementers)
+		src += g.writer.InterfaceTypeFieldsFunc(traverserName, prefix, field.Name, body)
+	}
+
+	for field, implementers := range s.InterfaceTypeFields {
+		for _, i := range implementers {
+			var err error
+			src, err = g.generateStructFns(
+				src,
+				i,
+				traverserName,
+				fmt.Sprintf("%s_%s_%s", prefix, field.Name, i),
+				field.Name,
+				fmt.Sprintf("%s.%s.(%s)", castTypeName, field.Name, i),
+				false,
+				m,
+			)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 

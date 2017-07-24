@@ -44,10 +44,6 @@ func (w CodeWriter) Done(travName string) string {
 }
 
 func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string {
-	if parentFieldName == "" {
-		return ""
-	}
-
 	var nilCheck string
 	if isPtr {
 		nilCheck = fmt.Sprintf(`
@@ -58,7 +54,7 @@ func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldNam
 	}
 
 	return fmt.Sprintf(`
-func(s %s) %s(data interface{}, currentPaht []string) pubsub.Paths {
+func(s %s) %s(data interface{}, currentPath []string) pubsub.Paths {
 	%sreturn pubsub.NewPathsWithTraverser([]string{"%s"}, pubsub.TreeTraverserFunc(s.%s_%s))
 }
 `, travName, prefix, nilCheck, parentFieldName, prefix, fieldName)
@@ -98,6 +94,30 @@ func (w CodeWriter) FieldPeersFunc(travName, prefix, fieldName, body string) str
 func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
   return pubsub.PathAndTraversers(
     []pubsub.PathAndTraverser{%s})
+}
+`, travName, prefix, fieldName, body)
+}
+
+func (w CodeWriter) InterfaceTypeBodyEntry(prefix, castTypeName, fieldName string, implementers []string) string {
+	body := fmt.Sprintf("switch %s.%s.(type) {", castTypeName, fieldName)
+	for _, i := range implementers {
+		body += fmt.Sprintf(`
+case %s:
+	return pubsub.NewPathsWithTraverser([]string{"%s"}, pubsub.TreeTraverserFunc(s.%s_%s_%s))
+`, i, i, prefix, fieldName, i)
+	}
+	body += `
+default:
+	return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
+}`
+
+	return body
+}
+
+func (w CodeWriter) InterfaceTypeFieldsFunc(travName, prefix, fieldName, body string) string {
+	return fmt.Sprintf(`
+func (s %s) %s_%s (data interface{}, currentPath []string) pubsub.Paths {
+%s
 }
 `, travName, prefix, fieldName, body)
 }

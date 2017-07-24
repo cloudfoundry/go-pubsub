@@ -11,9 +11,10 @@ type Field struct {
 }
 
 type Struct struct {
-	Name           string
-	Fields         []Field
-	PeerTypeFields []Field
+	Name                string
+	Fields              []Field
+	PeerTypeFields      []Field
+	InterfaceTypeFields map[Field][]string
 }
 
 type StructFetcher struct{}

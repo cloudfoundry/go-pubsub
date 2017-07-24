@@ -38,7 +38,7 @@ func TestLinker(t *testing.T) {
 				{Name: "B", Type: "int"},
 			}},
 		}
-		t.l.Link(m)
+		t.l.Link(m, nil)
 
 		Expect(t, m["X"].Fields).To(HaveLen(1))
 		Expect(t, m["X"].Fields[0].Name).To(Equal("A"))
@@ -46,5 +46,35 @@ func TestLinker(t *testing.T) {
 		Expect(t, m["X"].PeerTypeFields).To(HaveLen(2))
 		Expect(t, m["X"].PeerTypeFields[0].Name).To(Equal("B"))
 		Expect(t, m["X"].PeerTypeFields[1].Name).To(Equal("C"))
+	})
+
+	o.Spec("moves any known interface types to InterfaceTypeFields", func(t TL) {
+		m := map[string]inspector.Struct{
+			"X": {Fields: []inspector.Field{
+				{Name: "A", Type: "string"},
+				{Name: "B", Type: "Y"},
+				{Name: "C", Type: "Y"},
+			}},
+			"Y": {Fields: []inspector.Field{
+				{Name: "A", Type: "string"},
+				{Name: "B", Type: "int"},
+				{Name: "C", Type: "MyInterfaceThing"},
+			}},
+		}
+
+		mi := map[string][]string{
+			"MyInterfaceThing": []string{
+				"X", "Y",
+			},
+		}
+		c := m["Y"].Fields[2]
+
+		t.l.Link(m, mi)
+		Expect(t, m["Y"].Fields).To(HaveLen(2))
+		Expect(t, m["Y"].InterfaceTypeFields).To(HaveLen(1))
+		Expect(t, m["Y"].InterfaceTypeFields[c]).To(And(
+			HaveLen(2),
+			Contain("X", "Y"),
+		))
 	})
 }

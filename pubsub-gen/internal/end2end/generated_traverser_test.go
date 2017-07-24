@@ -39,10 +39,19 @@ func (s StructTraverser) _j(data interface{}, currentPath []string) pubsub.Paths
   Path:      fmt.Sprintf("%v", data.(*X).j),
   Traverser: pubsub.TreeTraverserFunc(s._y2),
 },
+
+{
+  Path:      "",
+  Traverser: pubsub.TreeTraverserFunc(s._m),
+},
+{
+  Path:      fmt.Sprintf("%v", data.(*X).j),
+  Traverser: pubsub.TreeTraverserFunc(s._m),
+},
 })
 }
 
-func(s StructTraverser) _y1(data interface{}, currentPaht []string) pubsub.Paths {
+func(s StructTraverser) _y1(data interface{}, currentPath []string) pubsub.Paths {
 	return pubsub.NewPathsWithTraverser([]string{"y1"}, pubsub.TreeTraverserFunc(s._y1_i))
 }
 
@@ -54,7 +63,7 @@ func (s StructTraverser) _y1_j(data interface{}, currentPath []string) pubsub.Pa
   return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*X).y1.j)}, pubsub.TreeTraverserFunc(s.done))
 }
 
-func(s StructTraverser) _y2(data interface{}, currentPaht []string) pubsub.Paths {
+func(s StructTraverser) _y2(data interface{}, currentPath []string) pubsub.Paths {
 	
   if data.(*X).y2 == nil {
     return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
@@ -68,4 +77,37 @@ func (s StructTraverser) _y2_i(data interface{}, currentPath []string) pubsub.Pa
 
 func (s StructTraverser) _y2_j(data interface{}, currentPath []string) pubsub.Paths {
   return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*X).y2.j)}, pubsub.TreeTraverserFunc(s.done))
+}
+
+func (s StructTraverser) _m (data interface{}, currentPath []string) pubsub.Paths {
+switch data.(*X).m.(type) {
+case M1:
+	return pubsub.NewPathsWithTraverser([]string{"M1"}, pubsub.TreeTraverserFunc(s._m_M1))
+
+case M2:
+	return pubsub.NewPathsWithTraverser([]string{"M2"}, pubsub.TreeTraverserFunc(s._m_M2))
+
+default:
+	return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
+}
+}
+
+func(s StructTraverser) _m_M1(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"m"}, pubsub.TreeTraverserFunc(s._m_M1_a))
+}
+
+func (s StructTraverser) _m_M1_a(data interface{}, currentPath []string) pubsub.Paths {
+  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*X).m.(M1).a)}, pubsub.TreeTraverserFunc(s.done))
+}
+
+func(s StructTraverser) _m_M2(data interface{}, currentPath []string) pubsub.Paths {
+	return pubsub.NewPathsWithTraverser([]string{"m"}, pubsub.TreeTraverserFunc(s._m_M2_a))
+}
+
+func (s StructTraverser) _m_M2_a(data interface{}, currentPath []string) pubsub.Paths {
+  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*X).m.(M2).a)}, pubsub.TreeTraverserFunc(s._m_M2_b))
+}
+
+func (s StructTraverser) _m_M2_b(data interface{}, currentPath []string) pubsub.Paths {
+  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*X).m.(M2).b)}, pubsub.TreeTraverserFunc(s.done))
 }

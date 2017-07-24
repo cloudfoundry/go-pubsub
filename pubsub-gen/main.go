@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -18,6 +19,7 @@ func main() {
 	traverserName := flag.String("traverser", "", "The name of the generated traverser")
 	output := flag.String("output", "", "The path to output the generated file")
 	isPtr := flag.Bool("pointer", false, "Will the struct be a pointer when being published?")
+	interfaces := flag.String("interfaces", "{}", "A map (map[string][]string encoded in JSON) mapping interface types to implementing structs")
 
 	flag.Parse()
 	gopath := os.Getenv("GOPATH")
@@ -47,6 +49,11 @@ func main() {
 		log.Fatalf("Invalid struct name: %s", *structPath)
 	}
 
+	mi := make(map[string][]string)
+	if err := json.Unmarshal([]byte(*interfaces), &mi); err != nil {
+		log.Fatalf("Invalid interfaces (%s): %s", *interfaces, err)
+	}
+
 	structName := (*structPath)[idx+1:]
 
 	sf := inspector.NewStructFetcher()
@@ -57,7 +64,7 @@ func main() {
 	}
 
 	linker := inspector.NewLinker()
-	linker.Link(m)
+	linker.Link(m, mi)
 
 	g := generator.New(generator.CodeWriter{})
 	src, err := g.Generate(m, *packageName, *traverserName, structName, *isPtr)
