@@ -1,18 +1,17 @@
 package end2end_test
 
 import (
-	"github.com/apoydence/pubsub"
-	"fmt"
+  "github.com/apoydence/pubsub"
+  "fmt"
 )
-
 type StructTraverser struct{}
-
-func NewStructTraverser()StructTraverser{ return StructTraverser{} }
+ func NewStructTraverser()StructTraverser{ return StructTraverser{} }
 
 func (s StructTraverser) Traverse(data interface{}, currentPath []string) pubsub.Paths {
 	return s._i(data, currentPath)
 }
-func (s StructTraverser) done(data interface{}, currentPath []string) pubsub.Paths {
+
+	func (s StructTraverser) done(data interface{}, currentPath []string) pubsub.Paths {
 	return pubsub.FlatPaths(nil)
 }
 

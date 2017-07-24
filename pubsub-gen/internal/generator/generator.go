@@ -2,15 +2,32 @@ package generator
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
 )
 
-type Generator struct{}
+type CodeWriter interface {
+	Package(name string) string
+	Imports(names []string) string
+	DefineType(travName string) string
+	Constructor(travName string) string
+	Done(travName string) string
+	Traverse(travName, name string) string
+	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string
+	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string) string
+	FieldStructFuncLast(travName, prefix, fieldName, castTypeName string) string
+	FieldPeersBodyEntry(prefix, name, castTypeName, fieldName string) string
+	FieldPeersFunc(travName, prefix, fieldName, body string) string
+}
+
+type Generator struct {
+	writer CodeWriter
+}
 
 func New() Generator {
-	return Generator{}
+	return Generator{
+		writer: codeWriter{},
+	}
 }
 
 func (g Generator) Generate(
@@ -20,17 +37,10 @@ func (g Generator) Generate(
 	structName string,
 	isPtr bool,
 ) (string, error) {
-	src := fmt.Sprintf(`package %s
-
-import (
-	"github.com/apoydence/pubsub"
-	"fmt"
-)
-
-type %s struct{}
-
-func New%s()%s{ return %s{} }
-`, packageName, traverserName, strings.Title(traverserName), traverserName, traverserName)
+	src := g.writer.Package(packageName)
+	src += g.writer.Imports([]string{"github.com/apoydence/pubsub", "fmt"})
+	src += g.writer.DefineType(traverserName)
+	src += g.writer.Constructor(traverserName)
 
 	s, ok := m[structName]
 	if !ok {
@@ -41,14 +51,8 @@ func New%s()%s{ return %s{} }
 		return "", fmt.Errorf("structs with no fields are not yet supported")
 	}
 
-	src = fmt.Sprintf(`%s
-func (s %s) Traverse(data interface{}, currentPath []string) pubsub.Paths {
-	return s._%s(data, currentPath)
-}
-func (s %s) done(data interface{}, currentPath []string) pubsub.Paths {
-	return pubsub.FlatPaths(nil)
-}
-`, src, traverserName, s.Fields[0].Name, traverserName)
+	src += g.writer.Traverse(traverserName, s.Fields[0].Name)
+	src += g.writer.Done(traverserName)
 
 	var ptr string
 	if isPtr {
@@ -86,61 +90,50 @@ func (g Generator) generateStructFns(
 		return "", fmt.Errorf("structs with no fields are not yet supported")
 	}
 
-	if parentFieldName != "" {
-		var nilCheck string
-		if isPtr {
-			nilCheck = fmt.Sprintf(`
-  if %s == nil {
-    return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
-  }
-		`, castTypeName)
-		}
-
-		src = fmt.Sprintf(`%s
-func(s %s) %s(data interface{}, currentPaht []string) pubsub.Paths {
-	%sreturn pubsub.NewPathsWithTraverser([]string{"%s"}, pubsub.TreeTraverserFunc(s.%s_%s))
-}
-`, src, traverserName, prefix, nilCheck, parentFieldName, prefix, s.Fields[0].Name)
-	}
+	src += g.writer.FieldStartStruct(
+		traverserName,
+		prefix,
+		s.Fields[0].Name,
+		parentFieldName,
+		castTypeName,
+		isPtr,
+	)
 
 	for i, f := range s.Fields[:len(s.Fields)-1] {
-		src = fmt.Sprintf(`%s
-func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
-  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s.%s)}, pubsub.TreeTraverserFunc(s.%s_%s))
-}
-`, src, traverserName, prefix, f.Name, castTypeName, f.Name, prefix, s.Fields[i+1].Name)
+		src += g.writer.FieldStructFunc(
+			traverserName,
+			prefix,
+			f.Name,
+			s.Fields[i+1].Name,
+			castTypeName,
+		)
 	}
 
 	if len(s.PeerTypeFields) == 0 {
-		src = fmt.Sprintf(`%s
-func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
-  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s.%s)}, pubsub.TreeTraverserFunc(s.done))
-}
-`, src, traverserName, prefix, s.Fields[len(s.Fields)-1].Name, castTypeName, s.Fields[len(s.Fields)-1].Name)
-
-		return src, nil
+		return src + g.writer.FieldStructFuncLast(
+			traverserName,
+			prefix,
+			s.Fields[len(s.Fields)-1].Name,
+			castTypeName,
+		), nil
 	}
 
 	var peers string
 	for _, pf := range s.PeerTypeFields {
-		peers = fmt.Sprintf(`%s
-{
-  Path:      "",
-  Traverser: pubsub.TreeTraverserFunc(s.%s_%s),
-},
-{
-  Path:      fmt.Sprintf("%%v", %s.%s),
-  Traverser: pubsub.TreeTraverserFunc(s.%s_%s),
-},
-`, peers, prefix, pf.Name, castTypeName, s.Fields[len(s.Fields)-1].Name, prefix, pf.Name)
+		peers += g.writer.FieldPeersBodyEntry(
+			prefix,
+			pf.Name,
+			castTypeName,
+			s.Fields[len(s.Fields)-1].Name,
+		)
 	}
 
-	src = fmt.Sprintf(`%s
-func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
-  return pubsub.PathAndTraversers(
-    []pubsub.PathAndTraverser{%s})
-}
-`, src, traverserName, prefix, s.Fields[len(s.Fields)-1].Name, peers)
+	src += g.writer.FieldPeersFunc(
+		traverserName,
+		prefix,
+		s.Fields[len(s.Fields)-1].Name,
+		peers,
+	)
 
 	for _, field := range s.PeerTypeFields {
 		var err error
