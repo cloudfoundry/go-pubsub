@@ -63,7 +63,7 @@ func TestLinker(t *testing.T) {
 		}
 
 		mi := map[string][]string{
-			"MyInterfaceThing": []string{
+			"MyInterfaceThing": {
 				"X", "Y",
 			},
 		}

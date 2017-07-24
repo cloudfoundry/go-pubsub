@@ -136,7 +136,7 @@ func (g Generator) generateStructFns(
 		)
 	}
 
-	for field, _ := range s.InterfaceTypeFields {
+	for field := range s.InterfaceTypeFields {
 		peers += g.writer.FieldPeersBodyEntry(
 			prefix,
 			field.Name,
