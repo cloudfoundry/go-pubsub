@@ -76,7 +76,7 @@ func main() {
 	linker := inspector.NewLinker()
 	linker.Link(m, mi)
 
-	g := generator.New(generator.CodeWriter{})
+	g := generator.NewTraverserGenerator(generator.CodeWriter{})
 	src, err := g.Generate(
 		m,
 		*packageName,

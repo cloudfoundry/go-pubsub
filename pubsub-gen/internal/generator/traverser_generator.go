@@ -6,7 +6,7 @@ import (
 	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
 )
 
-type Writer interface {
+type TraverserWriter interface {
 	Package(name string) string
 	Imports(names []string) string
 	DefineType(travName string) string
@@ -22,17 +22,17 @@ type Writer interface {
 	InterfaceTypeFieldsFunc(travName, prefix, fieldName, body string) string
 }
 
-type Generator struct {
-	writer Writer
+type TraverserGenerator struct {
+	writer TraverserWriter
 }
 
-func New(w Writer) Generator {
-	return Generator{
+func NewTraverserGenerator(w TraverserWriter) TraverserGenerator {
+	return TraverserGenerator{
 		writer: w,
 	}
 }
 
-func (g Generator) Generate(
+func (g TraverserGenerator) Generate(
 	m map[string]inspector.Struct,
 	packageName string,
 	traverserName string,
@@ -76,7 +76,7 @@ func (g Generator) Generate(
 	)
 }
 
-func (g Generator) generateStructFns(
+func (g TraverserGenerator) generateStructFns(
 	src string,
 	structName string,
 	traverserName string,
