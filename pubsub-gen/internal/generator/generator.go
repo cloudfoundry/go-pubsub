@@ -18,7 +18,7 @@ type Writer interface {
 	FieldStructFuncLast(travName, prefix, fieldName, castTypeName string) string
 	FieldPeersBodyEntry(prefix, name, castTypeName, fieldName string) string
 	FieldPeersFunc(travName, prefix, fieldName, body string) string
-	InterfaceTypeBodyEntry(prefix, castTypeName, fieldName string, implementers []string) string
+	InterfaceTypeBodyEntry(prefix, castTypeName, fieldName, structPkgPrefix string, implementers []string) string
 	InterfaceTypeFieldsFunc(travName, prefix, fieldName, body string) string
 }
 
@@ -38,9 +38,11 @@ func (g Generator) Generate(
 	traverserName string,
 	structName string,
 	isPtr bool,
+	structPkgPrefix string,
+	imports []string,
 ) (string, error) {
 	src := g.writer.Package(packageName)
-	src += g.writer.Imports([]string{"github.com/apoydence/pubsub", "fmt"})
+	src += g.writer.Imports(append([]string{"github.com/apoydence/pubsub", "fmt"}, imports...))
 	src += g.writer.DefineType(traverserName)
 	src += g.writer.Constructor(traverserName)
 
@@ -67,8 +69,9 @@ func (g Generator) Generate(
 		traverserName,
 		"",
 		"",
-		fmt.Sprintf("data.(%s%s)", ptr, structName),
+		fmt.Sprintf("data.(%s%s%s)", ptr, structPkgPrefix, structName),
 		false,
+		structPkgPrefix,
 		m,
 	)
 }
@@ -81,6 +84,7 @@ func (g Generator) generateStructFns(
 	parentFieldName string,
 	castTypeName string,
 	isPtr bool,
+	structPkgPrefix string,
 	m map[string]inspector.Struct,
 ) (string, error) {
 	s, ok := m[structName]
@@ -158,6 +162,7 @@ func (g Generator) generateStructFns(
 			field.Name,
 			fmt.Sprintf("%s.%s", castTypeName, field.Name),
 			field.Ptr,
+			structPkgPrefix,
 			m,
 		)
 		if err != nil {
@@ -166,7 +171,7 @@ func (g Generator) generateStructFns(
 	}
 
 	for field, implementers := range s.InterfaceTypeFields {
-		body := g.writer.InterfaceTypeBodyEntry(prefix, castTypeName, field.Name, implementers)
+		body := g.writer.InterfaceTypeBodyEntry(prefix, castTypeName, field.Name, structPkgPrefix, implementers)
 		src += g.writer.InterfaceTypeFieldsFunc(traverserName, prefix, field.Name, body)
 	}
 
@@ -179,8 +184,9 @@ func (g Generator) generateStructFns(
 				traverserName,
 				fmt.Sprintf("%s_%s_%s", prefix, field.Name, i),
 				field.Name,
-				fmt.Sprintf("%s.%s.(%s)", castTypeName, field.Name, i),
+				fmt.Sprintf("%s.%s.(%s%s)", castTypeName, field.Name, structPkgPrefix, i),
 				false,
+				structPkgPrefix,
 				m,
 			)
 			if err != nil {

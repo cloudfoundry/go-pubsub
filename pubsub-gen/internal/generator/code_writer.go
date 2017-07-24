@@ -98,13 +98,13 @@ func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
 `, travName, prefix, fieldName, body)
 }
 
-func (w CodeWriter) InterfaceTypeBodyEntry(prefix, castTypeName, fieldName string, implementers []string) string {
+func (w CodeWriter) InterfaceTypeBodyEntry(prefix, castTypeName, fieldName, structPkgPrefix string, implementers []string) string {
 	body := fmt.Sprintf("switch %s.%s.(type) {", castTypeName, fieldName)
 	for _, i := range implementers {
 		body += fmt.Sprintf(`
-case %s:
+case %s%s:
 	return pubsub.NewPathsWithTraverser([]string{"%s"}, pubsub.TreeTraverserFunc(s.%s_%s_%s))
-`, i, i, prefix, fieldName, i)
+`, structPkgPrefix, i, i, prefix, fieldName, i)
 	}
 	body += `
 default:

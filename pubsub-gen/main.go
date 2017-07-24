@@ -19,7 +19,9 @@ func main() {
 	traverserName := flag.String("traverser", "", "The name of the generated traverser")
 	output := flag.String("output", "", "The path to output the generated file")
 	isPtr := flag.Bool("pointer", false, "Will the struct be a pointer when being published?")
+	includePkgName := flag.Bool("include-pkg-name", false, "Prefix the struct type with the package name?")
 	interfaces := flag.String("interfaces", "{}", "A map (map[string][]string encoded in JSON) mapping interface types to implementing structs")
+	imports := flag.String("imports", "", "A coma separated list of imports required in the generated file")
 
 	flag.Parse()
 	gopath := os.Getenv("GOPATH")
@@ -54,7 +56,15 @@ func main() {
 		log.Fatalf("Invalid interfaces (%s): %s", *interfaces, err)
 	}
 
+	importList := strings.Split(*imports, ",")
+
 	structName := (*structPath)[idx+1:]
+
+	var pkgName string
+	if *includePkgName {
+		idx2 := strings.LastIndex(filepath.ToSlash(*structPath), "/")
+		pkgName = filepath.ToSlash(*structPath)[idx2+1:idx] + "."
+	}
 
 	sf := inspector.NewStructFetcher()
 	pp := inspector.NewPackageParser(sf)
@@ -67,7 +77,15 @@ func main() {
 	linker.Link(m, mi)
 
 	g := generator.New(generator.CodeWriter{})
-	src, err := g.Generate(m, *packageName, *traverserName, structName, *isPtr)
+	src, err := g.Generate(
+		m,
+		*packageName,
+		*traverserName,
+		structName,
+		*isPtr,
+		pkgName,
+		importList,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
