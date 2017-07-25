@@ -9,6 +9,7 @@ import (
 	. "github.com/apoydence/onpar/matchers"
 	"github.com/apoydence/pubsub"
 	. "github.com/apoydence/pubsub/pubsub-gen/internal/end2end"
+	"github.com/apoydence/pubsub/pubsub-gen/setters"
 )
 
 func TestEnd2End(t *testing.T) {
@@ -19,22 +20,39 @@ func TestEnd2End(t *testing.T) {
 
 	o.Spec("routes data as expected", func(t *testing.T) {
 		ps := pubsub.New()
-		traverser := StructTraverser{}
+		s := StructTraverser{}
 		sub1 := &mockSubscription{}
 		sub2 := &mockSubscription{}
 		sub3 := &mockSubscription{}
 		sub4 := &mockSubscription{}
 		sub5 := &mockSubscription{}
-		ps.Subscribe(sub1, []string{""})
-		ps.Subscribe(sub2, []string{"1", "", "Y1", "1", "a"})
-		ps.Subscribe(sub3, []string{"", "", "Y1", "", "b"})
-		ps.Subscribe(sub4, []string{"", "", "Y2"})
-		ps.Subscribe(sub5, []string{"", "", "M2", "", "2"})
 
-		ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 1, J: "a"}, Y2: &Y{I: 1, J: "a"}}, traverser)
-		ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 2, J: "b"}, Y2: &Y{I: 1, J: "a"}}, traverser)
-		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}}, traverser)
-		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}, M: M2{1, 2}}, traverser)
+		ps.Subscribe(sub1, s.CreatePath(nil))
+		ps.Subscribe(sub2, s.CreatePath(&XFilter{
+			I: setters.Int(1),
+			Y1: &YFilter{
+				I: setters.Int(1),
+				J: setters.String("a"),
+			},
+		}))
+		ps.Subscribe(sub3, s.CreatePath(&XFilter{
+			Y1: &YFilter{
+				J: setters.String("b"),
+			},
+		}))
+		ps.Subscribe(sub4, s.CreatePath(&XFilter{
+			Y2: &YFilter{},
+		}))
+		ps.Subscribe(sub5, s.CreatePath(&XFilter{
+			M_M2: &M2Filter{
+				B: setters.Int(2),
+			},
+		}))
+
+		ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 1, J: "a"}, Y2: &Y{I: 1, J: "a"}}, s)
+		ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 2, J: "b"}, Y2: &Y{I: 1, J: "a"}}, s)
+		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}}, s)
+		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}, M: M2{1, 2}}, s)
 
 		Expect(t, sub1.callCount).To(Equal(4))
 		Expect(t, sub2.callCount).To(Equal(1))

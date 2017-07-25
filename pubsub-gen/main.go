@@ -90,6 +90,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	pg := generator.NewPathGenerator()
+	src, err = pg.Generate(src, m, *traverserName, structName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	err = ioutil.WriteFile(*output, []byte(src), 420)
 	if err != nil {
 		log.Fatal(err)
