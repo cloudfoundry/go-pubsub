@@ -103,8 +103,8 @@ func (w CodeWriter) InterfaceTypeBodyEntry(prefix, castTypeName, fieldName, stru
 	for _, i := range implementers {
 		body += fmt.Sprintf(`
 case %s%s:
-	return pubsub.NewPathsWithTraverser([]string{"%s"}, pubsub.TreeTraverserFunc(s.%s_%s_%s))
-`, structPkgPrefix, i, i, prefix, fieldName, i)
+	return s.%s_%s_%s(data, currentPath)
+`, structPkgPrefix, i, prefix, fieldName, i)
 	}
 	body += `
 default:

@@ -183,7 +183,7 @@ func (g TraverserGenerator) generateStructFns(
 				i,
 				traverserName,
 				fmt.Sprintf("%s_%s_%s", prefix, field.Name, i),
-				field.Name,
+				i,
 				fmt.Sprintf("%s.%s.(%s%s)", castTypeName, field.Name, structPkgPrefix, i),
 				false,
 				structPkgPrefix,

@@ -83,10 +83,10 @@ func (s StructTraverser) _Y2_J(data interface{}, currentPath []string) pubsub.Pa
 func (s StructTraverser) _M (data interface{}, currentPath []string) pubsub.Paths {
 switch data.(*end2end.X).M.(type) {
 case end2end.M1:
-	return pubsub.NewPathsWithTraverser([]string{"M1"}, pubsub.TreeTraverserFunc(s._M_M1))
+	return s._M_M1(data, currentPath)
 
 case end2end.M2:
-	return pubsub.NewPathsWithTraverser([]string{"M2"}, pubsub.TreeTraverserFunc(s._M_M2))
+	return s._M_M2(data, currentPath)
 
 default:
 	return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
@@ -94,7 +94,7 @@ default:
 }
 
 func(s StructTraverser) _M_M1(data interface{}, currentPath []string) pubsub.Paths {
-	return pubsub.NewPathsWithTraverser([]string{"M"}, pubsub.TreeTraverserFunc(s._M_M1_A))
+	return pubsub.NewPathsWithTraverser([]string{"M1"}, pubsub.TreeTraverserFunc(s._M_M1_A))
 }
 
 func (s StructTraverser) _M_M1_A(data interface{}, currentPath []string) pubsub.Paths {
@@ -102,7 +102,7 @@ func (s StructTraverser) _M_M1_A(data interface{}, currentPath []string) pubsub.
 }
 
 func(s StructTraverser) _M_M2(data interface{}, currentPath []string) pubsub.Paths {
-	return pubsub.NewPathsWithTraverser([]string{"M"}, pubsub.TreeTraverserFunc(s._M_M2_A))
+	return pubsub.NewPathsWithTraverser([]string{"M2"}, pubsub.TreeTraverserFunc(s._M_M2_A))
 }
 
 func (s StructTraverser) _M_M2_A(data interface{}, currentPath []string) pubsub.Paths {
