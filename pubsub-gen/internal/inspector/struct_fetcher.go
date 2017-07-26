@@ -57,7 +57,7 @@ func (f StructFetcher) extractFields(parentName string, n ast.Node) []Field {
 				Ptr:  ptr,
 			}
 
-			if (ff.Name != "" || ff.Type != "") && !f.inBlacklist(ff.Name, parentName) {
+			if ff.Name != "" && ff.Type != "" && !f.inBlacklist(ff.Name, parentName) {
 				fields = append(fields, ff)
 			}
 		}
