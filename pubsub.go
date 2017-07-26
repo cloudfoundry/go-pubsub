@@ -98,14 +98,26 @@ type SubscribeOption interface {
 
 // WithShardID configures a subscription to have a shardID. Subscriptions with
 // a shardID are sharded to any subscriptions with the same shardID and path.
+// Defaults to an empty shardID (meaning it does not shard).
 func WithShardID(shardID string) SubscribeOption {
 	return subscribeConfigFunc(func(c *subscribeConfig) {
 		c.shardID = shardID
 	})
 }
 
+// WithPath configures a subscription to reside at a path. The path determines
+// what data the subscription is interested in. This value should be
+// correspond to what the publishing TreeTraverser yields.
+// It defaults to nil (meaning it gets everything).
+func WithPath(path ...string) SubscribeOption {
+	return subscribeConfigFunc(func(c *subscribeConfig) {
+		c.path = path
+	})
+}
+
 type subscribeConfig struct {
 	shardID string
+	path    []string
 }
 
 type subscribeConfigFunc func(*subscribeConfig)
@@ -114,12 +126,10 @@ func (f subscribeConfigFunc) configure(c *subscribeConfig) {
 	f(c)
 }
 
-// Subscribe will add a subscription using the given path to
-// the PubSub. It returns a function that can be used to unsubscribe.
-// Path is used to describe the placement of the subscription.
-// Options can be provided to configure the subscription and its interactions
-// with published data.
-func (s *PubSub) Subscribe(sub Subscription, path []string, opts ...SubscribeOption) Unsubscriber {
+// Subscribe will add a subscription  to the PubSub. It returns a function
+// that can be used to unsubscribe.  Options can be provided to configure
+// the subscription and its interactions with published data.
+func (s *PubSub) Subscribe(sub Subscription, opts ...SubscribeOption) Unsubscriber {
 	c := subscribeConfig{}
 	for _, o := range opts {
 		o.configure(&c)
@@ -129,7 +139,7 @@ func (s *PubSub) Subscribe(sub Subscription, path []string, opts ...SubscribeOpt
 	defer s.mu.Unlock()
 
 	n := s.n
-	for _, p := range path {
+	for _, p := range c.path {
 		n = n.AddChild(p)
 	}
 	id := n.AddSubscription(sub, c.shardID)
@@ -138,7 +148,7 @@ func (s *PubSub) Subscribe(sub Subscription, path []string, opts ...SubscribeOpt
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
-		s.cleanupSubscriptionTree(s.n, id, path)
+		s.cleanupSubscriptionTree(s.n, id, c.path)
 	}
 }
 

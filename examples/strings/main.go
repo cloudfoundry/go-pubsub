@@ -15,12 +15,12 @@ import (
 func main() {
 	ps := pubsub.New()
 
-	ps.Subscribe(Subscription("sub-1"), []string{"a", "b", "c"})
-	ps.Subscribe(Subscription("sub-2"), []string{"a", "b", "d"})
-	ps.Subscribe(Subscription("sub-3"), []string{"a", "b", "e"})
-	ps.Subscribe(Subscription("sub-4"), []string{"a"})
-	ps.Subscribe(Subscription("sub-5"), []string{"a", "b"})
-	ps.Subscribe(Subscription("sub-6"), []string{"x", "y", "z"})
+	ps.Subscribe(Subscription("sub-1"), pubsub.WithPath("a", "b", "c"))
+	ps.Subscribe(Subscription("sub-2"), pubsub.WithPath("a", "b", "d"))
+	ps.Subscribe(Subscription("sub-3"), pubsub.WithPath("a", "b", "e"))
+	ps.Subscribe(Subscription("sub-4"), pubsub.WithPath("a"))
+	ps.Subscribe(Subscription("sub-5"), pubsub.WithPath("a", "b"))
+	ps.Subscribe(Subscription("sub-6"), pubsub.WithPath("x", "y", "z"))
 
 	dataMap1 := map[string][]string{
 		"":      {"a"},

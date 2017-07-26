@@ -51,7 +51,7 @@ func TestPubSub(t *testing.T) {
 		t.p.Publish("x", t.treeTraverser)
 		Expect(t, t.treeTraverser.locations).To(HaveLen(1))
 
-		t.p.Subscribe(newSpySubscrption(), []string{"a", "b"})
+		t.p.Subscribe(newSpySubscrption(), pubsub.WithPath("a", "b"))
 		t.treeTraverser.locations = nil
 		t.p.Publish("x", t.treeTraverser)
 		Expect(t, t.treeTraverser.locations).To(HaveLen(3))
@@ -63,10 +63,10 @@ func TestPubSub(t *testing.T) {
 		sub2 := newSpySubscrption()
 		sub3 := newSpySubscrption()
 		sub4 := newSpySubscrption()
-		t.p.Subscribe(sub1, []string{"a", "b", "c"})
-		t.p.Subscribe(sub2, []string{"a", "b", "d"})
-		t.p.Subscribe(sub3, []string{"a", "b"})
-		t.p.Subscribe(sub4, []string{"j", "k"})
+		t.p.Subscribe(sub1, pubsub.WithPath("a", "b", "c"))
+		t.p.Subscribe(sub2, pubsub.WithPath("a", "b", "d"))
+		t.p.Subscribe(sub3, pubsub.WithPath("a", "b"))
+		t.p.Subscribe(sub4, pubsub.WithPath("j", "k"))
 
 		t.treeTraverser.keys = map[string][]string{
 			"":      {"a", "x"},
@@ -95,7 +95,7 @@ func TestPubSub(t *testing.T) {
 
 	o.Spec("does not write to the subscription twice", func(t TPS) {
 		sub := newSpySubscrption()
-		t.p.Subscribe(sub, []string{"a"})
+		t.p.Subscribe(sub, pubsub.WithPath("a"))
 
 		t.treeTraverser.keys = map[string][]string{
 			"":  {"a", "a"},
@@ -109,7 +109,7 @@ func TestPubSub(t *testing.T) {
 
 	o.Spec("it uses the new TreeTraverser when given one", func(t TPS) {
 		sub := newSpySubscrption()
-		t.p.Subscribe(sub, []string{"a", "b", "c"})
+		t.p.Subscribe(sub, pubsub.WithPath("a", "b", "c"))
 
 		f := &fakePaths{}
 
@@ -140,7 +140,7 @@ func TestPubSub(t *testing.T) {
 			"a": nil,
 		}
 
-		unsubscribe := t.p.Subscribe(sub, pubsub.LinearTreeTraverser([]string{"a"}))
+		unsubscribe := t.p.Subscribe(sub, pubsub.WithPath("a"))
 		unsubscribe()
 		t.p.Publish("some-data", t.treeTraverser)
 		Expect(t, sub.data).To(HaveLen(0))
@@ -175,21 +175,21 @@ func TestPubSubWithShardID(t *testing.T) {
 
 		t.p.Subscribe(
 			sub1,
-			pubsub.LinearTreeTraverser([]string{"a"}),
 			pubsub.WithShardID("1"),
+			pubsub.WithPath("a"),
 		)
 		t.p.Subscribe(
 			sub2,
-			pubsub.LinearTreeTraverser([]string{"a"}),
 			pubsub.WithShardID("1"),
+			pubsub.WithPath("a"),
 		)
 		t.p.Subscribe(
 			sub3,
-			pubsub.LinearTreeTraverser([]string{"a"}),
 			pubsub.WithShardID("2"),
+			pubsub.WithPath("a"),
 		)
-		t.p.Subscribe(sub4, pubsub.LinearTreeTraverser([]string{"a"}))
-		t.p.Subscribe(sub5, pubsub.LinearTreeTraverser([]string{"a"}))
+		t.p.Subscribe(sub4, pubsub.WithPath("a"))
+		t.p.Subscribe(sub5, pubsub.WithPath("a"))
 
 		for i := 0; i < 100; i++ {
 			t.p.Publish("some-data", t.treeTraverser)
@@ -211,9 +211,9 @@ func Example() {
 		}
 	}
 
-	ps.Subscribe(subscription("sub-1"), []string{"a", "b", "c"})
-	ps.Subscribe(subscription("sub-2"), []string{"a", "b", "d"})
-	ps.Subscribe(subscription("sub-3"), []string{"a", "b", "e"})
+	ps.Subscribe(subscription("sub-1"), pubsub.WithPath("a", "b", "c"))
+	ps.Subscribe(subscription("sub-2"), pubsub.WithPath("a", "b", "d"))
+	ps.Subscribe(subscription("sub-3"), pubsub.WithPath("a", "b", "e"))
 
 	ps.Publish("data-1", pubsub.LinearTreeTraverser([]string{"a", "b"}))
 	ps.Publish("data-2", pubsub.LinearTreeTraverser([]string{"a", "b", "c"}))

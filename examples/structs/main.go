@@ -30,11 +30,11 @@ type x struct {
 func main() {
 	ps := pubsub.New()
 
-	ps.Subscribe(Subscription("sub-0"), []string{"a", "b", "w", "w.i", "w.j"})
-	ps.Subscribe(Subscription("sub-1"), []string{"a", "b", "x", "x.i", "x.j"})
-	ps.Subscribe(Subscription("sub-2"), []string{"", "b", "x", "x.i", "x.j"})
-	ps.Subscribe(Subscription("sub-3"), []string{"", "", "x", "x.i", "x.j"})
-	ps.Subscribe(Subscription("sub-4"), []string{""})
+	ps.Subscribe(Subscription("sub-0"), pubsub.WithPath("a", "b", "w", "w.i", "w.j"))
+	ps.Subscribe(Subscription("sub-1"), pubsub.WithPath("a", "b", "x", "x.i", "x.j"))
+	ps.Subscribe(Subscription("sub-2"), pubsub.WithPath("", "b", "x", "x.i", "x.j"))
+	ps.Subscribe(Subscription("sub-3"), pubsub.WithPath("", "", "x", "x.i", "x.j"))
+	ps.Subscribe(Subscription("sub-4"), pubsub.WithPath(""))
 
 	ps.Publish(&someType{a: "a", b: "b", w: &w{i: "w.i", j: "w.j"}, x: &x{i: "x.i", j: "x.j"}}, StructTraverser{})
 	ps.Publish(&someType{a: "a", b: "b", x: &x{i: "x.i", j: "x.j"}}, StructTraverser{})
