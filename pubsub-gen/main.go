@@ -21,7 +21,10 @@ func main() {
 	isPtr := flag.Bool("pointer", false, "Will the struct be a pointer when being published?")
 	includePkgName := flag.Bool("include-pkg-name", false, "Prefix the struct type with the package name?")
 	interfaces := flag.String("interfaces", "{}", "A map (map[string][]string encoded in JSON) mapping interface types to implementing structs")
-	imports := flag.String("imports", "", "A coma separated list of imports required in the generated file")
+	imports := flag.String("imports", "", "A comma separated list of imports required in the generated file")
+	blacklist := flag.String("blacklist-fields", "", `A comma separated list of struct name and field
+	combos to not include (e.g., mystruct.myfield,otherthing.otherfield).
+	A wildcard (*) can be provided for the struct name (e.g., *.fieldname).`)
 
 	flag.Parse()
 	gopath := os.Getenv("GOPATH")
@@ -66,7 +69,9 @@ func main() {
 		pkgName = filepath.ToSlash(*structPath)[idx2+1:idx] + "."
 	}
 
-	sf := inspector.NewStructFetcher()
+	fieldBlacklist := buildBlacklist(*blacklist)
+
+	sf := inspector.NewStructFetcher(fieldBlacklist)
 	pp := inspector.NewPackageParser(sf)
 	m, err := pp.Parse((*structPath)[:idx], gopath)
 	if err != nil {
@@ -100,4 +105,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func buildBlacklist(bl string) map[string][]string {
+	m := make(map[string][]string)
+	for _, s := range strings.Split(bl, ",") {
+		x := strings.Split(s, ".")
+		if len(x) != 2 {
+			log.Fatalf("'%s' is not in the proper format (structname.fieldname)", x)
+		}
+
+		m[x[0]] = append(m[x[0]], x[1])
+	}
+	return m
 }
