@@ -93,6 +93,9 @@ return path
 	for f, implementers := range s.InterfaceTypeFields {
 		for _, i := range implementers {
 			src, err = g.genPath(src, m, genName, i, fmt.Sprintf("createPath_%s_%s", f.Name, i), i)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
