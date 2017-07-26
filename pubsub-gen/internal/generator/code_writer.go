@@ -60,20 +60,44 @@ func(s %s) %s(data interface{}, currentPath []string) pubsub.Paths {
 `, travName, prefix, nilCheck, parentFieldName, prefix, fieldName)
 }
 
-func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string) string {
+func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string, isPtr bool) string {
+	var nilCheck string
+	if isPtr {
+		nilCheck = fmt.Sprintf(`
+  if %s.%s == nil {
+    return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.%s_%s))
+  }
+		`, castTypeName, fieldName, prefix, nextFieldName)
+	}
+
+	var star string
+	if isPtr {
+		star = "*"
+	}
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
-  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s.%s)}, pubsub.TreeTraverserFunc(s.%s_%s))
+	%s
+  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s%s.%s)}, pubsub.TreeTraverserFunc(s.%s_%s))
 }
-`, travName, prefix, fieldName, castTypeName, fieldName, prefix, nextFieldName)
+`, travName, prefix, fieldName, nilCheck, star, castTypeName, fieldName, prefix, nextFieldName)
 }
 
-func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName string) string {
+func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName string, isPtr bool) string {
+	var nilCheck string
+	if isPtr {
+		nilCheck = fmt.Sprintf(`
+  if %s.%s == nil {
+    return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
+  }
+		`, castTypeName, fieldName)
+	}
+
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
+	%s
   return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s.%s)}, pubsub.TreeTraverserFunc(s.done))
 }
-`, travName, prefix, fieldName, castTypeName, fieldName)
+`, travName, prefix, fieldName, nilCheck, castTypeName, fieldName)
 }
 
 func (w CodeWriter) FieldPeersBodyEntry(prefix, name, castTypeName, fieldName string) string {

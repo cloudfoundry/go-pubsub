@@ -14,8 +14,8 @@ type TraverserWriter interface {
 	Done(travName string) string
 	Traverse(travName, name string) string
 	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string
-	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string) string
-	FieldStructFuncLast(travName, prefix, fieldName, castTypeName string) string
+	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string, isPtr bool) string
+	FieldStructFuncLast(travName, prefix, fieldName, castTypeName string, isPtr bool) string
 	FieldPeersBodyEntry(prefix, name, castTypeName, fieldName string) string
 	FieldPeersFunc(travName, prefix, fieldName, body string) string
 	InterfaceTypeBodyEntry(prefix, castTypeName, fieldName, structPkgPrefix string, implementers []string) string
@@ -114,6 +114,7 @@ func (g TraverserGenerator) generateStructFns(
 			f.Name,
 			s.Fields[i+1].Name,
 			castTypeName,
+			f.Ptr,
 		)
 	}
 
@@ -123,6 +124,7 @@ func (g TraverserGenerator) generateStructFns(
 			prefix,
 			s.Fields[len(s.Fields)-1].Name,
 			castTypeName,
+			s.Fields[len(s.Fields)-1].Ptr,
 		), nil
 	}
 
