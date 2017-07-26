@@ -51,15 +51,17 @@ func TestNode(t *testing.T) {
 		s1 := spySubscription{id: "a"}
 		s2 := spySubscription{id: "b"}
 		s3 := spySubscription{id: "c"}
-		id1 := t.n.AddSubscription(s1)
+		id1 := t.n.AddSubscription(s1, "")
 
-		t.n.AddSubscription(s2)
-		t.n.AddSubscription(s3)
+		t.n.AddSubscription(s2, "")
+		t.n.AddSubscription(s3, "")
 		t.n.DeleteSubscription(id1)
 
 		var ss []node.Subscription
-		t.n.ForEachSubscription(func(s node.Subscription) {
-			ss = append(ss, s)
+		t.n.ForEachSubscription(func(id string, s []node.SubscriptionEnvelope) {
+			for _, x := range s {
+				ss = append(ss, x.Subscription)
+			}
 		})
 		Expect(t, ss).To(HaveLen(2))
 		Expect(t, ss).To(Contain(s2))

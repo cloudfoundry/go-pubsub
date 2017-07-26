@@ -13,7 +13,9 @@
 package pubsub
 
 import (
+	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/apoydence/pubsub/internal/node"
 )
@@ -25,12 +27,14 @@ import (
 type PubSub struct {
 	mu sync.RWMutex
 	n  *node.Node
+	sa ShardingAlgorithm
 }
 
 // New constructs a new PubSub.
 func New() *PubSub {
 	return &PubSub{
-		n: node.New(),
+		n:  node.New(),
+		sa: NewRandSharding(),
 	}
 }
 
@@ -49,14 +53,78 @@ func (f SubscriptionFunc) Write(data interface{}) {
 	f(data)
 }
 
+// ShardingAlgorithm is used to data across subscriptions with the same
+// shardID and path.
+type ShardingAlgorithm interface {
+	// Write is invoked with the given data if publishing traverses to a node
+	// that has multiple subscriptions with the same shardID.
+	Write(data interface{}, subscriptions []Subscription)
+}
+
+// ShardingAlgorithmFunc is an adapter to allow ordinary functions to be a
+// ShardingAlgorithm.
+type ShardingAlgorithmFunc func(data interface{}, subscriptions []Subscription)
+
+// Write implements ShardingAlgorithmFunc
+func (f ShardingAlgorithmFunc) Write(data interface{}, subscriptions []Subscription) {
+	f(data, subscriptions)
+}
+
+// RandSharding implements ShardingAlgorithm. It picks a random subscription
+// to write to.
+type RandSharding struct {
+	*rand.Rand
+}
+
+// NewRandSharding constructs a new RandSharding.
+func NewRandSharding() RandSharding {
+	return RandSharding{rand.New(rand.NewSource(time.Now().UnixNano()))}
+}
+
+// Write implements ShardingAlgorithm.
+func (r RandSharding) Write(data interface{}, subscriptions []Subscription) {
+	idx := r.Rand.Intn(len(subscriptions))
+	subscriptions[idx].Write(data)
+}
+
 // Unsubscriber is returned by Subscribe. It should be invoked to
 // remove a subscription from the PubSub.
 type Unsubscriber func()
 
+// SubscribeOption is used to configure a subscription while subscribing.
+type SubscribeOption interface {
+	configure(*subscribeConfig)
+}
+
+// WithShardID configures a subscription to have a shardID. Subscriptions with
+// a shardID are sharded to any subscriptions with the same shardID and path.
+func WithShardID(shardID string) SubscribeOption {
+	return subscribeConfigFunc(func(c *subscribeConfig) {
+		c.shardID = shardID
+	})
+}
+
+type subscribeConfig struct {
+	shardID string
+}
+
+type subscribeConfigFunc func(*subscribeConfig)
+
+func (f subscribeConfigFunc) configure(c *subscribeConfig) {
+	f(c)
+}
+
 // Subscribe will add a subscription using the given path to
 // the PubSub. It returns a function that can be used to unsubscribe.
 // Path is used to describe the placement of the subscription.
-func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
+// Options can be provided to configure the subscription and its interactions
+// with published data.
+func (s *PubSub) Subscribe(sub Subscription, path []string, opts ...SubscribeOption) Unsubscriber {
+	c := subscribeConfig{}
+	for _, o := range opts {
+		o.configure(&c)
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -64,7 +132,7 @@ func (s *PubSub) Subscribe(sub Subscription, path []string) Unsubscriber {
 	for _, p := range path {
 		n = n.AddChild(p)
 	}
-	id := n.AddSubscription(sub)
+	id := n.AddSubscription(sub, c.shardID)
 
 	return func() {
 		s.mu.Lock()
@@ -206,8 +274,20 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 	}
 
 	if _, ok := history[n]; !ok {
-		n.ForEachSubscription(func(ss node.Subscription) {
-			ss.Write(d)
+		n.ForEachSubscription(func(shardID string, ss []node.SubscriptionEnvelope) {
+			if shardID == "" {
+				for _, x := range ss {
+					x.Subscription.Write(d)
+				}
+				return
+			}
+
+			var subs []Subscription
+			for _, x := range ss {
+				subs = append(subs, x)
+			}
+
+			s.sa.Write(d, subs)
 		})
 		history[n] = true
 	}

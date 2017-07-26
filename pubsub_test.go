@@ -147,6 +147,62 @@ func TestPubSub(t *testing.T) {
 	})
 }
 
+func TestPubSubWithShardID(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+	o.BeforeEach(func(t *testing.T) TPS {
+		spyT := newSpyTreeTraverser()
+
+		return TPS{
+			T:             t,
+			subscription:  newSpySubscrption(),
+			p:             pubsub.New(),
+			treeTraverser: spyT,
+		}
+	})
+
+	o.Spec("it splits data between same shardIDs", func(t TPS) {
+		sub1 := newSpySubscrption()
+		sub2 := newSpySubscrption()
+		sub3 := newSpySubscrption()
+		sub4 := newSpySubscrption()
+		sub5 := newSpySubscrption()
+		t.treeTraverser.keys = map[string][]string{
+			"":  {"a"},
+			"a": nil,
+		}
+
+		t.p.Subscribe(
+			sub1,
+			pubsub.LinearTreeTraverser([]string{"a"}),
+			pubsub.WithShardID("1"),
+		)
+		t.p.Subscribe(
+			sub2,
+			pubsub.LinearTreeTraverser([]string{"a"}),
+			pubsub.WithShardID("1"),
+		)
+		t.p.Subscribe(
+			sub3,
+			pubsub.LinearTreeTraverser([]string{"a"}),
+			pubsub.WithShardID("2"),
+		)
+		t.p.Subscribe(sub4, pubsub.LinearTreeTraverser([]string{"a"}))
+		t.p.Subscribe(sub5, pubsub.LinearTreeTraverser([]string{"a"}))
+
+		for i := 0; i < 100; i++ {
+			t.p.Publish("some-data", t.treeTraverser)
+		}
+
+		Expect(t, len(sub1.data)).To(And(BeAbove(0), BeBelow(99)))
+		Expect(t, len(sub2.data)).To(And(BeAbove(0), BeBelow(99)))
+		Expect(t, len(sub3.data)).To(Equal(100))
+		Expect(t, len(sub4.data)).To(Equal(100))
+		Expect(t, len(sub5.data)).To(Equal(100))
+	})
+}
+
 func Example() {
 	ps := pubsub.New()
 	subscription := func(name string) pubsub.SubscriptionFunc {

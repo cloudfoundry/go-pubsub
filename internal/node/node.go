@@ -8,15 +8,26 @@ type Subscription interface {
 	Write(data interface{})
 }
 
+type ShardingAlgorithm interface {
+	Write(data interface{}, subscriptions []Subscription)
+}
+
 type Node struct {
 	children      map[string]*Node
-	subscriptions map[int64]Subscription
+	subscriptions map[string][]SubscriptionEnvelope
+	shards        map[int64]string
+}
+
+type SubscriptionEnvelope struct {
+	Subscription
+	id int64
 }
 
 func New() *Node {
 	return &Node{
 		children:      make(map[string]*Node),
-		subscriptions: make(map[int64]Subscription),
+		subscriptions: make(map[string][]SubscriptionEnvelope),
+		shards:        make(map[int64]string),
 	}
 }
 
@@ -58,20 +69,17 @@ func (n *Node) ChildLen() int {
 	return len(n.children)
 }
 
-func (n *Node) AddSubscription(s Subscription) int64 {
+func (n *Node) AddSubscription(s Subscription, shardID string) int64 {
 	if n == nil {
 		return 0
 	}
 
-	var id int64
-	for {
-		id = rand.Int63()
-		if _, ok := n.subscriptions[id]; !ok {
-			break
-		}
-	}
-
-	n.subscriptions[id] = s
+	id := rand.Int63()
+	n.shards[id] = shardID
+	n.subscriptions[shardID] = append(n.subscriptions[shardID], SubscriptionEnvelope{
+		Subscription: s,
+		id:           id,
+	})
 	return id
 }
 
@@ -80,19 +88,37 @@ func (n *Node) DeleteSubscription(id int64) {
 		return
 	}
 
-	delete(n.subscriptions, id)
+	shardID, ok := n.shards[id]
+	if !ok {
+		return
+	}
+
+	delete(n.shards, id)
+
+	s := n.subscriptions[shardID]
+	for i, ss := range s {
+		if ss.id != id {
+			continue
+		}
+
+		n.subscriptions[shardID] = append(s[:i], s[i+1:]...)
+	}
+
+	if len(n.subscriptions[shardID]) == 0 {
+		delete(n.subscriptions, shardID)
+	}
 }
 
 func (n *Node) SubscriptionLen() int {
-	return len(n.subscriptions)
+	return len(n.shards)
 }
 
-func (n *Node) ForEachSubscription(f func(s Subscription)) {
+func (n *Node) ForEachSubscription(f func(shardID string, s []SubscriptionEnvelope)) {
 	if n == nil {
 		return
 	}
 
-	for _, s := range n.subscriptions {
-		f(s)
+	for shardID, s := range n.subscriptions {
+		f(shardID, s)
 	}
 }
