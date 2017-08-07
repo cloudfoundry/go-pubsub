@@ -19,6 +19,7 @@ func (s StructTraverser) done(data interface{}, currentPath []string) pubsub.Pat
 }
 
 func (s StructTraverser) _I(data interface{}, currentPath []string) pubsub.Paths {
+
 	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*end2end.X).I)}, pubsub.TreeTraverserFunc(s._J))
 }
 
@@ -59,10 +60,12 @@ func (s StructTraverser) _Y1(data interface{}, currentPath []string) pubsub.Path
 }
 
 func (s StructTraverser) _Y1_I(data interface{}, currentPath []string) pubsub.Paths {
+
 	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*end2end.X).Y1.I)}, pubsub.TreeTraverserFunc(s._Y1_J))
 }
 
 func (s StructTraverser) _Y1_J(data interface{}, currentPath []string) pubsub.Paths {
+
 	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*end2end.X).Y1.J)}, pubsub.TreeTraverserFunc(s.done))
 }
 
@@ -75,10 +78,12 @@ func (s StructTraverser) _Y2(data interface{}, currentPath []string) pubsub.Path
 }
 
 func (s StructTraverser) _Y2_I(data interface{}, currentPath []string) pubsub.Paths {
+
 	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*end2end.X).Y2.I)}, pubsub.TreeTraverserFunc(s._Y2_J))
 }
 
 func (s StructTraverser) _Y2_J(data interface{}, currentPath []string) pubsub.Paths {
+
 	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*end2end.X).Y2.J)}, pubsub.TreeTraverserFunc(s.done))
 }
 
@@ -100,6 +105,7 @@ func (s StructTraverser) _M_M1(data interface{}, currentPath []string) pubsub.Pa
 }
 
 func (s StructTraverser) _M_M1_A(data interface{}, currentPath []string) pubsub.Paths {
+
 	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*end2end.X).M.(end2end.M1).A)}, pubsub.TreeTraverserFunc(s.done))
 }
 
@@ -108,10 +114,12 @@ func (s StructTraverser) _M_M2(data interface{}, currentPath []string) pubsub.Pa
 }
 
 func (s StructTraverser) _M_M2_A(data interface{}, currentPath []string) pubsub.Paths {
+
 	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*end2end.X).M.(end2end.M2).A)}, pubsub.TreeTraverserFunc(s._M_M2_B))
 }
 
 func (s StructTraverser) _M_M2_B(data interface{}, currentPath []string) pubsub.Paths {
+
 	return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%v", data.(*end2end.X).M.(end2end.M2).B)}, pubsub.TreeTraverserFunc(s.done))
 }
 

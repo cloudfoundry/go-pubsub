@@ -123,7 +123,7 @@ func TestStructFetcherWithBlacklist(t *testing.T) {
 
 	o.Spec("blacklists the given struct.field combo", func(t TSF) {
 		f := inspector.NewStructFetcher(map[string][]string{
-			"x": []string{"a", "b"},
+			"x": {"a", "b"},
 		})
 		src := `
 package p
@@ -153,7 +153,7 @@ type x struct {
 
 	o.Spec("blacklists the given struct.field combo with wildcard structname", func(t TSF) {
 		f := inspector.NewStructFetcher(map[string][]string{
-			"*": []string{"a", "b"},
+			"*": {"a", "b"},
 		})
 		src := `
 package p

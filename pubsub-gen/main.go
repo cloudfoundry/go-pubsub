@@ -108,6 +108,10 @@ func main() {
 }
 
 func buildBlacklist(bl string) map[string][]string {
+	if len(bl) == 0 {
+		return nil
+	}
+
 	m := make(map[string][]string)
 	for _, s := range strings.Split(bl, ",") {
 		x := strings.Split(s, ".")
