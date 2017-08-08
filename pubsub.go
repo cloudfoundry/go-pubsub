@@ -109,7 +109,7 @@ func WithShardID(shardID string) SubscribeOption {
 // what data the subscription is interested in. This value should be
 // correspond to what the publishing TreeTraverser yields.
 // It defaults to nil (meaning it gets everything).
-func WithPath(path ...string) SubscribeOption {
+func WithPath(path []string) SubscribeOption {
 	return subscribeConfigFunc(func(c *subscribeConfig) {
 		c.path = path
 	})
