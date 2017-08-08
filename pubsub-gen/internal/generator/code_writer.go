@@ -92,12 +92,17 @@ func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeNam
 		`, castTypeName, fieldName)
 	}
 
+	var star string
+	if isPtr {
+		star = "*"
+	}
+
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
 	%s
-  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s.%s)}, pubsub.TreeTraverserFunc(s.done))
+  return pubsub.NewPathsWithTraverser([]string{"", fmt.Sprintf("%%v", %s%s.%s)}, pubsub.TreeTraverserFunc(s.done))
 }
-`, travName, prefix, fieldName, nilCheck, castTypeName, fieldName)
+`, travName, prefix, fieldName, nilCheck, star, castTypeName, fieldName)
 }
 
 func (w CodeWriter) FieldPeersBodyEntry(prefix, name, castTypeName, fieldName string) string {
