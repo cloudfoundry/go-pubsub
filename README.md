@@ -1,7 +1,5 @@
 # pubsub
-[![GoDoc][go-doc-badge]][go-doc][![travis][travis-badge]][travis]
-
-A tree based PubSub library for data in Go.
+[![GoDoc][go-doc-badge]][go-doc] [![travis][travis-badge]][travis]
 
 PubSub publishes data to subscriptions. However it can do so much more that just push some data to a subscription.  Each subscription is placed in a tree. When data is published, it traverses the tree and finds each interested subscription. This allows for sophisticated filters and routing.
 
