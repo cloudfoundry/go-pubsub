@@ -23,3 +23,7 @@ func Float32(f float32) *float32 {
 func Float64(f float64) *float64 {
 	return &f
 }
+
+func Bool(b bool) *bool {
+	return &b
+}
