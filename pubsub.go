@@ -25,17 +25,44 @@ import (
 // of PubSub's methods safe to access concurrently. PubSub should be
 // constructed with New().
 type PubSub struct {
-	mu sync.RWMutex
+	mu rlocker
 	n  *node.Node
 	sa ShardingAlgorithm
 }
 
 // New constructs a new PubSub.
-func New() *PubSub {
-	return &PubSub{
+func New(opts ...PubSubOption) *PubSub {
+	p := &PubSub{
 		n:  node.New(),
 		sa: NewRandSharding(),
+		mu: &sync.RWMutex{},
 	}
+
+	for _, o := range opts {
+		o.configure(p)
+	}
+
+	return p
+}
+
+// PubSubOption is used to configure a PubSub.
+type PubSubOption interface {
+	configure(*PubSub)
+}
+
+type pubsubConfigFunc func(*PubSub)
+
+func (f pubsubConfigFunc) configure(p *PubSub) {
+	f(p)
+}
+
+// WithNoMutex configures a PubSub that does not have any internal mutexes.
+// This is useful if more complex or custom locking is required. For example,
+// if a subscription needs to subscribe while being published to.
+func WithNoMutex() PubSubOption {
+	return pubsubConfigFunc(func(p *PubSub) {
+		p.mu = nopLock{}
+	})
 }
 
 // Subscription is a subscription that will have corresponding data written
@@ -44,7 +71,7 @@ type Subscription interface {
 	Write(data interface{})
 }
 
-// SubscriptionFuncis an adapter to allow ordinary functions to be a
+// SubscriptionFunc is an adapter to allow ordinary functions to be a
 // Subscription.
 type SubscriptionFunc func(data interface{})
 
@@ -319,3 +346,27 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 		s.traversePublish(d, next, nextA, c, append(l, child), history)
 	}
 }
+
+// rlocker is used to hold either a real sync.RWMutex or a nop lock.
+// This is used to turn off locking.
+type rlocker interface {
+	sync.Locker
+	RLock()
+	RUnlock()
+}
+
+// nopLock is used to turn off locking for the PubSub. It implements the
+// rlocker interface.
+type nopLock struct{}
+
+// Lock implements rlocker.
+func (l nopLock) Lock() {}
+
+// Unlock implements rlocker.
+func (l nopLock) Unlock() {}
+
+// RLock implements rlocker.
+func (l nopLock) RLock() {}
+
+// RUnlock implements rlocker.
+func (l nopLock) RUnlock() {}
