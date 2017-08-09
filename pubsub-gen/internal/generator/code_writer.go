@@ -14,6 +14,9 @@ func (w CodeWriter) Package(name string) string {
 func (w CodeWriter) Imports(names []string) string {
 	result := "import (\n"
 	for _, n := range names {
+		if n == "" {
+			continue
+		}
 		result += fmt.Sprintf("  \"%s\"\n", n)
 	}
 	return fmt.Sprintf("%s)\n", result)
