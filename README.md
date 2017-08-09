@@ -1,7 +1,7 @@
 # pubsub
 [![GoDoc][go-doc-badge]][go-doc] [![travis][travis-badge]][travis]
 
-PubSub publishes data to subscriptions. However it can do so much more that just push some data to a subscription.  Each subscription is placed in a tree. When data is published, it traverses the tree and finds each interested subscription. This allows for sophisticated filters and routing.
+PubSub publishes data to subscriptions. However, it can do so much more than just push some data to a subscription.  Each subscription is placed in a tree. When data is published, it traverses the tree and finds each interested subscription. This allows for sophisticated filters and routing.
 
 ### Subscription Trees
 A subscription tree is a collection of subscriptions that are organized based on what data they want published to     them. When subscribing, a path is provided to give directions to PubSub about where to store the subscription and     what data should be published to it.
