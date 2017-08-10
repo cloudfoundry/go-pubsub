@@ -15,7 +15,6 @@ package pubsub
 import (
 	"math/rand"
 	"sync"
-	"time"
 
 	"github.com/apoydence/pubsub/internal/node"
 )
@@ -27,14 +26,12 @@ import (
 type PubSub struct {
 	mu rlocker
 	n  *node.Node
-	sa ShardingAlgorithm
 }
 
 // New constructs a new PubSub.
 func New(opts ...PubSubOption) *PubSub {
 	p := &PubSub{
 		n:  node.New(),
-		sa: NewRandSharding(),
 		mu: &sync.RWMutex{},
 	}
 
@@ -78,40 +75,6 @@ type SubscriptionFunc func(data interface{})
 // Write implements Subscription.
 func (f SubscriptionFunc) Write(data interface{}) {
 	f(data)
-}
-
-// ShardingAlgorithm is used to data across subscriptions with the same
-// shardID and path.
-type ShardingAlgorithm interface {
-	// Write is invoked with the given data if publishing traverses to a node
-	// that has multiple subscriptions with the same shardID.
-	Write(data interface{}, subscriptions []Subscription)
-}
-
-// ShardingAlgorithmFunc is an adapter to allow ordinary functions to be a
-// ShardingAlgorithm.
-type ShardingAlgorithmFunc func(data interface{}, subscriptions []Subscription)
-
-// Write implements ShardingAlgorithmFunc
-func (f ShardingAlgorithmFunc) Write(data interface{}, subscriptions []Subscription) {
-	f(data, subscriptions)
-}
-
-// RandSharding implements ShardingAlgorithm. It picks a random subscription
-// to write to.
-type RandSharding struct {
-	*rand.Rand
-}
-
-// NewRandSharding constructs a new RandSharding.
-func NewRandSharding() RandSharding {
-	return RandSharding{rand.New(rand.NewSource(time.Now().UnixNano()))}
-}
-
-// Write implements ShardingAlgorithm.
-func (r RandSharding) Write(data interface{}, subscriptions []Subscription) {
-	idx := r.Rand.Intn(len(subscriptions))
-	subscriptions[idx].Write(data)
 }
 
 // Unsubscriber is returned by Subscribe. It should be invoked to
@@ -319,12 +282,8 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 				return
 			}
 
-			var subs []Subscription
-			for _, x := range ss {
-				subs = append(subs, x)
-			}
-
-			s.sa.Write(d, subs)
+			idx := rand.Intn(len(ss))
+			ss[idx].Write(d)
 		})
 		history[n] = true
 	}
