@@ -207,6 +207,14 @@ type Paths interface {
 	At(idx int) (path string, nextTraverser TreeTraverser, ok bool)
 }
 
+// PathsFunc is an adapter to allow ordinary functions to be a Path.
+type PathsFunc func(idx int) (path string, nextTraverser TreeTraverser, ok bool)
+
+// At implement Paths.
+func (f PathsFunc) At(idx int) (path string, nextTraverser TreeTraverser, ok bool) {
+	return f(idx)
+}
+
 // FlatPaths implements Paths for a slice of paths. It
 // returns nil for all nextTraverser meaning to use the given TreeTraverser.
 type FlatPaths []string

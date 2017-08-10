@@ -16,7 +16,7 @@ type TraverserWriter interface {
 	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string
 	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string, isPtr bool) string
 	FieldStructFuncLast(travName, prefix, fieldName, castTypeName string, isPtr bool) string
-	FieldPeersBodyEntry(prefix, name, castTypeName, fieldName string) string
+	FieldPeersBodyEntry(idx int, prefix, name, castTypeName, fieldName string) string
 	FieldPeersFunc(travName, prefix, fieldName, body string) string
 	InterfaceTypeBodyEntry(prefix, castTypeName, fieldName, structPkgPrefix string, implementers []string) string
 	InterfaceTypeFieldsFunc(travName, prefix, fieldName, body string) string
@@ -129,22 +129,27 @@ func (g TraverserGenerator) generateStructFns(
 	}
 
 	var peers string
+	var i int
 	for _, pf := range s.PeerTypeFields {
 		peers += g.writer.FieldPeersBodyEntry(
+			i,
 			prefix,
 			pf.Name,
 			castTypeName,
 			s.Fields[len(s.Fields)-1].Name,
 		)
+		i++
 	}
 
 	for field := range s.InterfaceTypeFields {
 		peers += g.writer.FieldPeersBodyEntry(
+			i,
 			prefix,
 			field.Name,
 			castTypeName,
 			s.Fields[len(s.Fields)-1].Name,
 		)
+		i++
 	}
 
 	src += g.writer.FieldPeersFunc(
