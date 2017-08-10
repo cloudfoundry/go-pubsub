@@ -273,28 +273,25 @@ func (t PathAndTraversers) At(idx int) (string, TreeTraverser, bool) {
 func (s *PubSub) Publish(d interface{}, a TreeTraverser) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	s.traversePublish(d, d, a, s.n, nil, make(map[*node.Node]bool))
+	s.traversePublish(d, d, a, s.n, nil)
 }
 
-func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.Node, l []string, history map[*node.Node]bool) {
+func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.Node, l []string) {
 	if n == nil {
 		return
 	}
 
-	if _, ok := history[n]; !ok {
-		n.ForEachSubscription(func(shardID string, ss []node.SubscriptionEnvelope) {
-			if shardID == "" {
-				for _, x := range ss {
-					x.Subscription.Write(d)
-				}
-				return
+	n.ForEachSubscription(func(shardID string, ss []node.SubscriptionEnvelope) {
+		if shardID == "" {
+			for _, x := range ss {
+				x.Subscription.Write(d)
 			}
+			return
+		}
 
-			idx := rand.Intn(len(ss))
-			ss[idx].Write(d)
-		})
-		history[n] = true
-	}
+		idx := rand.Intn(len(ss))
+		ss[idx].Write(d)
+	})
 
 	paths := a.Traverse(next, l)
 
@@ -310,7 +307,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 
 		c := n.FetchChild(child)
 
-		s.traversePublish(d, next, nextA, c, append(l, child), history)
+		s.traversePublish(d, next, nextA, c, append(l, child))
 	}
 }
 

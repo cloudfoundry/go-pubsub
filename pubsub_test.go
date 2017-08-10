@@ -93,20 +93,6 @@ func TestPubSub(t *testing.T) {
 		Expect(t, t.treeTraverser.data[1]).To(Equal("some-data"))
 	})
 
-	o.Spec("does not write to the subscription twice", func(t TPS) {
-		sub := newSpySubscrption()
-		t.p.Subscribe(sub, pubsub.WithPath([]string{"a"}))
-
-		t.treeTraverser.keys = map[string][]string{
-			"":  {"a", "a"},
-			"a": nil,
-		}
-		t.p.Publish("some-data", t.treeTraverser)
-
-		Expect(t, sub.data).To(HaveLen(1))
-		Expect(t, sub.data[0]).To(Equal("some-data"))
-	})
-
 	o.Spec("it uses the new TreeTraverser when given one", func(t TPS) {
 		sub := newSpySubscrption()
 		t.p.Subscribe(sub, pubsub.WithPath([]string{"a", "b", "c"}))
