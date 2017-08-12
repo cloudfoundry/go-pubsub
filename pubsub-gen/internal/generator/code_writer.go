@@ -32,15 +32,15 @@ func (w CodeWriter) Constructor(travName string) string {
 
 func (w CodeWriter) Traverse(travName, firstField string) string {
 	return fmt.Sprintf(`
-func (s %s) Traverse(data interface{}, currentPath []string) pubsub.Paths {
-	return s._%s(data, currentPath)
+func (s %s) Traverse(data interface{}) pubsub.Paths {
+	return s._%s(data)
 }
 `, travName, firstField)
 }
 
 func (w CodeWriter) Done(travName string) string {
 	return fmt.Sprintf(`
-	func (s %s) done(data interface{}, currentPath []string) pubsub.Paths {
+	func (s %s) done(data interface{}) pubsub.Paths {
 	return pubsub.FlatPaths(nil)
 }
 `, travName)
@@ -64,7 +64,7 @@ func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldNam
 	}
 
 	return fmt.Sprintf(`
-func(s %s) %s(data interface{}, currentPath []string) pubsub.Paths {
+func(s %s) %s(data interface{}) pubsub.Paths {
 	%s
   return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
@@ -100,7 +100,7 @@ func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, 
 		star = "*"
 	}
 	return fmt.Sprintf(`
-func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
+func (s %s) %s_%s(data interface{}) pubsub.Paths {
 	%s
   return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
@@ -139,7 +139,7 @@ func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeNam
 	}
 
 	return fmt.Sprintf(`
-func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
+func (s %s) %s_%s(data interface{}) pubsub.Paths {
 	%s
   return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
@@ -168,7 +168,7 @@ case %d:
 
 func (w CodeWriter) FieldPeersFunc(travName, prefix, fieldName, body string) string {
 	return fmt.Sprintf(`
-func (s %s) %s_%s(data interface{}, currentPath []string) pubsub.Paths {
+func (s %s) %s_%s(data interface{}) pubsub.Paths {
   return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
 		switch idx{
 		%s
@@ -185,7 +185,7 @@ func (w CodeWriter) InterfaceTypeBodyEntry(prefix, castTypeName, fieldName, stru
 	for _, i := range implementers {
 		body += fmt.Sprintf(`
 case %s%s:
-	return s.%s_%s_%s(data, currentPath)
+	return s.%s_%s_%s(data)
 `, structPkgPrefix, i, prefix, fieldName, i)
 	}
 	body += `
@@ -205,7 +205,7 @@ default:
 
 func (w CodeWriter) InterfaceTypeFieldsFunc(travName, prefix, fieldName, body string) string {
 	return fmt.Sprintf(`
-func (s %s) %s_%s (data interface{}, currentPath []string) pubsub.Paths {
+func (s %s) %s_%s (data interface{}) pubsub.Paths {
 %s
 }
 `, travName, prefix, fieldName, body)

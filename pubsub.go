@@ -165,16 +165,16 @@ func (s *PubSub) cleanupSubscriptionTree(n *node.Node, id int64, p []string) {
 // len(paths) > 1, then each path will be traversed.
 type TreeTraverser interface {
 	// Traverse is used to traverse the subscription tree.
-	Traverse(data interface{}, currentPath []string) Paths
+	Traverse(data interface{}) Paths
 }
 
 // TreeTraverserFunc is an adapter to allow ordinary functions to be a
 // TreeTraverser.
-type TreeTraverserFunc func(data interface{}, currentPath []string) Paths
+type TreeTraverserFunc func(data interface{}) Paths
 
 // Traverse implements TreeTraverser.
-func (f TreeTraverserFunc) Traverse(data interface{}, currentPath []string) Paths {
-	return f(data, currentPath)
+func (f TreeTraverserFunc) Traverse(data interface{}) Paths {
+	return f(data)
 }
 
 // LinearTreeTraverser implements TreeTraverser on behalf of a slice of paths.
@@ -182,12 +182,12 @@ func (f TreeTraverserFunc) Traverse(data interface{}, currentPath []string) Path
 type LinearTreeTraverser []string
 
 // Traverse implements TreeTraverser.
-func (a LinearTreeTraverser) Traverse(data interface{}, currentPath []string) Paths {
-	return a.buildTreeTraverser(a)(data, currentPath)
+func (a LinearTreeTraverser) Traverse(data interface{}) Paths {
+	return a.buildTreeTraverser(a)(data)
 }
 
 func (a LinearTreeTraverser) buildTreeTraverser(remainingPath []string) TreeTraverserFunc {
-	return func(data interface{}, currentPath []string) Paths {
+	return func(data interface{}) Paths {
 		if len(remainingPath) == 0 {
 			return FlatPaths(nil)
 		}
@@ -273,10 +273,10 @@ func (t PathAndTraversers) At(idx int) (string, TreeTraverser, bool) {
 func (s *PubSub) Publish(d interface{}, a TreeTraverser) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	s.traversePublish(d, d, a, s.n, nil)
+	s.traversePublish(d, d, a, s.n)
 }
 
-func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.Node, l []string) {
+func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.Node) {
 	if n == nil {
 		return
 	}
@@ -293,7 +293,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 		ss[idx].Write(d)
 	})
 
-	paths := a.Traverse(next, l)
+	paths := a.Traverse(next)
 
 	for i := 0; ; i++ {
 		child, nextA, ok := paths.At(i)
@@ -307,7 +307,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 
 		c := n.FetchChild(child)
 
-		s.traversePublish(d, next, nextA, c, append(l, child))
+		s.traversePublish(d, next, nextA, c)
 	}
 }
 
