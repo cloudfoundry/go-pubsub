@@ -215,6 +215,27 @@ func (f PathsFunc) At(idx int) (path string, nextTraverser TreeTraverser, ok boo
 	return f(idx)
 }
 
+// CombinePaths takes several paths and flattens it into a single path.
+func CombinePaths(p ...Paths) Paths {
+	var currentStart int
+	return PathsFunc(func(idx int) (path string, nextTraverser TreeTraverser, ok bool) {
+		for _, pp := range p {
+			path, next, ok := pp.At(idx - currentStart)
+			if ok {
+				return path, next, ok
+			}
+
+			if len(p) == 0 {
+				break
+			}
+
+			currentStart = idx
+			p = p[1:]
+		}
+		return "", nil, false
+	})
+}
+
 // FlatPaths implements Paths for a slice of paths. It
 // returns nil for all nextTraverser meaning to use the given TreeTraverser.
 type FlatPaths []string
@@ -280,7 +301,6 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 	if n == nil {
 		return
 	}
-
 	n.ForEachSubscription(func(shardID string, ss []node.SubscriptionEnvelope) {
 		if shardID == "" {
 			for _, x := range ss {

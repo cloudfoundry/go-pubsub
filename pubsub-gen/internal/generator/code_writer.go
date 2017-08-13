@@ -155,15 +155,26 @@ func (s %s) %s_%s(data interface{}) pubsub.Paths {
 `, travName, prefix, fieldName, nilCheck, star, castTypeName, fieldName)
 }
 
-func (w CodeWriter) FieldPeersBodyEntry(idx int, prefix, name, castTypeName, fieldName string) string {
+func (w CodeWriter) FieldPeersBodyEntry(idx int, names []string, prefix, castTypeName, fieldName string) string {
 	idx = idx * 2
 	idx2 := idx + 1
+
+	var travs []string
+	for _, name := range names {
+		travs = append(travs, fmt.Sprintf("s.%s_%s(data)", prefix, name))
+	}
+
+	travFunc := fmt.Sprintf(`
+     pubsub.TreeTraverserFunc(func(data interface{}) pubsub.Paths {
+ 				return pubsub.CombinePaths(%s)
+ 			})`, strings.Join(travs, ","))
+
 	return fmt.Sprintf(`
 case %d:
-				return "", pubsub.TreeTraverserFunc(s.%s_%s), true
+				return "", %s, true
 case %d:
-				return fmt.Sprintf("%%v", %s.%s), pubsub.TreeTraverserFunc(s.%s_%s), true
-`, idx, prefix, name, idx2, castTypeName, fieldName, prefix, name)
+				return fmt.Sprintf("%%v", %s.%s), %s, true
+`, idx, travFunc, idx2, castTypeName, fieldName, travFunc)
 }
 
 func (w CodeWriter) FieldPeersFunc(travName, prefix, fieldName, body string) string {

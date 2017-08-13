@@ -19,10 +19,20 @@ type TPS struct {
 	trav         testStructTrav
 }
 
-// go:generate go install github.com/apoydence/pubsub/pubsub-gen
-// go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/github.com/apoydence/pubsub/gen_struct_test.go --pointer --struct-name=github.com/apoydence/pubsub.testStruct --traverser=testStructTrav --package=pubsub_test
+//go:generate go install github.com/apoydence/pubsub/pubsub-gen
+//go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/github.com/apoydence/pubsub/gen_struct_test.go --pointer --struct-name=github.com/apoydence/pubsub.testStruct --traverser=testStructTrav --package=pubsub_test
 type testStruct struct {
+	a  int
+	b  int
+	aa *testStructA
+	bb *testStructB
+}
+
+type testStructA struct {
 	a int
+}
+
+type testStructB struct {
 	b int
 }
 
@@ -59,12 +69,15 @@ func TestPubSub(t *testing.T) {
 			a: setters.Int(1),
 		})))
 		t.p.Subscribe(sub4, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
-			a: setters.Int(6),
-			b: setters.Int(8),
+			a: setters.Int(2),
+			b: setters.Int(3),
+			aa: &testStructAFilter{
+				a: setters.Int(4),
+			},
 		})))
 
 		data := &testStruct{a: 1, b: 2}
-		otherData := &testStruct{a: 6, b: 8}
+		otherData := &testStruct{a: 2, b: 3, aa: &testStructA{a: 4}}
 		t.p.Publish(data, t.trav)
 		t.p.Publish(otherData, t.trav)
 
@@ -155,6 +168,58 @@ func TestPubSubWithShardID(t *testing.T) {
 		Expect(t, len(sub3.data)).To(Equal(100))
 		Expect(t, len(sub4.data)).To(Equal(100))
 		Expect(t, len(sub5.data)).To(Equal(100))
+	})
+}
+
+func TestPaths(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	o.Group("FlatPaths", func() {
+		o.Spec("it returns a path for each member of a slice", func(t *testing.T) {
+			p := pubsub.FlatPaths([]string{"a", "b", "c"})
+
+			var resultChild []string
+
+			for i := 0; i < 10; i++ {
+				c, tr, ok := p.At(i)
+				if !ok {
+					break
+				}
+				resultChild = append(resultChild, c)
+
+				Expect(t, tr == nil).To(BeTrue())
+			}
+
+			Expect(t, resultChild).To(HaveLen(3))
+			Expect(t, resultChild).To(Equal([]string{"a", "b", "c"}))
+		})
+	})
+
+	o.Group("CombinePaths", func() {
+		o.Spec("it joins paths", func(t *testing.T) {
+			p1 := pubsub.FlatPaths([]string{"a", "b", "c"})
+			p2 := pubsub.FlatPaths([]string{"d"})
+			p3 := pubsub.FlatPaths([]string{"e", "f", "g"})
+			p := pubsub.CombinePaths(p1, p2, p3)
+
+			var resultChild []string
+
+			for i := 0; i < 10; i++ {
+				c, tr, ok := p.At(i)
+				if !ok {
+					break
+				}
+				resultChild = append(resultChild, c)
+
+				Expect(t, tr == nil).To(BeTrue())
+			}
+
+			Expect(t, resultChild).To(HaveLen(7))
+			Expect(t, resultChild).To(Equal([]string{"a", "b", "c", "d", "e", "f", "g"}))
+
+		})
 	})
 }
 
