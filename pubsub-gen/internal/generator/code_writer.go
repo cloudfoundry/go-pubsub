@@ -41,7 +41,9 @@ func (s %s) Traverse(data interface{}) pubsub.Paths {
 func (w CodeWriter) Done(travName string) string {
 	return fmt.Sprintf(`
 	func (s %s) done(data interface{}) pubsub.Paths {
-	return pubsub.FlatPaths(nil)
+	return pubsub.PathsFunc( func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+	  return nil, nil, false
+	})
 }
 `, travName)
 }
