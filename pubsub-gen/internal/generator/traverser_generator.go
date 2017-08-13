@@ -42,7 +42,7 @@ func (g TraverserGenerator) Generate(
 	imports []string,
 ) (string, error) {
 	src := g.writer.Package(packageName)
-	src += g.writer.Imports(append([]string{"github.com/apoydence/pubsub", "fmt"}, imports...))
+	src += g.writer.Imports(append([]string{"github.com/apoydence/pubsub"}, imports...))
 	src += g.writer.DefineType(traverserName)
 	src += g.writer.Constructor(traverserName)
 

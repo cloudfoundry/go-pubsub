@@ -2,7 +2,6 @@ package end2end_test
 
 import (
   "github.com/apoydence/pubsub"
-  "fmt"
   "github.com/apoydence/pubsub/pubsub-gen/internal/end2end"
 )
 type StructTraverser struct{}
@@ -23,7 +22,7 @@ func (s StructTraverser) _I(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s._J), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*end2end.X).I), pubsub.TreeTraverserFunc(s._J), true
+				return data.(*end2end.X).I, pubsub.TreeTraverserFunc(s._J), true
 			default:
 				return nil, nil, false
 			}
@@ -40,7 +39,7 @@ case 0:
  				return pubsub.CombinePaths(s._Y1(data),s._Y2(data),s._M(data))
  			}), true
 case 1:
-				return fmt.Sprintf("%v", data.(*end2end.X).J), 
+				return data.(*end2end.X).J, 
      pubsub.TreeTraverserFunc(func(data interface{}) pubsub.Paths {
  				return pubsub.CombinePaths(s._Y1(data),s._Y2(data),s._M(data))
  			}), true
@@ -70,7 +69,7 @@ func (s StructTraverser) _Y1_I(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s._Y1_J), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*end2end.X).Y1.I), pubsub.TreeTraverserFunc(s._Y1_J), true
+				return data.(*end2end.X).Y1.I, pubsub.TreeTraverserFunc(s._Y1_J), true
 			default:
 				return nil, nil, false
 			}
@@ -84,7 +83,7 @@ func (s StructTraverser) _Y1_J(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*end2end.X).Y1.J), pubsub.TreeTraverserFunc(s.done), true
+				return data.(*end2end.X).Y1.J, pubsub.TreeTraverserFunc(s.done), true
 			default:
 				return nil, nil, false
 			}
@@ -121,7 +120,7 @@ func (s StructTraverser) _Y2_I(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s._Y2_J), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*end2end.X).Y2.I), pubsub.TreeTraverserFunc(s._Y2_J), true
+				return data.(*end2end.X).Y2.I, pubsub.TreeTraverserFunc(s._Y2_J), true
 			default:
 				return nil, nil, false
 			}
@@ -135,7 +134,7 @@ func (s StructTraverser) _Y2_J(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*end2end.X).Y2.J), pubsub.TreeTraverserFunc(s.done), true
+				return data.(*end2end.X).Y2.J, pubsub.TreeTraverserFunc(s.done), true
 			default:
 				return nil, nil, false
 			}
@@ -181,7 +180,7 @@ func (s StructTraverser) _M_M1_A(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*end2end.X).M.(end2end.M1).A), pubsub.TreeTraverserFunc(s.done), true
+				return data.(*end2end.X).M.(end2end.M1).A, pubsub.TreeTraverserFunc(s.done), true
 			default:
 				return nil, nil, false
 			}
@@ -207,7 +206,7 @@ func (s StructTraverser) _M_M2_A(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s._M_M2_B), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*end2end.X).M.(end2end.M2).A), pubsub.TreeTraverserFunc(s._M_M2_B), true
+				return data.(*end2end.X).M.(end2end.M2).A, pubsub.TreeTraverserFunc(s._M_M2_B), true
 			default:
 				return nil, nil, false
 			}
@@ -221,7 +220,7 @@ func (s StructTraverser) _M_M2_B(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*end2end.X).M.(end2end.M2).B), pubsub.TreeTraverserFunc(s.done), true
+				return data.(*end2end.X).M.(end2end.M2).B, pubsub.TreeTraverserFunc(s.done), true
 			default:
 				return nil, nil, false
 			}
@@ -287,13 +286,13 @@ if count > 1 {
 
 
 if f.I != nil {
-	path = append(path, fmt.Sprintf("%v", *f.I))
+	path = append(path, *f.I)
 }else{
 	path = append(path, nil)
 }
 
 if f.J != nil {
-	path = append(path, fmt.Sprintf("%v", *f.J))
+	path = append(path, *f.J)
 }else{
 	path = append(path, nil)
 }
@@ -329,13 +328,13 @@ if count > 1 {
 
 
 if f.I != nil {
-	path = append(path, fmt.Sprintf("%v", *f.I))
+	path = append(path, *f.I)
 }else{
 	path = append(path, nil)
 }
 
 if f.J != nil {
-	path = append(path, fmt.Sprintf("%v", *f.J))
+	path = append(path, *f.J)
 }else{
 	path = append(path, nil)
 }
@@ -363,13 +362,13 @@ if count > 1 {
 
 
 if f.I != nil {
-	path = append(path, fmt.Sprintf("%v", *f.I))
+	path = append(path, *f.I)
 }else{
 	path = append(path, nil)
 }
 
 if f.J != nil {
-	path = append(path, fmt.Sprintf("%v", *f.J))
+	path = append(path, *f.J)
 }else{
 	path = append(path, nil)
 }
@@ -397,7 +396,7 @@ if count > 1 {
 
 
 if f.A != nil {
-	path = append(path, fmt.Sprintf("%v", *f.A))
+	path = append(path, *f.A)
 }else{
 	path = append(path, nil)
 }
@@ -425,13 +424,13 @@ if count > 1 {
 
 
 if f.A != nil {
-	path = append(path, fmt.Sprintf("%v", *f.A))
+	path = append(path, *f.A)
 }else{
 	path = append(path, nil)
 }
 
 if f.B != nil {
-	path = append(path, fmt.Sprintf("%v", *f.B))
+	path = append(path, *f.B)
 }else{
 	path = append(path, nil)
 }

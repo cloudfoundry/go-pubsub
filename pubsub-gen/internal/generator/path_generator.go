@@ -151,7 +151,7 @@ if count > 1 {
 	for _, f := range s.Fields {
 		buildPath += fmt.Sprintf(`
 if f.%s != nil {
-	path = append(path, fmt.Sprintf("%%v", *f.%s))
+	path = append(path, *f.%s)
 }else{
 	path = append(path, nil)
 }

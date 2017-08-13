@@ -107,7 +107,7 @@ func (s %s) %s_%s(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s.%s_%s), true
 			case 1:
-				return fmt.Sprintf("%%v", %s%s.%s), pubsub.TreeTraverserFunc(s.%s_%s), true
+				return %s%s.%s, pubsub.TreeTraverserFunc(s.%s_%s), true
 			default:
 				return nil, nil, false
 			}
@@ -146,7 +146,7 @@ func (s %s) %s_%s(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
-				return fmt.Sprintf("%%v", %s%s.%s), pubsub.TreeTraverserFunc(s.done), true
+				return %s%s.%s, pubsub.TreeTraverserFunc(s.done), true
 			default:
 				return nil, nil, false
 			}
@@ -173,7 +173,7 @@ func (w CodeWriter) FieldPeersBodyEntry(idx int, names []string, prefix, castTyp
 case %d:
 				return nil, %s, true
 case %d:
-				return fmt.Sprintf("%%v", %s.%s), %s, true
+				return %s.%s, %s, true
 `, idx, travFunc, idx2, castTypeName, fieldName, travFunc)
 }
 

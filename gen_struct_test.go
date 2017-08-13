@@ -2,7 +2,6 @@ package pubsub_test
 
 import (
   "github.com/apoydence/pubsub"
-  "fmt"
 )
 type testStructTrav struct{}
  func NewTestStructTrav()testStructTrav{ return testStructTrav{} }
@@ -22,7 +21,7 @@ func (s testStructTrav) _a(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s._b), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*testStruct).a), pubsub.TreeTraverserFunc(s._b), true
+				return data.(*testStruct).a, pubsub.TreeTraverserFunc(s._b), true
 			default:
 				return nil, nil, false
 			}
@@ -39,7 +38,7 @@ case 0:
  				return pubsub.CombinePaths(s._aa(data),s._bb(data))
  			}), true
 case 1:
-				return fmt.Sprintf("%v", data.(*testStruct).b), 
+				return data.(*testStruct).b, 
      pubsub.TreeTraverserFunc(func(data interface{}) pubsub.Paths {
  				return pubsub.CombinePaths(s._aa(data),s._bb(data))
  			}), true
@@ -80,7 +79,7 @@ func (s testStructTrav) _aa_a(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*testStruct).aa.a), pubsub.TreeTraverserFunc(s.done), true
+				return data.(*testStruct).aa.a, pubsub.TreeTraverserFunc(s.done), true
 			default:
 				return nil, nil, false
 			}
@@ -117,7 +116,7 @@ func (s testStructTrav) _bb_b(data interface{}) pubsub.Paths {
 			case 0:
 				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
-				return fmt.Sprintf("%v", data.(*testStruct).bb.b), pubsub.TreeTraverserFunc(s.done), true
+				return data.(*testStruct).bb.b, pubsub.TreeTraverserFunc(s.done), true
 			default:
 				return nil, nil, false
 			}
@@ -166,13 +165,13 @@ if count > 1 {
 
 
 if f.a != nil {
-	path = append(path, fmt.Sprintf("%v", *f.a))
+	path = append(path, *f.a)
 }else{
 	path = append(path, nil)
 }
 
 if f.b != nil {
-	path = append(path, fmt.Sprintf("%v", *f.b))
+	path = append(path, *f.b)
 }else{
 	path = append(path, nil)
 }
@@ -204,7 +203,7 @@ if count > 1 {
 
 
 if f.a != nil {
-	path = append(path, fmt.Sprintf("%v", *f.a))
+	path = append(path, *f.a)
 }else{
 	path = append(path, nil)
 }
@@ -232,7 +231,7 @@ if count > 1 {
 
 
 if f.b != nil {
-	path = append(path, fmt.Sprintf("%v", *f.b))
+	path = append(path, *f.b)
 }else{
 	path = append(path, nil)
 }
