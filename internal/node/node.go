@@ -13,7 +13,7 @@ type ShardingAlgorithm interface {
 }
 
 type Node struct {
-	children      map[string]*Node
+	children      map[interface{}]*Node
 	subscriptions map[string][]SubscriptionEnvelope
 	shards        map[int64]string
 }
@@ -25,13 +25,13 @@ type SubscriptionEnvelope struct {
 
 func New() *Node {
 	return &Node{
-		children:      make(map[string]*Node),
+		children:      make(map[interface{}]*Node),
 		subscriptions: make(map[string][]SubscriptionEnvelope),
 		shards:        make(map[int64]string),
 	}
 }
 
-func (n *Node) AddChild(key string) *Node {
+func (n *Node) AddChild(key interface{}) *Node {
 	if n == nil {
 		return nil
 	}
@@ -45,7 +45,7 @@ func (n *Node) AddChild(key string) *Node {
 	return child
 }
 
-func (n *Node) FetchChild(key string) *Node {
+func (n *Node) FetchChild(key interface{}) *Node {
 	if n == nil {
 		return nil
 	}
@@ -57,7 +57,7 @@ func (n *Node) FetchChild(key string) *Node {
 	return nil
 }
 
-func (n *Node) DeleteChild(key string) {
+func (n *Node) DeleteChild(key interface{}) {
 	if n == nil {
 		return
 	}

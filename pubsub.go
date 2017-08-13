@@ -99,7 +99,7 @@ func WithShardID(shardID string) SubscribeOption {
 // what data the subscription is interested in. This value should be
 // correspond to what the publishing TreeTraverser yields.
 // It defaults to nil (meaning it gets everything).
-func WithPath(path []string) SubscribeOption {
+func WithPath(path []interface{}) SubscribeOption {
 	return subscribeConfigFunc(func(c *subscribeConfig) {
 		c.path = path
 	})
@@ -107,7 +107,7 @@ func WithPath(path []string) SubscribeOption {
 
 type subscribeConfig struct {
 	shardID string
-	path    []string
+	path    []interface{}
 }
 
 type subscribeConfigFunc func(*subscribeConfig)
@@ -142,7 +142,7 @@ func (s *PubSub) Subscribe(sub Subscription, opts ...SubscribeOption) Unsubscrib
 	}
 }
 
-func (s *PubSub) cleanupSubscriptionTree(n *node.Node, id int64, p []string) {
+func (s *PubSub) cleanupSubscriptionTree(n *node.Node, id int64, p []interface{}) {
 	if len(p) == 0 {
 		n.DeleteSubscription(id)
 		return
@@ -179,20 +179,20 @@ func (f TreeTraverserFunc) Traverse(data interface{}) Paths {
 
 // LinearTreeTraverser implements TreeTraverser on behalf of a slice of paths.
 // If the data does not traverse multiple paths, then this works well.
-type LinearTreeTraverser []string
+type LinearTreeTraverser []interface{}
 
 // Traverse implements TreeTraverser.
 func (a LinearTreeTraverser) Traverse(data interface{}) Paths {
 	return a.buildTreeTraverser(a)(data)
 }
 
-func (a LinearTreeTraverser) buildTreeTraverser(remainingPath []string) TreeTraverserFunc {
+func (a LinearTreeTraverser) buildTreeTraverser(remainingPath []interface{}) TreeTraverserFunc {
 	return func(data interface{}) Paths {
 		if len(remainingPath) == 0 {
 			return FlatPaths(nil)
 		}
 
-		return NewPathsWithTraverser(FlatPaths([]string{remainingPath[0]}), a.buildTreeTraverser(remainingPath[1:]))
+		return NewPathsWithTraverser(FlatPaths([]interface{}{remainingPath[0]}), a.buildTreeTraverser(remainingPath[1:]))
 	}
 }
 
@@ -204,21 +204,21 @@ type Paths interface {
 	// for an idx that is greater than it has valid data for.
 	//
 	// If nextTraverser is nil, then the previous TreeTraverser is used.
-	At(idx int) (path string, nextTraverser TreeTraverser, ok bool)
+	At(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool)
 }
 
 // PathsFunc is an adapter to allow ordinary functions to be a Path.
-type PathsFunc func(idx int) (path string, nextTraverser TreeTraverser, ok bool)
+type PathsFunc func(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool)
 
 // At implement Paths.
-func (f PathsFunc) At(idx int) (path string, nextTraverser TreeTraverser, ok bool) {
+func (f PathsFunc) At(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool) {
 	return f(idx)
 }
 
 // CombinePaths takes several paths and flattens it into a single path.
 func CombinePaths(p ...Paths) Paths {
 	var currentStart int
-	return PathsFunc(func(idx int) (path string, nextTraverser TreeTraverser, ok bool) {
+	return PathsFunc(func(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool) {
 		for _, pp := range p {
 			path, next, ok := pp.At(idx - currentStart)
 			if ok {
@@ -238,10 +238,10 @@ func CombinePaths(p ...Paths) Paths {
 
 // FlatPaths implements Paths for a slice of paths. It
 // returns nil for all nextTraverser meaning to use the given TreeTraverser.
-type FlatPaths []string
+type FlatPaths []interface{}
 
 // At implements Paths.
-func (p FlatPaths) At(idx int) (string, TreeTraverser, bool) {
+func (p FlatPaths) At(idx int) (interface{}, TreeTraverser, bool) {
 	if idx >= len(p) {
 		return "", nil, false
 	}
@@ -254,16 +254,16 @@ func (p FlatPaths) At(idx int) (string, TreeTraverser, bool) {
 // It should be constructed with NewPathsWithTraverser().
 type PathsWithTraverser struct {
 	a TreeTraverser
-	p []string
+	p []interface{}
 }
 
 // NewPathsWithTraverser creates a new PathsWithTraverser.
-func NewPathsWithTraverser(paths []string, a TreeTraverser) PathsWithTraverser {
+func NewPathsWithTraverser(paths []interface{}, a TreeTraverser) PathsWithTraverser {
 	return PathsWithTraverser{a: a, p: paths}
 }
 
 // At implements Paths.
-func (a PathsWithTraverser) At(idx int) (string, TreeTraverser, bool) {
+func (a PathsWithTraverser) At(idx int) (interface{}, TreeTraverser, bool) {
 	if idx >= len(a.p) {
 		return "", nil, false
 	}
@@ -273,7 +273,7 @@ func (a PathsWithTraverser) At(idx int) (string, TreeTraverser, bool) {
 
 // PathAndTraverser is a path and traverser pair.
 type PathAndTraverser struct {
-	Path      string
+	Path      interface{}
 	Traverser TreeTraverser
 }
 
@@ -282,7 +282,7 @@ type PathAndTraverser struct {
 type PathAndTraversers []PathAndTraverser
 
 // At implements Paths.
-func (t PathAndTraversers) At(idx int) (string, TreeTraverser, bool) {
+func (t PathAndTraversers) At(idx int) (interface{}, TreeTraverser, bool) {
 	if idx >= len(t) {
 		return "", nil, false
 	}

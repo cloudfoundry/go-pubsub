@@ -70,11 +70,11 @@ func (g PathGenerator) genPath(
 	}
 
 	src += fmt.Sprintf(`
-func (g %s) %s(f *%sFilter) []string {
+func (g %s) %s(f *%sFilter) []interface{} {
 if f == nil {
 	return nil
 }
-var path []string
+var path []interface{}
 
 %s
 
@@ -153,7 +153,7 @@ if count > 1 {
 if f.%s != nil {
 	path = append(path, fmt.Sprintf("%%v", *f.%s))
 }else{
-	path = append(path, "")
+	path = append(path, nil)
 }
 `, f.Name, f.Name)
 	}

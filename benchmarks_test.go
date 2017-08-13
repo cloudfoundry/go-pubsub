@@ -154,16 +154,16 @@ func BenchmarkPublishingWhileSubscribingStructs(b *testing.B) {
 	})
 }
 
-func randPath() []string {
-	var r []string
+func randPath() []interface{} {
+	var r []interface{}
 	for i := 0; i < 10; i++ {
 		r = append(r, fmt.Sprintf("%d", rand.Intn(10)))
 	}
 	return r
 }
 
-func randData() [][]string {
-	var r [][]string
+func randData() [][]interface{} {
+	var r [][]interface{}
 	for i := 0; i < 100000; i++ {
 		r = append(r, nil)
 		for j := 0; j < 10; j++ {
@@ -213,7 +213,7 @@ type StructTraverser struct{}
 
 func (s StructTraverser) Traverse(data interface{}) pubsub.Paths {
 	// a
-	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).a}, pubsub.TreeTraverserFunc(s.b))
+	return pubsub.NewPathsWithTraverser([]interface{}{"", data.(*someType).a}, pubsub.TreeTraverserFunc(s.b))
 }
 
 func (s StructTraverser) b(data interface{}) pubsub.Paths {
@@ -241,34 +241,34 @@ func (s StructTraverser) b(data interface{}) pubsub.Paths {
 
 func (s StructTraverser) w(data interface{}) pubsub.Paths {
 	if data.(*someType).w == nil {
-		return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
+		return pubsub.NewPathsWithTraverser([]interface{}{""}, pubsub.TreeTraverserFunc(s.done))
 	}
 
-	return pubsub.NewPathsWithTraverser([]string{"w"}, pubsub.TreeTraverserFunc(s.wi))
+	return pubsub.NewPathsWithTraverser([]interface{}{"w"}, pubsub.TreeTraverserFunc(s.wi))
 }
 
 func (s StructTraverser) wi(data interface{}) pubsub.Paths {
-	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).w.i}, pubsub.TreeTraverserFunc(s.wj))
+	return pubsub.NewPathsWithTraverser([]interface{}{"", data.(*someType).w.i}, pubsub.TreeTraverserFunc(s.wj))
 }
 
 func (s StructTraverser) wj(data interface{}) pubsub.Paths {
-	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).w.j}, pubsub.TreeTraverserFunc(s.done))
+	return pubsub.NewPathsWithTraverser([]interface{}{"", data.(*someType).w.j}, pubsub.TreeTraverserFunc(s.done))
 }
 
 func (s StructTraverser) x(data interface{}) pubsub.Paths {
 	if data.(*someType).x == nil {
-		return pubsub.NewPathsWithTraverser([]string{""}, pubsub.TreeTraverserFunc(s.done))
+		return pubsub.NewPathsWithTraverser([]interface{}{""}, pubsub.TreeTraverserFunc(s.done))
 	}
 
-	return pubsub.NewPathsWithTraverser([]string{"x"}, pubsub.TreeTraverserFunc(s.xi))
+	return pubsub.NewPathsWithTraverser([]interface{}{"x"}, pubsub.TreeTraverserFunc(s.xi))
 }
 
 func (s StructTraverser) xi(data interface{}) pubsub.Paths {
-	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).x.i}, pubsub.TreeTraverserFunc(s.xj))
+	return pubsub.NewPathsWithTraverser([]interface{}{"", data.(*someType).x.i}, pubsub.TreeTraverserFunc(s.xj))
 }
 
 func (s StructTraverser) xj(data interface{}) pubsub.Paths {
-	return pubsub.NewPathsWithTraverser([]string{"", data.(*someType).x.j}, pubsub.TreeTraverserFunc(s.done))
+	return pubsub.NewPathsWithTraverser([]interface{}{"", data.(*someType).x.j}, pubsub.TreeTraverserFunc(s.done))
 }
 
 func (s StructTraverser) done(data interface{}) pubsub.Paths {

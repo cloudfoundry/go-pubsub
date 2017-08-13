@@ -51,12 +51,12 @@ func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldNam
 	if isPtr {
 		nilCheck = fmt.Sprintf(`
   if %s == nil {
-		return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+		return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.done), true
+				return nil, pubsub.TreeTraverserFunc(s.done), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
   }
@@ -66,12 +66,12 @@ func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldNam
 	return fmt.Sprintf(`
 func(s %s) %s(data interface{}) pubsub.Paths {
 	%s
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
 				return "%s", pubsub.TreeTraverserFunc(s.%s_%s), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
 }
@@ -83,12 +83,12 @@ func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, 
 	if isPtr {
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
-    return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+    return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.%s_%s), true
+				return nil, pubsub.TreeTraverserFunc(s.%s_%s), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
   }
@@ -102,14 +102,14 @@ func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, 
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}) pubsub.Paths {
 	%s
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.%s_%s), true
+				return nil, pubsub.TreeTraverserFunc(s.%s_%s), true
 			case 1:
 				return fmt.Sprintf("%%v", %s%s.%s), pubsub.TreeTraverserFunc(s.%s_%s), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
 }
@@ -121,12 +121,12 @@ func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeNam
 	if isPtr {
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
-    return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+    return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.done), true
+				return nil, pubsub.TreeTraverserFunc(s.done), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
   }
@@ -141,14 +141,14 @@ func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeNam
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}) pubsub.Paths {
 	%s
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.done), true
+				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
 				return fmt.Sprintf("%%v", %s%s.%s), pubsub.TreeTraverserFunc(s.done), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
 }
@@ -171,7 +171,7 @@ func (w CodeWriter) FieldPeersBodyEntry(idx int, names []string, prefix, castTyp
 
 	return fmt.Sprintf(`
 case %d:
-				return "", %s, true
+				return nil, %s, true
 case %d:
 				return fmt.Sprintf("%%v", %s.%s), %s, true
 `, idx, travFunc, idx2, castTypeName, fieldName, travFunc)
@@ -180,11 +180,11 @@ case %d:
 func (w CodeWriter) FieldPeersFunc(travName, prefix, fieldName, body string) string {
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}) pubsub.Paths {
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 		switch idx{
 		%s
 	  default:
-			return "", nil, false
+			return nil, nil, false
 		}
 	})
 }
@@ -201,12 +201,12 @@ case %s%s:
 	}
 	body += `
 default:
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.done), true
+				return nil, pubsub.TreeTraverserFunc(s.done), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
 }`

@@ -17,24 +17,24 @@ func (s testStructTrav) Traverse(data interface{}) pubsub.Paths {
 
 func (s testStructTrav) _a(data interface{}) pubsub.Paths {
 	
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s._b), true
+				return nil, pubsub.TreeTraverserFunc(s._b), true
 			case 1:
 				return fmt.Sprintf("%v", data.(*testStruct).a), pubsub.TreeTraverserFunc(s._b), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
 }
 
 func (s testStructTrav) _b(data interface{}) pubsub.Paths {
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 		switch idx{
 		
 case 0:
-				return "", 
+				return nil, 
      pubsub.TreeTraverserFunc(func(data interface{}) pubsub.Paths {
  				return pubsub.CombinePaths(s._aa(data),s._bb(data))
  			}), true
@@ -45,7 +45,7 @@ case 1:
  			}), true
 
 	  default:
-			return "", nil, false
+			return nil, nil, false
 		}
 	})
 }
@@ -53,36 +53,36 @@ case 1:
 func(s testStructTrav) _aa(data interface{}) pubsub.Paths {
 	
   if data.(*testStruct).aa == nil {
-		return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+		return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.done), true
+				return nil, pubsub.TreeTraverserFunc(s.done), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
   }
 		
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
 				return "aa", pubsub.TreeTraverserFunc(s._aa_a), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
 }
 
 func (s testStructTrav) _aa_a(data interface{}) pubsub.Paths {
 	
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.done), true
+				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
 				return fmt.Sprintf("%v", data.(*testStruct).aa.a), pubsub.TreeTraverserFunc(s.done), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
 }
@@ -90,36 +90,36 @@ func (s testStructTrav) _aa_a(data interface{}) pubsub.Paths {
 func(s testStructTrav) _bb(data interface{}) pubsub.Paths {
 	
   if data.(*testStruct).bb == nil {
-		return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+		return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.done), true
+				return nil, pubsub.TreeTraverserFunc(s.done), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
   }
 		
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
 				return "bb", pubsub.TreeTraverserFunc(s._bb_b), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
 }
 
 func (s testStructTrav) _bb_b(data interface{}) pubsub.Paths {
 	
-  return pubsub.PathsFunc(func(idx int) (path string, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.PathsFunc(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "", pubsub.TreeTraverserFunc(s.done), true
+				return nil, pubsub.TreeTraverserFunc(s.done), true
 			case 1:
 				return fmt.Sprintf("%v", data.(*testStruct).bb.b), pubsub.TreeTraverserFunc(s.done), true
 			default:
-				return "", nil, false
+				return nil, nil, false
 			}
 		})
 }
@@ -142,11 +142,11 @@ b *int
 
 }
 
-func (g testStructTrav) CreatePath(f *testStructFilter) []string {
+func (g testStructTrav) CreatePath(f *testStructFilter) []interface{} {
 if f == nil {
 	return nil
 }
-var path []string
+var path []interface{}
 
 
 
@@ -168,13 +168,13 @@ if count > 1 {
 if f.a != nil {
 	path = append(path, fmt.Sprintf("%v", *f.a))
 }else{
-	path = append(path, "")
+	path = append(path, nil)
 }
 
 if f.b != nil {
 	path = append(path, fmt.Sprintf("%v", *f.b))
 }else{
-	path = append(path, "")
+	path = append(path, nil)
 }
 
 
@@ -188,11 +188,11 @@ path = append(path, g.createPath_bb(f.bb)...)
 return path
 }
 
-func (g testStructTrav) createPath_aa(f *testStructAFilter) []string {
+func (g testStructTrav) createPath_aa(f *testStructAFilter) []interface{} {
 if f == nil {
 	return nil
 }
-var path []string
+var path []interface{}
 
 path = append(path, "aa")
 
@@ -206,7 +206,7 @@ if count > 1 {
 if f.a != nil {
 	path = append(path, fmt.Sprintf("%v", *f.a))
 }else{
-	path = append(path, "")
+	path = append(path, nil)
 }
 
 
@@ -216,11 +216,11 @@ if f.a != nil {
 return path
 }
 
-func (g testStructTrav) createPath_bb(f *testStructBFilter) []string {
+func (g testStructTrav) createPath_bb(f *testStructBFilter) []interface{} {
 if f == nil {
 	return nil
 }
-var path []string
+var path []interface{}
 
 path = append(path, "bb")
 
@@ -234,7 +234,7 @@ if count > 1 {
 if f.b != nil {
 	path = append(path, fmt.Sprintf("%v", *f.b))
 }else{
-	path = append(path, "")
+	path = append(path, nil)
 }
 
 
