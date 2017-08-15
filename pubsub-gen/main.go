@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -21,6 +22,7 @@ func main() {
 	isPtr := flag.Bool("pointer", false, "Will the struct be a pointer when being published?")
 	includePkgName := flag.Bool("include-pkg-name", false, "Prefix the struct type with the package name?")
 	interfaces := flag.String("interfaces", "{}", "A map (map[string][]string encoded in JSON) mapping interface types to implementing structs")
+	subStructs := flag.String("sub-structs", "{}", "A map (map[string]string encoded in JSON) mapping names to package locations")
 	imports := flag.String("imports", "", "A comma separated list of imports required in the generated file")
 	blacklist := flag.String("blacklist-fields", "", `A comma separated list of struct name and field
 	combos to not include (e.g., mystruct.myfield,otherthing.otherfield).
@@ -59,6 +61,11 @@ func main() {
 		log.Fatalf("Invalid interfaces (%s): %s", *interfaces, err)
 	}
 
+	ms := make(map[string]string)
+	if err := json.Unmarshal([]byte(*subStructs), &ms); err != nil {
+		log.Fatalf("Invalid sub-structs (%s): %s", *subStructs, err)
+	}
+
 	importList := strings.Split(*imports, ",")
 
 	structName := (*structPath)[idx+1:]
@@ -71,19 +78,50 @@ func main() {
 
 	fieldBlacklist := buildBlacklist(*blacklist)
 
-	sf := inspector.NewStructFetcher(fieldBlacklist)
+	sf := inspector.NewStructFetcher(fieldBlacklist, ms)
 	pp := inspector.NewPackageParser(sf)
+
+	mm := make(map[string]inspector.Struct)
+	for fullName, path := range ms {
+		splitName := strings.SplitN(fullName, ".", 2)
+		var name, pkg string
+		_ = name
+		if len(splitName) != 2 {
+			name = fullName
+		} else {
+			pkg = splitName[0]
+			name = splitName[1]
+		}
+
+		m, err := pp.Parse(path, gopath)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for k, v := range m {
+			v.Name = fmt.Sprintf("%s.%s", pkg, k)
+			if strings.HasSuffix(fullName, v.Name) {
+				mm[v.Name] = v
+			} else {
+				mm[k] = v
+			}
+		}
+	}
+
 	m, err := pp.Parse((*structPath)[:idx], gopath)
 	if err != nil {
 		log.Fatal(err)
 	}
+	for k, v := range m {
+		mm[k] = v
+	}
 
 	linker := inspector.NewLinker()
-	linker.Link(m, mi)
+	linker.Link(mm, mi)
 
 	g := generator.NewTraverserGenerator(generator.CodeWriter{})
 	src, err := g.Generate(
-		m,
+		mm,
 		*packageName,
 		*traverserName,
 		structName,
@@ -96,7 +134,7 @@ func main() {
 	}
 
 	pg := generator.NewPathGenerator()
-	src, err = pg.Generate(src, m, *traverserName, structName)
+	src, err = pg.Generate(src, mm, *traverserName, structName)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -52,7 +52,8 @@ func (g TraverserGenerator) Generate(
 	}
 
 	if len(s.Fields) == 0 {
-		return "", fmt.Errorf("structs with no fields are not yet supported")
+		s.Fields = append(s.Fields, inspector.Field{Name: "empty", Type: "int"})
+		m[structName] = s
 	}
 
 	src += g.writer.Traverse(traverserName, s.Fields[0].Name)
@@ -93,7 +94,8 @@ func (g TraverserGenerator) generateStructFns(
 	}
 
 	if len(s.Fields) == 0 {
-		return "", fmt.Errorf("structs with no fields are not yet supported")
+		s.Fields = append(s.Fields, inspector.Field{Name: "empty", Type: "int"})
+		m[structName] = s
 	}
 
 	if parentFieldName != "" {

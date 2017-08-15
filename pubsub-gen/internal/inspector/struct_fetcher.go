@@ -1,6 +1,7 @@
 package inspector
 
 import (
+	"fmt"
 	"go/ast"
 )
 
@@ -18,12 +19,14 @@ type Struct struct {
 }
 
 type StructFetcher struct {
-	blacklist map[string][]string
+	blacklist  map[string][]string
+	knownTypes map[string]string
 }
 
-func NewStructFetcher(blacklist map[string][]string) StructFetcher {
+func NewStructFetcher(blacklist map[string][]string, knownTypes map[string]string) StructFetcher {
 	return StructFetcher{
-		blacklist: blacklist,
+		blacklist:  blacklist,
+		knownTypes: knownTypes,
 	}
 }
 
@@ -94,9 +97,18 @@ func (f StructFetcher) extractType(n ast.Node) (string, bool) {
 	case *ast.Ident:
 		return x.Name, false
 	case *ast.StarExpr:
-		if n, ok := x.X.(*ast.Ident); ok {
-			return n.Name, true
+		name, _ := f.extractType(x.X)
+		return name, true
+	case *ast.SelectorExpr:
+		pkg, _ := f.extractType(x.X)
+		name, _ := f.extractType(x.Sel)
+		fullName := fmt.Sprintf("%s.%s", pkg, name)
+
+		if _, ok := f.knownTypes[fullName]; !ok {
+			return "", false
 		}
+
+		return fullName, false
 	}
 
 	return "", false

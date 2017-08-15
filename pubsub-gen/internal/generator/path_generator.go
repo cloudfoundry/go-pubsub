@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
 )
@@ -84,7 +85,7 @@ var path []interface{}
 
 return path
 }
-`, genName, funcName, structName, addLabel, body, next)
+`, genName, funcName, g.sanitizeName(structName), addLabel, body, next)
 
 	for _, pf := range s.PeerTypeFields {
 		src, err = g.genPath(src, m, genName, pf.Type, fmt.Sprintf("createPath_%s", pf.Name), pf.Name)
@@ -100,6 +101,10 @@ return path
 	}
 
 	return src, nil
+}
+
+func (g PathGenerator) sanitizeName(name string) string {
+	return strings.Replace(name, ".", "", -1)
 }
 
 func (g PathGenerator) genPathNextFunc(
@@ -188,7 +193,7 @@ func (g PathGenerator) genStruct(
 	}
 
 	for _, f := range s.PeerTypeFields {
-		fields += fmt.Sprintf("%s *%sFilter\n", f.Name, f.Type)
+		fields += fmt.Sprintf("%s *%sFilter\n", f.Name, g.sanitizeName(f.Type))
 	}
 
 	for f, implementers := range s.InterfaceTypeFields {
@@ -201,7 +206,7 @@ func (g PathGenerator) genStruct(
 type %sFilter struct{
 %s
 }
-`, structName, fields)
+`, g.sanitizeName(structName), fields)
 
 	for _, f := range s.PeerTypeFields {
 		var err error
