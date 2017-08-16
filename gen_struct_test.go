@@ -177,6 +177,13 @@ func (g testStructTrav) CreatePath(f *testStructFilter) []interface{} {
 
 	path = append(path, g.createPath_bb(f.bb)...)
 
+	for i := len(path) - 1; i >= 1; i-- {
+		if path[i] != nil {
+			break
+		}
+		path = path[:i]
+	}
+
 	return path
 }
 

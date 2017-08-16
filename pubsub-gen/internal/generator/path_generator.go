@@ -25,13 +25,14 @@ func (g PathGenerator) Generate(
 		return "", err
 	}
 
-	src, err = g.genPath(src, m, genName, structName, "CreatePath", "")
+	src, err = g.genPath(src, m, genName, structName, "CreatePath", "", true)
 	if err != nil {
 		return "", err
 	}
 
 	return src, err
 }
+
 func (g PathGenerator) genPath(
 	src string,
 	m map[string]inspector.Struct,
@@ -39,6 +40,7 @@ func (g PathGenerator) genPath(
 	structName string,
 	funcName string,
 	label string,
+	includeMinimize bool,
 ) (string, error) {
 	body, err := g.genPathBody(
 		m,
@@ -70,6 +72,18 @@ func (g PathGenerator) genPath(
 		addLabel = fmt.Sprintf(`path = append(path, "%s")`, label)
 	}
 
+	var minimize string
+	if includeMinimize {
+		minimize = `
+for i := len(path) - 1; i >= 1; i-- {
+	if path[i] != nil {
+		break
+	}
+	path = path[:i]
+}
+`
+	}
+
 	src += fmt.Sprintf(`
 func (g %s) %s(f *%sFilter) []interface{} {
 if f == nil {
@@ -83,17 +97,19 @@ var path []interface{}
 
 %s
 
+%s
+
 return path
 }
-`, genName, funcName, g.sanitizeName(structName), addLabel, body, next)
+`, genName, funcName, g.sanitizeName(structName), addLabel, body, next, minimize)
 
 	for _, pf := range s.PeerTypeFields {
-		src, err = g.genPath(src, m, genName, pf.Type, fmt.Sprintf("createPath_%s", pf.Name), pf.Name)
+		src, err = g.genPath(src, m, genName, pf.Type, fmt.Sprintf("createPath_%s", pf.Name), pf.Name, false)
 	}
 
 	for f, implementers := range s.InterfaceTypeFields {
 		for _, i := range implementers {
-			src, err = g.genPath(src, m, genName, i, fmt.Sprintf("createPath_%s_%s", f.Name, i), i)
+			src, err = g.genPath(src, m, genName, i, fmt.Sprintf("createPath_%s_%s", f.Name, i), i, false)
 			if err != nil {
 				return "", err
 			}

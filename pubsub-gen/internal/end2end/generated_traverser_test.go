@@ -301,6 +301,13 @@ func (g StructTraverser) CreatePath(f *XFilter) []interface{} {
 
 	path = append(path, g.createPath_M_M2(f.M_M2)...)
 
+	for i := len(path) - 1; i >= 1; i-- {
+		if path[i] != nil {
+			break
+		}
+		path = path[:i]
+	}
+
 	return path
 }
 
