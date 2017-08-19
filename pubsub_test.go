@@ -189,7 +189,7 @@ func TestPaths(t *testing.T) {
 			var resultChild []string
 
 			for i := 0; i < 10; i++ {
-				c, tr, ok := p.At(i)
+				c, tr, ok := p(i)
 				if !ok {
 					break
 				}
@@ -213,7 +213,7 @@ func TestPaths(t *testing.T) {
 			var resultChild []string
 
 			for i := 0; i < 10; i++ {
-				c, tr, ok := p.At(i)
+				c, tr, ok := p(i)
 				if !ok {
 					break
 				}

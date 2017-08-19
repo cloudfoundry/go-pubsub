@@ -181,35 +181,25 @@ func (a LinearTreeTraverser) buildTreeTraverser(remainingPath []interface{}) Tre
 			return FlatPaths(nil)
 		}
 
-		return NewPathsWithTraverser(FlatPaths([]interface{}{remainingPath[0]}), a.buildTreeTraverser(remainingPath[1:]))
+		return PathsWithTraverser([]interface{}{remainingPath[0]}, a.buildTreeTraverser(remainingPath[1:]))
 	}
 }
 
 // Paths is returned by a TreeTraverser. It describes how the data is
 // both assigned and how to continue to analyze it.
-type Paths interface {
-	// At will be called with idx ranging from [0, n] where n is the number
-	// of valid paths. This means that the Paths needs to be prepared
-	// for an idx that is greater than it has valid data for.
-	//
-	// If nextTraverser is nil, then the previous TreeTraverser is used.
-	At(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool)
-}
-
-// PathsFunc is an adapter to allow ordinary functions to be a Path.
-type PathsFunc func(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool)
-
-// At implement Paths.
-func (f PathsFunc) At(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool) {
-	return f(idx)
-}
+// At will be called with idx ranging from [0, n] where n is the number
+// of valid paths. This means that the Paths needs to be prepared
+// for an idx that is greater than it has valid data for.
+//
+// If nextTraverser is nil, then the previous TreeTraverser is used.
+type Paths func(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool)
 
 // CombinePaths takes several paths and flattens it into a single path.
 func CombinePaths(p ...Paths) Paths {
 	var currentStart int
-	return PathsFunc(func(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool) {
+	return Paths(func(idx int) (path interface{}, nextTraverser TreeTraverser, ok bool) {
 		for _, pp := range p {
-			path, next, ok := pp.At(idx - currentStart)
+			path, next, ok := pp(idx - currentStart)
 			if ok {
 				return path, next, ok
 			}
@@ -227,37 +217,26 @@ func CombinePaths(p ...Paths) Paths {
 
 // FlatPaths implements Paths for a slice of paths. It
 // returns nil for all nextTraverser meaning to use the given TreeTraverser.
-type FlatPaths []interface{}
+func FlatPaths(p []interface{}) Paths {
+	return func(idx int) (interface{}, TreeTraverser, bool) {
+		if idx >= len(p) {
+			return "", nil, false
+		}
 
-// At implements Paths.
-func (p FlatPaths) At(idx int) (interface{}, TreeTraverser, bool) {
-	if idx >= len(p) {
-		return "", nil, false
+		return p[idx], nil, true
 	}
-
-	return p[idx], nil, true
 }
 
 // PathsWithTraverser implements Paths for both a slice of paths and
 // a single TreeTraverser. Each path will return the given TreeTraverser.
-// It should be constructed with NewPathsWithTraverser().
-type PathsWithTraverser struct {
-	a TreeTraverser
-	p []interface{}
-}
+func PathsWithTraverser(paths []interface{}, a TreeTraverser) Paths {
+	return func(idx int) (interface{}, TreeTraverser, bool) {
+		if idx >= len(paths) {
+			return "", nil, false
+		}
 
-// NewPathsWithTraverser creates a new PathsWithTraverser.
-func NewPathsWithTraverser(paths []interface{}, a TreeTraverser) PathsWithTraverser {
-	return PathsWithTraverser{a: a, p: paths}
-}
-
-// At implements Paths.
-func (a PathsWithTraverser) At(idx int) (interface{}, TreeTraverser, bool) {
-	if idx >= len(a.p) {
-		return "", nil, false
+		return paths[idx], a, true
 	}
-
-	return a.p[idx], a.a, true
 }
 
 // PathAndTraverser is a path and traverser pair.
@@ -268,15 +247,14 @@ type PathAndTraverser struct {
 
 // PathsWithTraverser implement Paths and allow a TreeTraverser to have
 // multiple paths with multiple traversers.
-type PathAndTraversers []PathAndTraverser
+func PathAndTraversers(t []PathAndTraverser) Paths {
+	return func(idx int) (interface{}, TreeTraverser, bool) {
+		if idx >= len(t) {
+			return "", nil, false
+		}
 
-// At implements Paths.
-func (t PathAndTraversers) At(idx int) (interface{}, TreeTraverser, bool) {
-	if idx >= len(t) {
-		return "", nil, false
+		return t[idx].Path, t[idx].Traverser, true
 	}
-
-	return t[idx].Path, t[idx].Traverser, true
 }
 
 // Publish writes data using the TreeTraverser to the interested subscriptions.
@@ -305,7 +283,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 	paths := a.Traverse(next)
 
 	for i := 0; ; i++ {
-		child, nextA, ok := paths.At(i)
+		child, nextA, ok := paths(i)
 		if !ok {
 			return
 		}
