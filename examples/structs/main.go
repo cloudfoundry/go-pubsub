@@ -43,21 +43,20 @@ func main() {
 }
 
 // Subscription writes any results to stderr
-type Subscription string
+func Subscription(s string) func(interface{}) {
+	return func(data interface{}) {
+		d := data.(*someType)
+		var w string
+		if d.w != nil {
+			w = fmt.Sprintf("w:{i:%s j:%s}", d.w.i, d.w.j)
+		}
 
-// Write implements pubsub.Subscription
-func (s Subscription) Write(data interface{}) {
-	d := data.(*someType)
-	var w string
-	if d.w != nil {
-		w = fmt.Sprintf("w:{i:%s j:%s}", d.w.i, d.w.j)
+		var x string
+		if d.x != nil {
+			x = fmt.Sprintf("x:{i:%s j:%s}", d.x.i, d.x.j)
+		}
+		log.Printf("%s <- {a:%s b:%s %s %s", s, d.a, d.b, w, x)
 	}
-
-	var x string
-	if d.x != nil {
-		x = fmt.Sprintf("x:{i:%s j:%s}", d.x.i, d.x.j)
-	}
-	log.Printf("%s <- {a:%s b:%s %s %s", s, d.a, d.b, w, x)
 }
 
 // StructTraverser traverses type SomeType.

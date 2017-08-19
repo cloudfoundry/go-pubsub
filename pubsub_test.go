@@ -16,6 +16,8 @@ type TPS struct {
 	*testing.T
 	p            *pubsub.PubSub
 	subscription *spySubscription
+	spy          *spySubscription
+	sub          func(interface{})
 	trav         testStructTrav
 }
 
@@ -42,33 +44,35 @@ func TestPubSub(t *testing.T) {
 	defer o.Run(t)
 	o.BeforeEach(func(t *testing.T) TPS {
 		trav := NewTestStructTrav()
+		s, f := newSpySubscrption()
 
 		return TPS{
 			T:            t,
-			subscription: newSpySubscrption(),
+			sub:          f,
+			subscription: s,
 			p:            pubsub.New(),
 			trav:         trav,
 		}
 	})
 
 	o.Spec("it writes to the correct subscription", func(t TPS) {
-		sub1 := newSpySubscrption()
-		sub2 := newSpySubscrption()
-		sub3 := newSpySubscrption()
-		sub4 := newSpySubscrption()
+		sub1, f1 := newSpySubscrption()
+		sub2, f2 := newSpySubscrption()
+		sub3, f3 := newSpySubscrption()
+		sub4, f4 := newSpySubscrption()
 
-		t.p.Subscribe(sub1, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		t.p.Subscribe(f1, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 			a: setters.Int(1),
 			b: setters.Int(2),
 		})))
-		t.p.Subscribe(sub2, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		t.p.Subscribe(f2, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 			a: setters.Int(1),
 			b: setters.Int(3),
 		})))
-		t.p.Subscribe(sub3, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		t.p.Subscribe(f3, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 			a: setters.Int(1),
 		})))
-		t.p.Subscribe(sub4, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		t.p.Subscribe(f4, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 			a: setters.Int(2),
 			b: setters.Int(3),
 			aa: &testStructAFilter{
@@ -77,23 +81,23 @@ func TestPubSub(t *testing.T) {
 		})))
 
 		data := &testStruct{a: 1, b: 2}
-		// otherData := &testStruct{a: 2, b: 3, aa: &testStructA{a: 4}}
+		otherData := &testStruct{a: 2, b: 3, aa: &testStructA{a: 4}}
 		t.p.Publish(data, t.trav)
-		// t.p.Publish(otherData, t.trav)
+		t.p.Publish(otherData, t.trav)
 
-		// Expect(t, sub1.data).To(HaveLen(1))
-		// Expect(t, sub2.data).To(HaveLen(0))
+		Expect(t, sub1.data).To(HaveLen(1))
+		Expect(t, sub2.data).To(HaveLen(0))
 		Expect(t, sub3.data).To(HaveLen(1))
-		// Expect(t, sub4.data).To(HaveLen(1))
+		Expect(t, sub4.data).To(HaveLen(1))
 
-		// Expect(t, sub1.data[0]).To(Equal(data))
-		// Expect(t, sub3.data[0]).To(Equal(data))
-		// Expect(t, sub4.data[0]).To(Equal(otherData))
+		Expect(t, sub1.data[0]).To(Equal(data))
+		Expect(t, sub3.data[0]).To(Equal(data))
+		Expect(t, sub4.data[0]).To(Equal(otherData))
 	})
 
 	o.Spec("it does not write to a subscription after it unsubscribes", func(t TPS) {
-		sub := newSpySubscrption()
-		unsubscribe := t.p.Subscribe(sub, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		sub, f := newSpySubscrption()
+		unsubscribe := t.p.Subscribe(f, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 			a: setters.Int(1),
 			b: setters.Int(2),
 		})))
@@ -111,49 +115,51 @@ func TestPubSubWithShardID(t *testing.T) {
 	defer o.Run(t)
 	o.BeforeEach(func(t *testing.T) TPS {
 		trav := NewTestStructTrav()
+		s, f := newSpySubscrption()
 
 		return TPS{
 			T:            t,
-			subscription: newSpySubscrption(),
+			subscription: s,
+			sub:          f,
 			p:            pubsub.New(),
 			trav:         trav,
 		}
 	})
 
 	o.Spec("it splits data between same shardIDs", func(t TPS) {
-		sub1 := newSpySubscrption()
-		sub2 := newSpySubscrption()
-		sub3 := newSpySubscrption()
-		sub4 := newSpySubscrption()
-		sub5 := newSpySubscrption()
+		sub1, f1 := newSpySubscrption()
+		sub2, f2 := newSpySubscrption()
+		sub3, f3 := newSpySubscrption()
+		sub4, f4 := newSpySubscrption()
+		sub5, f5 := newSpySubscrption()
 
-		t.p.Subscribe(sub1,
+		t.p.Subscribe(f1,
 			pubsub.WithShardID("1"),
 			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
 		)
 
-		t.p.Subscribe(sub2,
+		t.p.Subscribe(f2,
 			pubsub.WithShardID("1"),
 			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
 		)
-		t.p.Subscribe(sub3,
+		t.p.Subscribe(f3,
 			pubsub.WithShardID("2"),
 			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
 		)
 
-		t.p.Subscribe(sub4,
+		t.p.Subscribe(f4,
 			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
 		)
 
-		t.p.Subscribe(sub5,
+		t.p.Subscribe(f5,
 			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
@@ -225,7 +231,7 @@ func TestPaths(t *testing.T) {
 
 func Example() {
 	ps := pubsub.New()
-	subscription := func(name string) pubsub.SubscriptionFunc {
+	subscription := func(name string) pubsub.Subscription {
 		return func(data interface{}) {
 			fmt.Printf("%s -> %v\n", name, data)
 		}
@@ -250,12 +256,11 @@ type spySubscription struct {
 	data []interface{}
 }
 
-func newSpySubscrption() *spySubscription {
-	return &spySubscription{}
-}
-
-func (s *spySubscription) Write(data interface{}) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.data = append(s.data, data)
+func newSpySubscrption() (*spySubscription, func(interface{})) {
+	s := &spySubscription{}
+	return s, func(data interface{}) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.data = append(s.data, data)
+	}
 }

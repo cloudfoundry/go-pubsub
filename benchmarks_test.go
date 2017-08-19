@@ -13,7 +13,8 @@ func BenchmarkPublishing(b *testing.B) {
 	b.StopTimer()
 	p := pubsub.New()
 	for i := 0; i < 100; i++ {
-		p.Subscribe(newSpySubscrption(), pubsub.WithPath(randPath()))
+		_, f := newSpySubscrption()
+		p.Subscribe(f, pubsub.WithPath(randPath()))
 	}
 	data := randData()
 	b.StartTimer()
@@ -27,7 +28,8 @@ func BenchmarkPublishingStructs(b *testing.B) {
 	b.StopTimer()
 	p := pubsub.New()
 	for i := 0; i < 100; i++ {
-		p.Subscribe(newSpySubscrption(), pubsub.WithPath(randPath()))
+		_, f := newSpySubscrption()
+		p.Subscribe(f, pubsub.WithPath(randPath()))
 	}
 	data := randStructs()
 	st := StructTraverser{}
@@ -47,7 +49,8 @@ func BenchmarkSubscriptions(b *testing.B) {
 	b.RunParallel(func(b *testing.PB) {
 		i := rand.Int()
 		for b.Next() {
-			unsub := p.Subscribe(newSpySubscrption(), pubsub.WithPath(data[i%len(data)]))
+			_, f := newSpySubscrption()
+			unsub := p.Subscribe(f, pubsub.WithPath(data[i%len(data)]))
 			unsub()
 			i++
 		}
@@ -58,7 +61,8 @@ func BenchmarkPublishingParallel(b *testing.B) {
 	b.StopTimer()
 	p := pubsub.New()
 	for i := 0; i < 100; i++ {
-		p.Subscribe(newSpySubscrption(), pubsub.WithPath(randPath()))
+		_, f := newSpySubscrption()
+		p.Subscribe(f, pubsub.WithPath(randPath()))
 	}
 	data := randData()
 	b.StartTimer()
@@ -76,7 +80,8 @@ func BenchmarkPublishingParallelStructs(b *testing.B) {
 	b.StopTimer()
 	p := pubsub.New()
 	for i := 0; i < 100; i++ {
-		p.Subscribe(newSpySubscrption(), pubsub.WithPath(randPath()))
+		_, f := newSpySubscrption()
+		p.Subscribe(f, pubsub.WithPath(randPath()))
 	}
 	data := randStructs()
 	st := StructTraverser{}
@@ -102,7 +107,8 @@ func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 		go func() {
 			wg.Done()
 			for i := 0; ; i++ {
-				unsub := p.Subscribe(newSpySubscrption(), pubsub.WithPath(data[i%len(data)]))
+				_, f := newSpySubscrption()
+				unsub := p.Subscribe(f, pubsub.WithPath(data[i%len(data)]))
 				if i%2 == 0 {
 					unsub()
 				}
@@ -133,7 +139,8 @@ func BenchmarkPublishingWhileSubscribingStructs(b *testing.B) {
 		go func() {
 			wg.Done()
 			for i := 0; ; i++ {
-				unsub := p.Subscribe(newSpySubscrption(), pubsub.WithPath(randPath()))
+				_, f := newSpySubscrption()
+				unsub := p.Subscribe(f, pubsub.WithPath(randPath()))
 				if i%2 == 0 {
 					unsub()
 				}

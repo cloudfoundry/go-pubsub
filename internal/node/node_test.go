@@ -48,29 +48,24 @@ func TestNode(t *testing.T) {
 	})
 
 	o.Spec("returns all subscriptions", func(t TN) {
-		s1 := spySubscription{id: "a"}
-		s2 := spySubscription{id: "b"}
-		s3 := spySubscription{id: "c"}
-		id1 := t.n.AddSubscription(s1, "")
+		id1 := t.n.AddSubscription(func(interface{}) {}, "")
 
-		t.n.AddSubscription(s2, "")
-		t.n.AddSubscription(s3, "")
+		t.n.AddSubscription(func(interface{}) {}, "")
+		t.n.AddSubscription(func(interface{}) {}, "")
 		t.n.DeleteSubscription(id1)
 
-		var ss []node.Subscription
+		var ss []func(interface{})
 		t.n.ForEachSubscription(func(id string, s []node.SubscriptionEnvelope) {
 			for _, x := range s {
 				ss = append(ss, x.Subscription)
 			}
 		})
 		Expect(t, ss).To(HaveLen(2))
-		Expect(t, ss).To(Contain(s2))
-		Expect(t, ss).To(Contain(s3))
 		Expect(t, t.n.SubscriptionLen()).To(Equal(2))
 	})
 }
 
 type spySubscription struct {
-	node.Subscription
-	id string
+	subscription func(interface{})
+	id           string
 }

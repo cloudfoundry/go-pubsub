@@ -27,23 +27,23 @@ func TestEnd2End(t *testing.T) {
 		sub4 := &mockSubscription{}
 		sub5 := &mockSubscription{}
 
-		ps.Subscribe(sub1, pubsub.WithPath(s.CreatePath(nil)))
-		ps.Subscribe(sub2, pubsub.WithPath(s.CreatePath(&XFilter{
+		ps.Subscribe(sub1.write, pubsub.WithPath(s.CreatePath(nil)))
+		ps.Subscribe(sub2.write, pubsub.WithPath(s.CreatePath(&XFilter{
 			I: setters.Int(1),
 			Y1: &YFilter{
 				I: setters.Int(1),
 				J: setters.String("a"),
 			},
 		})))
-		ps.Subscribe(sub3, pubsub.WithPath(s.CreatePath(&XFilter{
+		ps.Subscribe(sub3.write, pubsub.WithPath(s.CreatePath(&XFilter{
 			Y1: &YFilter{
 				J: setters.String("b"),
 			},
 		})))
-		ps.Subscribe(sub4, pubsub.WithPath(s.CreatePath(&XFilter{
+		ps.Subscribe(sub4.write, pubsub.WithPath(s.CreatePath(&XFilter{
 			Y2: &YFilter{},
 		})))
-		ps.Subscribe(sub5, pubsub.WithPath(s.CreatePath(&XFilter{
+		ps.Subscribe(sub5.write, pubsub.WithPath(s.CreatePath(&XFilter{
 			M_M2: &M2Filter{
 				B: setters.Int(2),
 			},
@@ -66,7 +66,7 @@ type mockSubscription struct {
 	callCount int
 }
 
-func (m *mockSubscription) Write(data interface{}) {
+func (m *mockSubscription) write(data interface{}) {
 	m.callCount++
 }
 

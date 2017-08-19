@@ -4,12 +4,8 @@ import (
 	"math/rand"
 )
 
-type Subscription interface {
-	Write(data interface{})
-}
-
 type ShardingAlgorithm interface {
-	Write(data interface{}, subscriptions []Subscription)
+	Write(data interface{}, subscriptions []func(interface{}))
 }
 
 type Node struct {
@@ -19,8 +15,8 @@ type Node struct {
 }
 
 type SubscriptionEnvelope struct {
-	Subscription
-	id int64
+	Subscription func(interface{})
+	id           int64
 }
 
 func New() *Node {
@@ -69,7 +65,7 @@ func (n *Node) ChildLen() int {
 	return len(n.children)
 }
 
-func (n *Node) AddSubscription(s Subscription, shardID string) int64 {
+func (n *Node) AddSubscription(s func(interface{}), shardID string) int64 {
 	if n == nil {
 		return 0
 	}

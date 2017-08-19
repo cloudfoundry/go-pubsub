@@ -64,18 +64,7 @@ func WithNoMutex() PubSubOption {
 
 // Subscription is a subscription that will have corresponding data written
 // to it.
-type Subscription interface {
-	Write(data interface{})
-}
-
-// SubscriptionFunc is an adapter to allow ordinary functions to be a
-// Subscription.
-type SubscriptionFunc func(data interface{})
-
-// Write implements Subscription.
-func (f SubscriptionFunc) Write(data interface{}) {
-	f(data)
-}
+type Subscription func(data interface{})
 
 // Unsubscriber is returned by Subscribe. It should be invoked to
 // remove a subscription from the PubSub.
@@ -304,13 +293,13 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 	n.ForEachSubscription(func(shardID string, ss []node.SubscriptionEnvelope) {
 		if shardID == "" {
 			for _, x := range ss {
-				x.Subscription.Write(d)
+				x.Subscription(d)
 			}
 			return
 		}
 
 		idx := rand.Intn(len(ss))
-		ss[idx].Write(d)
+		ss[idx].Subscription(d)
 	})
 
 	paths := a.Traverse(next)
