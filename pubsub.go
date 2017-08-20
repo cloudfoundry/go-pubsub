@@ -152,36 +152,17 @@ func (s *PubSub) cleanupSubscriptionTree(n *node.Node, id int64, p []interface{}
 //
 // Traversing a path ends when the return len(paths) == 0. If
 // len(paths) > 1, then each path will be traversed.
-type TreeTraverser interface {
-	// Traverse is used to traverse the subscription tree.
-	Traverse(data interface{}) Paths
-}
-
-// TreeTraverserFunc is an adapter to allow ordinary functions to be a
-// TreeTraverser.
-type TreeTraverserFunc func(data interface{}) Paths
-
-// Traverse implements TreeTraverser.
-func (f TreeTraverserFunc) Traverse(data interface{}) Paths {
-	return f(data)
-}
+type TreeTraverser func(data interface{}) Paths
 
 // LinearTreeTraverser implements TreeTraverser on behalf of a slice of paths.
 // If the data does not traverse multiple paths, then this works well.
-type LinearTreeTraverser []interface{}
-
-// Traverse implements TreeTraverser.
-func (a LinearTreeTraverser) Traverse(data interface{}) Paths {
-	return a.buildTreeTraverser(a)(data)
-}
-
-func (a LinearTreeTraverser) buildTreeTraverser(remainingPath []interface{}) TreeTraverserFunc {
+func LinearTreeTraverser(a []interface{}) TreeTraverser {
 	return func(data interface{}) Paths {
-		if len(remainingPath) == 0 {
+		if len(a) == 0 {
 			return FlatPaths(nil)
 		}
 
-		return PathsWithTraverser([]interface{}{remainingPath[0]}, a.buildTreeTraverser(remainingPath[1:]))
+		return PathsWithTraverser([]interface{}{a[0]}, LinearTreeTraverser(a[1:]))
 	}
 }
 
@@ -280,7 +261,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 		ss[idx].Subscription(d)
 	})
 
-	paths := a.Traverse(next)
+	paths := a(next)
 
 	for i := 0; ; i++ {
 		child, nextA, ok := paths(i)

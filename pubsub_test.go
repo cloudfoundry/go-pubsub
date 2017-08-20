@@ -82,8 +82,8 @@ func TestPubSub(t *testing.T) {
 
 		data := &testStruct{a: 1, b: 2}
 		otherData := &testStruct{a: 2, b: 3, aa: &testStructA{a: 4}}
-		t.p.Publish(data, t.trav)
-		t.p.Publish(otherData, t.trav)
+		t.p.Publish(data, t.trav.Traverse)
+		t.p.Publish(otherData, t.trav.Traverse)
 
 		Expect(t, sub1.data).To(HaveLen(1))
 		Expect(t, sub2.data).To(HaveLen(0))
@@ -104,7 +104,7 @@ func TestPubSub(t *testing.T) {
 
 		unsubscribe()
 
-		t.p.Publish(&testStruct{a: 1, b: 2}, t.trav)
+		t.p.Publish(&testStruct{a: 1, b: 2}, t.trav.Traverse)
 		Expect(t, sub.data).To(HaveLen(0))
 	})
 }
@@ -166,7 +166,7 @@ func TestPubSubWithShardID(t *testing.T) {
 		)
 
 		for i := 0; i < 100; i++ {
-			t.p.Publish(&testStruct{a: 1, b: 2}, t.trav)
+			t.p.Publish(&testStruct{a: 1, b: 2}, t.trav.Traverse)
 		}
 
 		Expect(t, len(sub1.data)).To(And(BeAbove(0), BeBelow(99)))
