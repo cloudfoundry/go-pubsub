@@ -157,10 +157,7 @@ func (s %s) %s_%s(data interface{}) pubsub.Paths {
 `, travName, prefix, fieldName, nilCheck, star, castTypeName, fieldName)
 }
 
-func (w CodeWriter) FieldPeersBodyEntry(idx int, names []string, prefix, castTypeName, fieldName string) string {
-	idx = idx * 2
-	idx2 := idx + 1
-
+func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName string, names []string, isPtr bool) string {
 	var travs []string
 	for _, name := range names {
 		travs = append(travs, fmt.Sprintf("s.%s_%s(data)", prefix, name))
@@ -171,26 +168,42 @@ func (w CodeWriter) FieldPeersBodyEntry(idx int, names []string, prefix, castTyp
  				return pubsub.CombinePaths(%s)
  			})`, strings.Join(travs, ","))
 
-	return fmt.Sprintf(`
-case %d:
+	var nilCheck string
+	if isPtr {
+		nilCheck = fmt.Sprintf(`
+  if %s.%s == nil {
+    return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+			switch idx {
+			case 0:
 				return nil, %s, true
-case %d:
-				return %s.%s, %s, true
-`, idx, travFunc, idx2, castTypeName, fieldName, travFunc)
-}
+			default:
+				return nil, nil, false
+			}
+		})
+  }
+		`, castTypeName, fieldName, travFunc)
+	}
 
-func (w CodeWriter) FieldPeersFunc(travName, prefix, fieldName, body string) string {
+	var star string
+	if isPtr {
+		star = "*"
+	}
+
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}) pubsub.Paths {
+	%s
   return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
 		switch idx{
-		%s
+		case 0:
+				return nil, %s, true
+		case 1:
+				return %s%s.%s, %s, true
 	  default:
 			return nil, nil, false
 		}
 	})
 }
-`, travName, prefix, fieldName, body)
+`, travName, prefix, fieldName, nilCheck, travFunc, star, castTypeName, fieldName, travFunc)
 }
 
 func (w CodeWriter) InterfaceTypeBodyEntry(prefix, castTypeName, fieldName, structPkgPrefix string, implementers []string) string {

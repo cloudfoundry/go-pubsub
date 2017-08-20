@@ -34,9 +34,9 @@ func (s StructTraverser) _I(data interface{}) pubsub.Paths {
 }
 
 func (s StructTraverser) _J(data interface{}) pubsub.Paths {
+
 	return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
-
 		case 0:
 			return nil,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
@@ -47,7 +47,6 @@ func (s StructTraverser) _J(data interface{}) pubsub.Paths {
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 					return pubsub.CombinePaths(s._Y1(data), s._Y2(data), s._M(data))
 				}), true
-
 		default:
 			return nil, nil, false
 		}
