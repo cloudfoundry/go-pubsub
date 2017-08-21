@@ -13,14 +13,14 @@ func (s testStructTrav) Traverse(data interface{}) pubsub.Paths {
 }
 
 func (s testStructTrav) done(data interface{}) pubsub.Paths {
-	return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+	return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 		return nil, nil, false
 	})
 }
 
 func (s testStructTrav) _a(data interface{}) pubsub.Paths {
 
-	return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+	return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
 			return nil, pubsub.TreeTraverser(s._b), true
@@ -34,7 +34,7 @@ func (s testStructTrav) _a(data interface{}) pubsub.Paths {
 
 func (s testStructTrav) _b(data interface{}) pubsub.Paths {
 
-	return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+	return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
 			return nil,
@@ -55,7 +55,7 @@ func (s testStructTrav) _b(data interface{}) pubsub.Paths {
 func (s testStructTrav) _aa(data interface{}) pubsub.Paths {
 
 	if data.(*testStruct).aa == nil {
-		return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+		return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 			switch idx {
 			case 0:
 				return nil, pubsub.TreeTraverser(s.done), true
@@ -65,7 +65,7 @@ func (s testStructTrav) _aa(data interface{}) pubsub.Paths {
 		})
 	}
 
-	return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+	return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
 			return "aa", pubsub.TreeTraverser(s._aa_a), true
@@ -77,7 +77,7 @@ func (s testStructTrav) _aa(data interface{}) pubsub.Paths {
 
 func (s testStructTrav) _aa_a(data interface{}) pubsub.Paths {
 
-	return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+	return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
 			return nil, pubsub.TreeTraverser(s.done), true
@@ -92,7 +92,7 @@ func (s testStructTrav) _aa_a(data interface{}) pubsub.Paths {
 func (s testStructTrav) _bb(data interface{}) pubsub.Paths {
 
 	if data.(*testStruct).bb == nil {
-		return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+		return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 			switch idx {
 			case 0:
 				return nil, pubsub.TreeTraverser(s.done), true
@@ -102,7 +102,7 @@ func (s testStructTrav) _bb(data interface{}) pubsub.Paths {
 		})
 	}
 
-	return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+	return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
 			return "bb", pubsub.TreeTraverser(s._bb_b), true
@@ -114,7 +114,7 @@ func (s testStructTrav) _bb(data interface{}) pubsub.Paths {
 
 func (s testStructTrav) _bb_b(data interface{}) pubsub.Paths {
 
-	return pubsub.Paths(func(idx int) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+	return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
 			return nil, pubsub.TreeTraverser(s.done), true
