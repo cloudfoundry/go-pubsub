@@ -163,10 +163,18 @@ func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName str
 		travs = append(travs, fmt.Sprintf("s.%s_%s(data)", prefix, name))
 	}
 
-	travFunc := fmt.Sprintf(`
+	var travFunc string
+	if len(names) == 1 {
+		travFunc = fmt.Sprintf(`
+     pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
+ 				return %s
+ 			})`, travs[0])
+	} else {
+		travFunc = fmt.Sprintf(`
      pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
  				return pubsub.CombinePaths(%s)
  			})`, strings.Join(travs, ","))
+	}
 
 	var nilCheck string
 	if isPtr {
