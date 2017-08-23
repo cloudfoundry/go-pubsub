@@ -39,17 +39,41 @@ func (s testStructTrav) _b(data interface{}) pubsub.Paths {
 		case 0:
 			return nil,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return pubsub.CombinePaths(s._aa(data), s._bb(data))
+					return s.__aa_bb
 				}), true
 		case 1:
 			return data.(*testStruct).b,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return pubsub.CombinePaths(s._aa(data), s._bb(data))
+					return s.__aa_bb
 				}), true
 		default:
 			return nil, nil, false
 		}
 	})
+}
+
+func (s testStructTrav) __aa_bb(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+	switch idx {
+
+	case 0:
+
+		if data.(*testStruct).aa == nil {
+			return nil, pubsub.TreeTraverser(s.done), true
+		}
+
+		return "aa", pubsub.TreeTraverser(s._aa_a), true
+
+	case 1:
+
+		if data.(*testStruct).bb == nil {
+			return nil, pubsub.TreeTraverser(s.done), true
+		}
+
+		return "bb", pubsub.TreeTraverser(s._bb_b), true
+
+	default:
+		return nil, nil, false
+	}
 }
 
 func (s testStructTrav) _aa(data interface{}) pubsub.Paths {

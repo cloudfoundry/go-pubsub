@@ -40,17 +40,49 @@ func (s StructTraverser) _J(data interface{}) pubsub.Paths {
 		case 0:
 			return nil,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return pubsub.CombinePaths(s._Y1(data), s._Y2(data), s._M(data))
+					return s.__Y1_Y2_M
 				}), true
 		case 1:
 			return data.(*end2end.X).J,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return pubsub.CombinePaths(s._Y1(data), s._Y2(data), s._M(data))
+					return s.__Y1_Y2_M
 				}), true
 		default:
 			return nil, nil, false
 		}
 	})
+}
+
+func (s StructTraverser) __Y1_Y2_M(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
+	switch idx {
+
+	case 0:
+
+		return "Y1", pubsub.TreeTraverser(s._Y1_I), true
+
+	case 1:
+
+		if data.(*end2end.X).Y2 == nil {
+			return nil, pubsub.TreeTraverser(s.done), true
+		}
+
+		return "Y2", pubsub.TreeTraverser(s._Y2_I), true
+
+	case 2:
+		switch data.(*end2end.X).M.(type) {
+		case end2end.M1:
+			return "M1", s._M_M1_A, true
+
+		case end2end.M2:
+			return "M2", s._M_M2_A, true
+
+		default:
+			return nil, pubsub.TreeTraverser(s.done), true
+		}
+
+	default:
+		return nil, nil, false
+	}
 }
 
 func (s StructTraverser) _Y1(data interface{}) pubsub.Paths {
@@ -142,26 +174,6 @@ func (s StructTraverser) _Y2_J(data interface{}) pubsub.Paths {
 			return nil, nil, false
 		}
 	})
-}
-
-func (s StructTraverser) _M(data interface{}) pubsub.Paths {
-	switch data.(*end2end.X).M.(type) {
-	case end2end.M1:
-		return s._M_M1(data)
-
-	case end2end.M2:
-		return s._M_M2(data)
-
-	default:
-		return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool) {
-			switch idx {
-			case 0:
-				return nil, pubsub.TreeTraverser(s.done), true
-			default:
-				return nil, nil, false
-			}
-		})
-	}
 }
 
 func (s StructTraverser) _M_M1(data interface{}) pubsub.Paths {

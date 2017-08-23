@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
 )
@@ -13,12 +14,15 @@ type TraverserWriter interface {
 	Constructor(travName string) string
 	Done(travName string) string
 	Traverse(travName, name string) string
+
+	FieldSelector(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string
+	InterfaceSelector(prefix, castTypeName, fieldName, structPkgPrefix string, implementers map[string]string) string
+	SelectorFunc(travName, selectorName string, fields []string) string
+
 	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string
 	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string, isPtr bool) string
 	FieldStructFuncLast(travName, prefix, fieldName, castTypeName string, isPtr bool) string
 	FieldPeersFunc(travName, prefix, castTypeName, fieldName string, names []string, isPtr bool) string
-	InterfaceTypeBodyEntry(prefix, castTypeName, fieldName, structPkgPrefix string, implementers []string) string
-	InterfaceTypeFieldsFunc(travName, prefix, fieldName, body string) string
 }
 
 type TraverserGenerator struct {
@@ -138,14 +142,57 @@ func (g TraverserGenerator) generateStructFns(
 		names = append(names, field.Name)
 	}
 
+	var peerFields []string
+	var fieldNames []string
+
+	// Struct Peers
+	for _, f := range s.PeerTypeFields {
+		x, ok := m[f.Type]
+		if !ok {
+			continue
+		}
+
+		fieldNames = append(fieldNames, f.Name)
+		peerFields = append(peerFields, g.writer.FieldSelector(
+			traverserName,
+			fmt.Sprintf("%s_%s", prefix, f.Name),
+			x.Fields[0].Name,
+			f.Name,
+			castTypeName,
+			f.Ptr,
+		))
+	}
+
+	// Interface Peers
+	for field, implementers := range s.InterfaceTypeFields {
+		implementersWithFields := make(map[string]string)
+		for _, impl := range implementers {
+			implementersWithFields[impl] = m[impl].Fields[0].Name
+		}
+
+		fieldNames = append(fieldNames, field.Name)
+		peerFields = append(peerFields, g.writer.InterfaceSelector(
+			prefix,
+			castTypeName,
+			field.Name,
+
+			structPkgPrefix,
+			implementersWithFields,
+		))
+	}
+
 	src += g.writer.FieldPeersFunc(
 		traverserName,
 		prefix,
 		castTypeName,
 		s.Fields[len(s.Fields)-1].Name,
-		names,
+		fieldNames,
 		s.Fields[len(s.Fields)-1].Ptr,
 	)
+
+	if len(peerFields) != 0 {
+		src += g.writer.SelectorFunc(traverserName, strings.Join(fieldNames, "_"), peerFields)
+	}
 
 	for _, field := range s.PeerTypeFields {
 		var err error
@@ -163,11 +210,6 @@ func (g TraverserGenerator) generateStructFns(
 		if err != nil {
 			return "", err
 		}
-	}
-
-	for field, implementers := range s.InterfaceTypeFields {
-		body := g.writer.InterfaceTypeBodyEntry(prefix, castTypeName, field.Name, structPkgPrefix, implementers)
-		src += g.writer.InterfaceTypeFieldsFunc(traverserName, prefix, field.Name, body)
 	}
 
 	for field, implementers := range s.InterfaceTypeFields {
