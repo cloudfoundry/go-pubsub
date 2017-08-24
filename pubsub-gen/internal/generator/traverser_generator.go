@@ -14,15 +14,16 @@ type TraverserWriter interface {
 	Constructor(travName string) string
 	Done(travName string) string
 	Traverse(travName, name string) string
+	Hashers(travName string) string
 
-	FieldSelector(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string
+	FieldSelector(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string
 	InterfaceSelector(prefix, castTypeName, fieldName, structPkgPrefix string, implementers map[string]string) string
 	SelectorFunc(travName, selectorName string, fields []string) string
 
-	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string
-	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string, isPtr bool) string
-	FieldStructFuncLast(travName, prefix, fieldName, castTypeName string, isPtr bool) string
-	FieldPeersFunc(travName, prefix, castTypeName, fieldName string, names []string, isPtr bool) string
+	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string
+	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashFn string, isPtr bool) string
+	FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashFn string, isPtr bool) string
+	FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashFn string, names []string, isPtr bool) string
 }
 
 type TraverserGenerator struct {
@@ -45,7 +46,7 @@ func (g TraverserGenerator) Generate(
 	imports []string,
 ) (string, error) {
 	src := g.writer.Package(packageName)
-	src += g.writer.Imports(append([]string{"github.com/apoydence/pubsub"}, imports...))
+	src += g.writer.Imports(append([]string{"github.com/apoydence/pubsub", "hash/crc64"}, imports...))
 	src += g.writer.DefineType(traverserName)
 	src += g.writer.Constructor(traverserName)
 
@@ -61,6 +62,7 @@ func (g TraverserGenerator) Generate(
 
 	src += g.writer.Traverse(traverserName, s.Fields[0].Name)
 	src += g.writer.Done(traverserName)
+	src += g.writer.Hashers(traverserName)
 
 	var ptr string
 	if isPtr {
@@ -109,6 +111,7 @@ func (g TraverserGenerator) generateStructFns(
 			parentFieldName,
 			castTypeName,
 			isPtr,
+			1,
 		)
 	}
 
@@ -119,6 +122,7 @@ func (g TraverserGenerator) generateStructFns(
 			f.Name,
 			s.Fields[i+1].Name,
 			castTypeName,
+			f.Type,
 			f.Ptr,
 		)
 	}
@@ -129,6 +133,7 @@ func (g TraverserGenerator) generateStructFns(
 			prefix,
 			s.Fields[len(s.Fields)-1].Name,
 			castTypeName,
+			s.Fields[len(s.Fields)-1].Type,
 			s.Fields[len(s.Fields)-1].Ptr,
 		), nil
 	}
@@ -146,7 +151,7 @@ func (g TraverserGenerator) generateStructFns(
 	var fieldNames []string
 
 	// Struct Peers
-	for _, f := range s.PeerTypeFields {
+	for i, f := range s.PeerTypeFields {
 		x, ok := m[f.Type]
 		if !ok {
 			continue
@@ -160,6 +165,7 @@ func (g TraverserGenerator) generateStructFns(
 			f.Name,
 			castTypeName,
 			f.Ptr,
+			i+1,
 		))
 	}
 
@@ -186,6 +192,7 @@ func (g TraverserGenerator) generateStructFns(
 		prefix,
 		castTypeName,
 		s.Fields[len(s.Fields)-1].Name,
+		s.Fields[len(s.Fields)-1].Type,
 		fieldNames,
 		s.Fields[len(s.Fields)-1].Ptr,
 	)
@@ -233,4 +240,17 @@ func (g TraverserGenerator) generateStructFns(
 	}
 
 	return src, nil
+}
+
+func hashFn(t, dataValue string) string {
+	switch t {
+	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "float32", "float64":
+		return fmt.Sprintf("uint64(%s)", dataValue)
+	case "string":
+		return fmt.Sprintf("crc64.Checksum([]byte(%s), tableECMA)", dataValue)
+	case "bool":
+		return fmt.Sprintf("s.hashBool(%s)", dataValue)
+	default:
+		return dataValue
+	}
 }

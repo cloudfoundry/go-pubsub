@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
@@ -25,7 +26,7 @@ func (g PathGenerator) Generate(
 		return "", err
 	}
 
-	src, err = g.genPath(src, m, genName, structName, "CreatePath", "", true)
+	src, err = g.genPath(src, m, genName, structName, "CreatePath", true, 0)
 	if err != nil {
 		return "", err
 	}
@@ -39,8 +40,8 @@ func (g PathGenerator) genPath(
 	genName string,
 	structName string,
 	funcName string,
-	label string,
 	includeMinimize bool,
+	enumValue int,
 ) (string, error) {
 	body, err := g.genPathBody(
 		m,
@@ -68,15 +69,15 @@ func (g PathGenerator) genPath(
 	}
 
 	var addLabel string
-	if label != "" {
-		addLabel = fmt.Sprintf(`path = append(path, "%s")`, label)
+	if enumValue != 0 {
+		addLabel = fmt.Sprintf(`path = append(path, %d)`, enumValue)
 	}
 
 	var minimize string
 	if includeMinimize {
 		minimize = `
 for i := len(path) - 1; i >= 1; i-- {
-	if path[i] != nil {
+	if path[i] != 0 {
 		break
 	}
 	path = path[:i]
@@ -85,11 +86,11 @@ for i := len(path) - 1; i >= 1; i-- {
 	}
 
 	src += fmt.Sprintf(`
-func (g %s) %s(f *%sFilter) []interface{} {
+func (s %s) %s(f *%sFilter) []uint64 {
 if f == nil {
 	return nil
 }
-var path []interface{}
+var path []uint64
 
 %s
 
@@ -103,13 +104,14 @@ return path
 }
 `, genName, funcName, g.sanitizeName(structName), addLabel, body, next, minimize)
 
-	for _, pf := range s.PeerTypeFields {
-		src, err = g.genPath(src, m, genName, pf.Type, fmt.Sprintf("createPath_%s", pf.Name), pf.Name, false)
+	for i, pf := range s.PeerTypeFields {
+		src, err = g.genPath(src, m, genName, pf.Type, fmt.Sprintf("createPath_%s", pf.Name), false, i+1)
 	}
 
 	for f, implementers := range s.InterfaceTypeFields {
-		for _, i := range implementers {
-			src, err = g.genPath(src, m, genName, i, fmt.Sprintf("createPath_%s_%s", f.Name, i), i, false)
+		sort.Strings(implementers)
+		for j, i := range implementers {
+			src, err = g.genPath(src, m, genName, i, fmt.Sprintf("createPath_%s_%s", f.Name, i), false, j+1)
 			if err != nil {
 				return "", err
 			}
@@ -128,7 +130,7 @@ func (g PathGenerator) genPathNextFunc(
 	structName string,
 ) string {
 	return fmt.Sprintf(`
-path = append(path, g.createPath_%s(f.%s)...)
+path = append(path, s.createPath_%s(f.%s)...)
 `, structName, structName)
 }
 
@@ -170,13 +172,16 @@ if count > 1 {
 
 	buildPath := ""
 	for _, f := range s.Fields {
+		dataValue := fmt.Sprintf("*f.%s", f.Name)
+		wrappedHash := hashFn(f.Type, dataValue)
+
 		buildPath += fmt.Sprintf(`
 if f.%s != nil {
-	path = append(path, *f.%s)
+	path = append(path, %s)
 }else{
-	path = append(path, nil)
+	path = append(path, 0)
 }
-`, f.Name, f.Name)
+`, f.Name, wrappedHash)
 	}
 
 	src += fmt.Sprintf(`

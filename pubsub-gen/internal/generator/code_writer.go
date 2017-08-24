@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -41,24 +42,41 @@ func (s %s) Traverse(data interface{}) pubsub.Paths {
 func (w CodeWriter) Done(travName string) string {
 	return fmt.Sprintf(`
 	func (s %s) done(data interface{}) pubsub.Paths {
-	return pubsub.Paths( func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
-	  return nil, nil, false
+	return pubsub.Paths( func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
+	  return 0, nil, false
 	})
 }
 `, travName)
 }
 
-func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string {
+func (w CodeWriter) Hashers(travName string) string {
+	return fmt.Sprintf(`
+func (s %s) hashBool(data bool) uint64 {
+	if data {
+		return 1
+	}
+	return 0
+}
+
+var tableECMA = crc64.MakeTable(crc64.ECMA)
+func (s %s) hashString(data string) uint64 {
+	return crc64.Checksum([]byte(data), tableECMA)
+}
+`, travName, travName)
+
+}
+
+func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string {
 	var nilCheck string
 	if isPtr {
 		nilCheck = fmt.Sprintf(`
   if %s == nil {
-		return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return nil, pubsub.TreeTraverser(s.done), true
+				return 0, pubsub.TreeTraverser(s.done), true
 			default:
-				return nil, nil, false
+				return 0, nil, false
 			}
 		})
   }
@@ -68,32 +86,32 @@ func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldNam
 	return fmt.Sprintf(`
 func(s %s) %s(data interface{}) pubsub.Paths {
 	%s
-  return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return "%s", pubsub.TreeTraverser(s.%s_%s), true
+				return %d, pubsub.TreeTraverser(s.%s_%s), true
 			default:
-				return nil, nil, false
+				return 0, nil, false
 			}
 		})
 }
-`, travName, prefix, nilCheck, parentFieldName, prefix, fieldName)
+`, travName, prefix, nilCheck, enumValue, prefix, fieldName)
 }
 
-func (w CodeWriter) FieldSelector(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool) string {
+func (w CodeWriter) FieldSelector(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string {
 	var nilCheck string
 	if isPtr {
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
-		return nil, pubsub.TreeTraverser(s.done), true
+		return 0, pubsub.TreeTraverser(s.done), true
   }
 		`, castTypeName, parentFieldName)
 	}
 
 	return fmt.Sprintf(`
 	%s
-	return "%s", pubsub.TreeTraverser(s.%s_%s), true
-`, nilCheck, parentFieldName, prefix, fieldName)
+	return %d, pubsub.TreeTraverser(s.%s_%s), true
+`, nilCheck, enumValue, prefix, fieldName)
 }
 
 func (w CodeWriter) SelectorFunc(travName, selectorName string, fields []string) string {
@@ -106,27 +124,27 @@ func (w CodeWriter) SelectorFunc(travName, selectorName string, fields []string)
 	}
 
 	return fmt.Sprintf(`
-	func (s %s) __%s (idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+	func (s %s) __%s (idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 		switch idx{
 	%s
 default:
-	return nil, nil, false
+	return 0, nil, false
 }
 	}
 	`, travName, selectorName, body)
 }
 
-func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName string, isPtr bool) string {
+func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashType string, isPtr bool) string {
 	var nilCheck string
 	if isPtr {
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
-    return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+    return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return nil, pubsub.TreeTraverser(s.%s_%s), true
+				return 0, pubsub.TreeTraverser(s.%s_%s), true
 			default:
-				return nil, nil, false
+				return 0, nil, false
 			}
 		})
   }
@@ -137,34 +155,38 @@ func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, 
 	if isPtr {
 		star = "*"
 	}
+
+	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
+	wrappedHash := hashFn(hashType, dataValue)
+
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}) pubsub.Paths {
 	%s
-  return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return nil, pubsub.TreeTraverser(s.%s_%s), true
+				return 0, pubsub.TreeTraverser(s.%s_%s), true
 			case 1:
-				return %s%s.%s, pubsub.TreeTraverser(s.%s_%s), true
+				return %s, pubsub.TreeTraverser(s.%s_%s), true
 			default:
-				return nil, nil, false
+				return 0, nil, false
 			}
 		})
 }
-`, travName, prefix, fieldName, nilCheck, prefix, nextFieldName, star, castTypeName, fieldName, prefix, nextFieldName)
+`, travName, prefix, fieldName, nilCheck, prefix, nextFieldName, wrappedHash, prefix, nextFieldName)
 }
 
-func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName string, isPtr bool) string {
+func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashType string, isPtr bool) string {
 	var nilCheck string
 	if isPtr {
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
-    return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+    return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return nil, pubsub.TreeTraverser(s.done), true
+				return 0, pubsub.TreeTraverser(s.done), true
 			default:
-				return nil, nil, false
+				return 0, nil, false
 			}
 		})
   }
@@ -176,24 +198,27 @@ func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeNam
 		star = "*"
 	}
 
+	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
+	wrappedHash := hashFn(hashType, dataValue)
+
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}) pubsub.Paths {
 	%s
-  return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return nil, pubsub.TreeTraverser(s.done), true
+				return 0, pubsub.TreeTraverser(s.done), true
 			case 1:
-				return %s%s.%s, pubsub.TreeTraverser(s.done), true
+				return %s, pubsub.TreeTraverser(s.done), true
 			default:
-				return nil, nil, false
+				return 0, nil, false
 			}
 		})
 }
-`, travName, prefix, fieldName, nilCheck, star, castTypeName, fieldName)
+`, travName, prefix, fieldName, nilCheck, wrappedHash)
 }
 
-func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName string, names []string, isPtr bool) string {
+func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashType string, names []string, isPtr bool) string {
 	travFunc := fmt.Sprintf(`
     pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 			return s.__%s
@@ -203,12 +228,12 @@ func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName str
 	if isPtr {
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
-    return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+    return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 			switch idx {
 			case 0:
-				return nil, %s, true
+				return 0, %s, true
 			default:
-				return nil, nil, false
+				return 0, nil, false
 			}
 		})
   }
@@ -220,35 +245,56 @@ func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName str
 		star = "*"
 	}
 
+	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
+	wrappedHash := hashFn(hashType, dataValue)
+
 	return fmt.Sprintf(`
 func (s %s) %s_%s(data interface{}) pubsub.Paths {
 	%s
-  return pubsub.Paths(func(idx int, data interface{}) (path interface{}, nextTraverser pubsub.TreeTraverser, ok bool){
+  return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 		switch idx{
 		case 0:
-				return nil, %s, true
+				return 0, %s, true
 		case 1:
-				return %s%s.%s, %s, true
+				return %s, %s, true
 	  default:
-			return nil, nil, false
+			return 0, nil, false
 		}
 	})
 }
-`, travName, prefix, fieldName, nilCheck, travFunc, star, castTypeName, fieldName, travFunc)
+`, travName, prefix, fieldName, nilCheck, travFunc, wrappedHash, travFunc)
 }
 
 func (w CodeWriter) InterfaceSelector(prefix, castTypeName, fieldName, structPkgPrefix string, implementers map[string]string) string {
+	idxs := orderImpls(implementers)
 	body := fmt.Sprintf("switch %s.%s.(type) {", castTypeName, fieldName)
 	for i, f := range implementers {
 		body += fmt.Sprintf(`
 case %s%s:
-	return "%s", s.%s_%s_%s_%s, true
-`, structPkgPrefix, i, i, prefix, fieldName, i, f)
+	return %d, s.%s_%s_%s_%s, true
+`, structPkgPrefix, i, idxs[i], prefix, fieldName, i, f)
 	}
 	body += `
 default:
-	return nil, pubsub.TreeTraverser(s.done), true
+	return 0, pubsub.TreeTraverser(s.done), true
 }`
 
 	return body
+}
+
+func orderImpls(impls map[string]string) map[string]int {
+	m := make(map[string]int)
+
+	var names []string
+	for k := range impls {
+		names = append(names, k)
+	}
+
+	sort.Strings(names)
+
+	for i, s := range names {
+		m[s] = i + 1
+	}
+
+	return m
 }

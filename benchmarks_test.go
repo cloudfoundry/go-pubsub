@@ -16,11 +16,10 @@ func BenchmarkPublishing(b *testing.B) {
 		_, f := newSpySubscrption()
 		p.Subscribe(f, pubsub.WithPath(randPath()))
 	}
-	data := randData()
 	b.StartTimer()
 
 	for i := 0; i < b.N; i++ {
-		p.Publish("data", pubsub.LinearTreeTraverser(data[i%len(data)]))
+		p.Publish("data", pubsub.LinearTreeTraverser(randPath()))
 	}
 }
 
@@ -43,14 +42,13 @@ func BenchmarkPublishingStructs(b *testing.B) {
 func BenchmarkSubscriptions(b *testing.B) {
 	b.StopTimer()
 	p := pubsub.New()
-	data := randData()
 	b.StartTimer()
 
 	b.RunParallel(func(b *testing.PB) {
 		i := rand.Int()
 		for b.Next() {
 			_, f := newSpySubscrption()
-			unsub := p.Subscribe(f, pubsub.WithPath(data[i%len(data)]))
+			unsub := p.Subscribe(f, pubsub.WithPath(randPath()))
 			unsub()
 			i++
 		}
@@ -64,13 +62,12 @@ func BenchmarkPublishingParallel(b *testing.B) {
 		_, f := newSpySubscrption()
 		p.Subscribe(f, pubsub.WithPath(randPath()))
 	}
-	data := randData()
 	b.StartTimer()
 
 	b.RunParallel(func(b *testing.PB) {
 		i := rand.Int()
 		for b.Next() {
-			p.Publish("data", pubsub.LinearTreeTraverser(data[i%len(data)]))
+			p.Publish("data", pubsub.LinearTreeTraverser(randPath()))
 			i++
 		}
 	})
@@ -99,7 +96,6 @@ func BenchmarkPublishingParallelStructs(b *testing.B) {
 func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 	b.StopTimer()
 	p := pubsub.New()
-	data := randData()
 
 	var wg sync.WaitGroup
 	for x := 0; x < 5; x++ {
@@ -108,7 +104,7 @@ func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 			wg.Done()
 			for i := 0; ; i++ {
 				_, f := newSpySubscrption()
-				unsub := p.Subscribe(f, pubsub.WithPath(data[i%len(data)]))
+				unsub := p.Subscribe(f, pubsub.WithPath(randPath()))
 				if i%2 == 0 {
 					unsub()
 				}
@@ -122,7 +118,7 @@ func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 	b.RunParallel(func(b *testing.PB) {
 		i := rand.Int()
 		for b.Next() {
-			p.Publish("data", pubsub.LinearTreeTraverser(data[i%len(data)]))
+			p.Publish("data", pubsub.LinearTreeTraverser(randPath()))
 			i++
 		}
 	})
@@ -161,10 +157,10 @@ func BenchmarkPublishingWhileSubscribingStructs(b *testing.B) {
 	})
 }
 
-func randPath() []interface{} {
-	var r []interface{}
+func randPath() []uint64 {
+	var r []uint64
 	for i := 0; i < 10; i++ {
-		r = append(r, fmt.Sprintf("%d", rand.Intn(10)))
+		r = append(r, uint64(rand.Int63n(10)))
 	}
 	return r
 }
@@ -181,24 +177,24 @@ func randData() [][]interface{} {
 }
 
 type someType struct {
-	a string
-	b string
+	a uint64
+	b uint64
 	w *w
 	x *x
 }
 
 type w struct {
-	i string
-	j string
+	i uint64
+	j uint64
 }
 
 type x struct {
-	i string
-	j string
+	i uint64
+	j uint64
 }
 
-func randNum(i int) string {
-	return fmt.Sprintf("%d", rand.Intn(i))
+func randNum(i int64) uint64 {
+	return uint64(rand.Int63n(i))
 }
 
 func randStructs() []*someType {
@@ -220,14 +216,14 @@ type StructTraverser struct{}
 
 func (s StructTraverser) traverse(data interface{}) pubsub.Paths {
 	// a
-	return pubsub.PathsWithTraverser([]interface{}{"", data.(*someType).a}, pubsub.TreeTraverser(s.b))
+	return pubsub.PathsWithTraverser([]uint64{0, data.(*someType).a}, pubsub.TreeTraverser(s.b))
 }
 
 func (s StructTraverser) b(data interface{}) pubsub.Paths {
 	return pubsub.PathAndTraversers(
 		[]pubsub.PathAndTraverser{
 			{
-				Path:      "",
+				Path:      0,
 				Traverser: pubsub.TreeTraverser(s.w),
 			},
 			{
@@ -235,7 +231,7 @@ func (s StructTraverser) b(data interface{}) pubsub.Paths {
 				Traverser: pubsub.TreeTraverser(s.w),
 			},
 			{
-				Path:      "",
+				Path:      0,
 				Traverser: pubsub.TreeTraverser(s.x),
 			},
 			{
@@ -246,36 +242,41 @@ func (s StructTraverser) b(data interface{}) pubsub.Paths {
 	)
 }
 
+var (
+	W = uint64(1)
+	X = uint64(2)
+)
+
 func (s StructTraverser) w(data interface{}) pubsub.Paths {
 	if data.(*someType).w == nil {
-		return pubsub.PathsWithTraverser([]interface{}{""}, pubsub.TreeTraverser(s.done))
+		return pubsub.PathsWithTraverser([]uint64{0}, pubsub.TreeTraverser(s.done))
 	}
 
-	return pubsub.PathsWithTraverser([]interface{}{"w"}, pubsub.TreeTraverser(s.wi))
+	return pubsub.PathsWithTraverser([]uint64{W}, pubsub.TreeTraverser(s.wi))
 }
 
 func (s StructTraverser) wi(data interface{}) pubsub.Paths {
-	return pubsub.PathsWithTraverser([]interface{}{"", data.(*someType).w.i}, pubsub.TreeTraverser(s.wj))
+	return pubsub.PathsWithTraverser([]uint64{0, data.(*someType).w.i}, pubsub.TreeTraverser(s.wj))
 }
 
 func (s StructTraverser) wj(data interface{}) pubsub.Paths {
-	return pubsub.PathsWithTraverser([]interface{}{"", data.(*someType).w.j}, pubsub.TreeTraverser(s.done))
+	return pubsub.PathsWithTraverser([]uint64{0, data.(*someType).w.j}, pubsub.TreeTraverser(s.done))
 }
 
 func (s StructTraverser) x(data interface{}) pubsub.Paths {
 	if data.(*someType).x == nil {
-		return pubsub.PathsWithTraverser([]interface{}{""}, pubsub.TreeTraverser(s.done))
+		return pubsub.PathsWithTraverser([]uint64{0}, pubsub.TreeTraverser(s.done))
 	}
 
-	return pubsub.PathsWithTraverser([]interface{}{"x"}, pubsub.TreeTraverser(s.xi))
+	return pubsub.PathsWithTraverser([]uint64{X}, pubsub.TreeTraverser(s.xi))
 }
 
 func (s StructTraverser) xi(data interface{}) pubsub.Paths {
-	return pubsub.PathsWithTraverser([]interface{}{"", data.(*someType).x.i}, pubsub.TreeTraverser(s.xj))
+	return pubsub.PathsWithTraverser([]uint64{0, data.(*someType).x.i}, pubsub.TreeTraverser(s.xj))
 }
 
 func (s StructTraverser) xj(data interface{}) pubsub.Paths {
-	return pubsub.PathsWithTraverser([]interface{}{"", data.(*someType).x.j}, pubsub.TreeTraverser(s.done))
+	return pubsub.PathsWithTraverser([]uint64{0, data.(*someType).x.j}, pubsub.TreeTraverser(s.done))
 }
 
 func (s StructTraverser) done(data interface{}) pubsub.Paths {

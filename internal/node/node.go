@@ -4,12 +4,8 @@ import (
 	"math/rand"
 )
 
-type ShardingAlgorithm interface {
-	Write(data interface{}, subscriptions []func(interface{}))
-}
-
 type Node struct {
-	children      map[interface{}]*Node
+	children      map[uint64]*Node
 	subscriptions map[string][]SubscriptionEnvelope
 	shards        map[int64]string
 }
@@ -21,13 +17,13 @@ type SubscriptionEnvelope struct {
 
 func New() *Node {
 	return &Node{
-		children:      make(map[interface{}]*Node),
+		children:      make(map[uint64]*Node),
 		subscriptions: make(map[string][]SubscriptionEnvelope),
 		shards:        make(map[int64]string),
 	}
 }
 
-func (n *Node) AddChild(key interface{}) *Node {
+func (n *Node) AddChild(key uint64) *Node {
 	if n == nil {
 		return nil
 	}
@@ -41,7 +37,7 @@ func (n *Node) AddChild(key interface{}) *Node {
 	return child
 }
 
-func (n *Node) FetchChild(key interface{}) *Node {
+func (n *Node) FetchChild(key uint64) *Node {
 	if n == nil {
 		return nil
 	}
@@ -53,7 +49,7 @@ func (n *Node) FetchChild(key interface{}) *Node {
 	return nil
 }
 
-func (n *Node) DeleteChild(key interface{}) {
+func (n *Node) DeleteChild(key uint64) {
 	if n == nil {
 		return
 	}

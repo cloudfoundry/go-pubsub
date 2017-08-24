@@ -28,23 +28,24 @@ func TestNode(t *testing.T) {
 
 	o.Spec("returns nil for nil node", func(t TN) {
 		var nilNode *node.Node
-		n := nilNode.FetchChild("invalid")
+		n := nilNode.FetchChild(99)
 		Expect(t, n == nil).To(BeTrue())
 	})
 
 	o.Spec("returns nil for unknown child", func(t TN) {
-		n := t.n.FetchChild("invalid")
+		n := t.n.FetchChild(99)
 		Expect(t, n == nil).To(BeTrue())
 	})
 
 	o.Spec("returns child", func(t TN) {
-		n1 := t.n.AddChild("a")
-		n2 := t.n.FetchChild("a")
+		n1 := t.n.AddChild(1)
+		n2 := t.n.FetchChild(1)
 		Expect(t, n1).To(Equal(n2))
 		Expect(t, t.n.ChildLen()).To(Equal(1))
 
-		t.n.DeleteChild("a")
-		Expect(t, t.n.FetchChild("a") == nil).To(BeTrue())
+		// Removes child upon deletion
+		t.n.DeleteChild(1)
+		Expect(t, t.n.FetchChild(1) == nil).To(BeTrue())
 	})
 
 	o.Spec("returns all subscriptions", func(t TN) {

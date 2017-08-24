@@ -1,7 +1,6 @@
 package pubsub_test
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 
@@ -182,74 +181,74 @@ func TestPaths(t *testing.T) {
 	o := onpar.New()
 	defer o.Run(t)
 
-	o.Group("FlatPaths", func() {
-		o.Spec("it returns a path for each member of a slice", func(t *testing.T) {
-			p := pubsub.FlatPaths([]interface{}{"a", "b", "c"})
+	// o.Group("FlatPaths", func() {
+	// 	o.Spec("it returns a path for each member of a slice", func(t *testing.T) {
+	// 		p := pubsub.FlatPaths([]interface{}{"a", "b", "c"})
 
-			var resultChild []string
+	// 		var resultChild []string
 
-			for i := 0; i < 10; i++ {
-				c, tr, ok := p(i, nil)
-				if !ok {
-					break
-				}
-				resultChild = append(resultChild, c.(string))
+	// 		for i := 0; i < 10; i++ {
+	// 			c, tr, ok := p(i, nil)
+	// 			if !ok {
+	// 				break
+	// 			}
+	// 			resultChild = append(resultChild, c.(string))
 
-				Expect(t, tr == nil).To(BeTrue())
-			}
+	// 			Expect(t, tr == nil).To(BeTrue())
+	// 		}
 
-			Expect(t, resultChild).To(HaveLen(3))
-			Expect(t, resultChild).To(Equal([]string{"a", "b", "c"}))
-		})
-	})
+	// 		Expect(t, resultChild).To(HaveLen(3))
+	// 		Expect(t, resultChild).To(Equal([]string{"a", "b", "c"}))
+	// 	})
+	// })
 
-	o.Group("CombinePaths", func() {
-		o.Spec("it joins paths", func(t *testing.T) {
-			p1 := pubsub.FlatPaths([]interface{}{"a", "b", "c"})
-			p2 := pubsub.FlatPaths([]interface{}{"d"})
-			p3 := pubsub.FlatPaths([]interface{}{"e", "f", "g"})
-			p := pubsub.CombinePaths(p1, p2, p3)
+	// o.Group("CombinePaths", func() {
+	// 	o.Spec("it joins paths", func(t *testing.T) {
+	// 		p1 := pubsub.FlatPaths([]interface{}{"a", "b", "c"})
+	// 		p2 := pubsub.FlatPaths([]interface{}{"d"})
+	// 		p3 := pubsub.FlatPaths([]interface{}{"e", "f", "g"})
+	// 		p := pubsub.CombinePaths(p1, p2, p3)
 
-			var resultChild []string
+	// 		var resultChild []string
 
-			for i := 0; i < 10; i++ {
-				c, tr, ok := p(i, nil)
-				if !ok {
-					break
-				}
-				resultChild = append(resultChild, c.(string))
+	// 		for i := 0; i < 10; i++ {
+	// 			c, tr, ok := p(i, nil)
+	// 			if !ok {
+	// 				break
+	// 			}
+	// 			resultChild = append(resultChild, c.(string))
 
-				Expect(t, tr == nil).To(BeTrue())
-			}
+	// 			Expect(t, tr == nil).To(BeTrue())
+	// 		}
 
-			Expect(t, resultChild).To(HaveLen(7))
-			Expect(t, resultChild).To(Equal([]string{"a", "b", "c", "d", "e", "f", "g"}))
+	// 		Expect(t, resultChild).To(HaveLen(7))
+	// 		Expect(t, resultChild).To(Equal([]string{"a", "b", "c", "d", "e", "f", "g"}))
 
-		})
-	})
+	// 	})
+	// })
 }
 
-func Example() {
-	ps := pubsub.New()
-	subscription := func(name string) pubsub.Subscription {
-		return func(data interface{}) {
-			fmt.Printf("%s -> %v\n", name, data)
-		}
-	}
+// func Example() {
+// 	ps := pubsub.New()
+// 	subscription := func(name string) pubsub.Subscription {
+// 		return func(data interface{}) {
+// 			fmt.Printf("%s -> %v\n", name, data)
+// 		}
+// 	}
 
-	ps.Subscribe(subscription("sub-1"), pubsub.WithPath([]interface{}{"a", "b", "c"}))
-	ps.Subscribe(subscription("sub-2"), pubsub.WithPath([]interface{}{"a", "b", "d"}))
-	ps.Subscribe(subscription("sub-3"), pubsub.WithPath([]interface{}{"a", "b", "e"}))
+// 	ps.Subscribe(subscription("sub-1"), pubsub.WithPath([]interface{}{"a", "b", "c"}))
+// 	ps.Subscribe(subscription("sub-2"), pubsub.WithPath([]interface{}{"a", "b", "d"}))
+// 	ps.Subscribe(subscription("sub-3"), pubsub.WithPath([]interface{}{"a", "b", "e"}))
 
-	ps.Publish("data-1", pubsub.LinearTreeTraverser([]interface{}{"a", "b"}))
-	ps.Publish("data-2", pubsub.LinearTreeTraverser([]interface{}{"a", "b", "c"}))
-	ps.Publish("data-3", pubsub.LinearTreeTraverser([]interface{}{"a", "b", "d"}))
-	ps.Publish("data-3", pubsub.LinearTreeTraverser([]interface{}{"x", "y"}))
+// 	ps.Publish("data-1", pubsub.LinearTreeTraverser([]interface{}{"a", "b"}))
+// 	ps.Publish("data-2", pubsub.LinearTreeTraverser([]interface{}{"a", "b", "c"}))
+// 	ps.Publish("data-3", pubsub.LinearTreeTraverser([]interface{}{"a", "b", "d"}))
+// 	ps.Publish("data-3", pubsub.LinearTreeTraverser([]interface{}{"x", "y"}))
 
-	// Output:
-	// sub-1 -> data-2
-	// sub-2 -> data-3
-}
+// 	// Output:
+// 	// sub-1 -> data-2
+// 	// sub-2 -> data-3
+// }
 
 type spySubscription struct {
 	mu   sync.Mutex
