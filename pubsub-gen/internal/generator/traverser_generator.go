@@ -10,14 +10,12 @@ import (
 type TraverserWriter interface {
 	Package(name string) string
 	Imports(names []string) string
-	DefineType(travName string) string
-	Constructor(travName string) string
 	Done(travName string) string
 	Traverse(travName, name string) string
 	Hashers(travName string) string
 
 	FieldSelector(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string
-	InterfaceSelector(prefix, castTypeName, fieldName, structPkgPrefix string, implementers map[string]string) string
+	InterfaceSelector(prefix, castTypeName, fieldName, structPkgPrefix string, implementers map[string]string, startIdx int) string
 	SelectorFunc(travName, selectorName string, fields []string) string
 
 	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string
@@ -47,8 +45,6 @@ func (g TraverserGenerator) Generate(
 ) (string, error) {
 	src := g.writer.Package(packageName)
 	src += g.writer.Imports(append([]string{"github.com/apoydence/pubsub", "hash/crc64"}, imports...))
-	src += g.writer.DefineType(traverserName)
-	src += g.writer.Constructor(traverserName)
 
 	s, ok := m[structName]
 	if !ok {
@@ -151,7 +147,8 @@ func (g TraverserGenerator) generateStructFns(
 	var fieldNames []string
 
 	// Struct Peers
-	for i, f := range s.PeerTypeFields {
+	var i int
+	for _, f := range s.PeerTypeFields {
 		x, ok := m[f.Type]
 		if !ok {
 			continue
@@ -167,6 +164,7 @@ func (g TraverserGenerator) generateStructFns(
 			f.Ptr,
 			i+1,
 		))
+		i++
 	}
 
 	// Interface Peers
@@ -184,6 +182,7 @@ func (g TraverserGenerator) generateStructFns(
 
 			structPkgPrefix,
 			implementersWithFields,
+			i,
 		))
 	}
 

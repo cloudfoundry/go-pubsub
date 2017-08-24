@@ -20,44 +20,43 @@ func TestEnd2End(t *testing.T) {
 
 	o.Spec("routes data as expected", func(t *testing.T) {
 		ps := pubsub.New()
-		s := StructTraverser{}
 		sub1 := &mockSubscription{}
 		sub2 := &mockSubscription{}
 		sub3 := &mockSubscription{}
 		sub4 := &mockSubscription{}
 		sub5 := &mockSubscription{}
 
-		ps.Subscribe(sub1.write, pubsub.WithPath(s.CreatePath(nil)))
-		ps.Subscribe(sub2.write, pubsub.WithPath(s.CreatePath(&XFilter{
+		ps.Subscribe(sub1.write, pubsub.WithPath(StructTraverserCreatePath(nil)))
+		ps.Subscribe(sub2.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{
 			I: setters.Int(1),
 			Y1: &YFilter{
 				I: setters.Int(1),
 				J: setters.String("a"),
 			},
 		})))
-		ps.Subscribe(sub3.write, pubsub.WithPath(s.CreatePath(&XFilter{
+		ps.Subscribe(sub3.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{
 			Y1: &YFilter{
 				J: setters.String("b"),
 			},
 		})))
-		ps.Subscribe(sub4.write, pubsub.WithPath(s.CreatePath(&XFilter{
+		ps.Subscribe(sub4.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{
 			Y2: &YFilter{},
 		})))
-		ps.Subscribe(sub5.write, pubsub.WithPath(s.CreatePath(&XFilter{
+		ps.Subscribe(sub5.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{
 			M_M2: &M2Filter{
 				B: setters.Int(2),
 			},
 		})))
 
-		// ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 1, J: "a"}, Y2: &Y{I: 1, J: "a"}}, s.Traverse)
-		// ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 2, J: "b"}, Y2: &Y{I: 1, J: "a"}}, s.Traverse)
-		// ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}}, s.Traverse)
-		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}, M: M2{A: 1, B: 2}}, s.Traverse)
+		ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 1, J: "a"}, Y2: &Y{I: 1, J: "a"}}, StructTraverserTraverse)
+		ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 2, J: "b"}, Y2: &Y{I: 1, J: "a"}}, StructTraverserTraverse)
+		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}}, StructTraverserTraverse)
+		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}, M: M2{A: 1, B: 2}}, StructTraverserTraverse)
 
-		// Expect(t, sub1.callCount).To(Equal(4))
-		// Expect(t, sub2.callCount).To(Equal(1))
-		// Expect(t, sub3.callCount).To(Equal(3))
-		// Expect(t, sub4.callCount).To(Equal(2))
+		Expect(t, sub1.callCount).To(Equal(4))
+		Expect(t, sub2.callCount).To(Equal(1))
+		Expect(t, sub3.callCount).To(Equal(3))
+		Expect(t, sub4.callCount).To(Equal(2))
 		Expect(t, sub5.callCount).To(Equal(1))
 	})
 }

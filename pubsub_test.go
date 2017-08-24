@@ -17,7 +17,6 @@ type TPS struct {
 	subscription *spySubscription
 	spy          *spySubscription
 	sub          func(interface{})
-	trav         testStructTrav
 }
 
 //go:generate go install github.com/apoydence/pubsub/pubsub-gen
@@ -42,7 +41,6 @@ func TestPubSub(t *testing.T) {
 	o := onpar.New()
 	defer o.Run(t)
 	o.BeforeEach(func(t *testing.T) TPS {
-		trav := NewTestStructTrav()
 		s, f := newSpySubscrption()
 
 		return TPS{
@@ -50,7 +48,6 @@ func TestPubSub(t *testing.T) {
 			sub:          f,
 			subscription: s,
 			p:            pubsub.New(),
-			trav:         trav,
 		}
 	})
 
@@ -60,18 +57,18 @@ func TestPubSub(t *testing.T) {
 		sub3, f3 := newSpySubscrption()
 		sub4, f4 := newSpySubscrption()
 
-		t.p.Subscribe(f1, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		t.p.Subscribe(f1, pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 			a: setters.Int(1),
 			b: setters.Int(2),
 		})))
-		t.p.Subscribe(f2, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		t.p.Subscribe(f2, pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 			a: setters.Int(1),
 			b: setters.Int(3),
 		})))
-		t.p.Subscribe(f3, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		t.p.Subscribe(f3, pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 			a: setters.Int(1),
 		})))
-		t.p.Subscribe(f4, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		t.p.Subscribe(f4, pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 			a: setters.Int(2),
 			b: setters.Int(3),
 			aa: &testStructAFilter{
@@ -81,8 +78,8 @@ func TestPubSub(t *testing.T) {
 
 		data := &testStruct{a: 1, b: 2}
 		otherData := &testStruct{a: 2, b: 3, aa: &testStructA{a: 4}}
-		t.p.Publish(data, t.trav.Traverse)
-		t.p.Publish(otherData, t.trav.Traverse)
+		t.p.Publish(data, testStructTravTraverse)
+		t.p.Publish(otherData, testStructTravTraverse)
 
 		Expect(t, sub1.data).To(HaveLen(1))
 		Expect(t, sub2.data).To(HaveLen(0))
@@ -96,14 +93,14 @@ func TestPubSub(t *testing.T) {
 
 	o.Spec("it does not write to a subscription after it unsubscribes", func(t TPS) {
 		sub, f := newSpySubscrption()
-		unsubscribe := t.p.Subscribe(f, pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+		unsubscribe := t.p.Subscribe(f, pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 			a: setters.Int(1),
 			b: setters.Int(2),
 		})))
 
 		unsubscribe()
 
-		t.p.Publish(&testStruct{a: 1, b: 2}, t.trav.Traverse)
+		t.p.Publish(&testStruct{a: 1, b: 2}, testStructTravTraverse)
 		Expect(t, sub.data).To(HaveLen(0))
 	})
 }
@@ -113,7 +110,6 @@ func TestPubSubWithShardID(t *testing.T) {
 	o := onpar.New()
 	defer o.Run(t)
 	o.BeforeEach(func(t *testing.T) TPS {
-		trav := NewTestStructTrav()
 		s, f := newSpySubscrption()
 
 		return TPS{
@@ -121,7 +117,6 @@ func TestPubSubWithShardID(t *testing.T) {
 			subscription: s,
 			sub:          f,
 			p:            pubsub.New(),
-			trav:         trav,
 		}
 	})
 
@@ -134,38 +129,38 @@ func TestPubSubWithShardID(t *testing.T) {
 
 		t.p.Subscribe(f1,
 			pubsub.WithShardID("1"),
-			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
 		)
 
 		t.p.Subscribe(f2,
 			pubsub.WithShardID("1"),
-			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
 		)
 		t.p.Subscribe(f3,
 			pubsub.WithShardID("2"),
-			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
 		)
 
 		t.p.Subscribe(f4,
-			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
 		)
 
 		t.p.Subscribe(f5,
-			pubsub.WithPath(t.trav.CreatePath(&testStructFilter{
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{
 				a: setters.Int(1),
 			})),
 		)
 
 		for i := 0; i < 100; i++ {
-			t.p.Publish(&testStruct{a: 1, b: 2}, t.trav.Traverse)
+			t.p.Publish(&testStruct{a: 1, b: 2}, testStructTravTraverse)
 		}
 
 		Expect(t, len(sub1.data)).To(And(BeAbove(0), BeBelow(99)))

@@ -31,10 +31,9 @@ type x struct {
 // StructTraverser that reads each field. Fields can be left blank upon
 // subscription meaning the field is optinal.
 func main() {
-	trav := StructTrav{}
 	ps := pubsub.New()
 
-	ps.Subscribe(Subscription("sub-0"), pubsub.WithPath(trav.CreatePath(&someTypeFilter{
+	ps.Subscribe(Subscription("sub-0"), pubsub.WithPath(StructTravCreatePath(&someTypeFilter{
 		a: setters.String("a"),
 		b: setters.String("b"),
 		w: &wFilter{
@@ -43,7 +42,7 @@ func main() {
 		},
 	})))
 
-	ps.Subscribe(Subscription("sub-1"), pubsub.WithPath(trav.CreatePath(&someTypeFilter{
+	ps.Subscribe(Subscription("sub-1"), pubsub.WithPath(StructTravCreatePath(&someTypeFilter{
 		a: setters.String("a"),
 		b: setters.String("b"),
 		x: &xFilter{
@@ -52,7 +51,7 @@ func main() {
 		},
 	})))
 
-	ps.Subscribe(Subscription("sub-2"), pubsub.WithPath(trav.CreatePath(&someTypeFilter{
+	ps.Subscribe(Subscription("sub-2"), pubsub.WithPath(StructTravCreatePath(&someTypeFilter{
 		b: setters.String("b"),
 		x: &xFilter{
 			i: setters.String("x.i"),
@@ -60,7 +59,7 @@ func main() {
 		},
 	})))
 
-	ps.Subscribe(Subscription("sub-3"), pubsub.WithPath(trav.CreatePath(&someTypeFilter{
+	ps.Subscribe(Subscription("sub-3"), pubsub.WithPath(StructTravCreatePath(&someTypeFilter{
 		x: &xFilter{
 			i: setters.String("x.i"),
 			j: setters.String("x.j"),
@@ -69,10 +68,10 @@ func main() {
 
 	ps.Subscribe(Subscription("sub-4"))
 
-	ps.Publish(&someType{a: "a", b: "b", w: &w{i: "w.i", j: "w.j"}, x: &x{i: "x.i", j: "x.j"}}, trav.Traverse)
-	ps.Publish(&someType{a: "a", b: "b", x: &x{i: "x.i", j: "x.j"}}, trav.Traverse)
-	ps.Publish(&someType{a: "a'", b: "b'", x: &x{i: "x.i", j: "x.j"}}, trav.Traverse)
-	ps.Publish(&someType{a: "a", b: "b"}, trav.Traverse)
+	ps.Publish(&someType{a: "a", b: "b", w: &w{i: "w.i", j: "w.j"}, x: &x{i: "x.i", j: "x.j"}}, StructTravTraverse)
+	ps.Publish(&someType{a: "a", b: "b", x: &x{i: "x.i", j: "x.j"}}, StructTravTraverse)
+	ps.Publish(&someType{a: "a'", b: "b'", x: &x{i: "x.i", j: "x.j"}}, StructTravTraverse)
+	ps.Publish(&someType{a: "a", b: "b"}, StructTravTraverse)
 }
 
 // Subscription writes any results to stderr
