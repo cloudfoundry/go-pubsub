@@ -248,7 +248,7 @@ func hashFn(t, dataValue string) string {
 	case "string":
 		return fmt.Sprintf("crc64.Checksum([]byte(%s), tableECMA)", dataValue)
 	case "bool":
-		return fmt.Sprintf("s.hashBool(%s)", dataValue)
+		return fmt.Sprintf("hashBool(%s)", dataValue)
 	default:
 		return dataValue
 	}
