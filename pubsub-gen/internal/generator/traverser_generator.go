@@ -19,9 +19,9 @@ type TraverserWriter interface {
 	SelectorFunc(travName, selectorName string, fields []string) string
 
 	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string
-	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashFn string, isPtr bool) string
-	FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashFn string, isPtr bool) string
-	FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashFn string, names []string, isPtr bool) string
+	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashFn string, isPtr, isSlice bool) string
+	FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashFn string, isPtr, isSlice bool) string
+	FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashFn string, names []string, isPtr, isSlice bool) string
 }
 
 type TraverserGenerator struct {
@@ -120,6 +120,7 @@ func (g TraverserGenerator) generateStructFns(
 			castTypeName,
 			f.Type,
 			f.Ptr,
+			f.Slice,
 		)
 	}
 
@@ -131,6 +132,7 @@ func (g TraverserGenerator) generateStructFns(
 			castTypeName,
 			s.Fields[len(s.Fields)-1].Type,
 			s.Fields[len(s.Fields)-1].Ptr,
+			s.Fields[len(s.Fields)-1].Slice,
 		), nil
 	}
 
@@ -194,6 +196,7 @@ func (g TraverserGenerator) generateStructFns(
 		s.Fields[len(s.Fields)-1].Type,
 		fieldNames,
 		s.Fields[len(s.Fields)-1].Ptr,
+		s.Fields[len(s.Fields)-1].Slice,
 	)
 
 	if len(peerFields) != 0 {
@@ -241,15 +244,31 @@ func (g TraverserGenerator) generateStructFns(
 	return src, nil
 }
 
-func hashFn(t, dataValue string) string {
+func hashFn(t, dataValue string, isSlice bool) string {
+	calc, value := hashSplitFn(t, dataValue, isSlice)
+	return fmt.Sprintf(`
+		%s
+		return %s`, calc, value)
+}
+
+func hashSplitFn(t, dataValue string, isSlice bool) (calc, value string) {
+	if isSlice {
+		_, value := hashSplitFn(t, "x", false)
+		return fmt.Sprintf(`
+	var total uint64
+	for _, x := range %s{ 
+		total += %s
+	}`, dataValue, value), "total"
+	}
+
 	switch t {
-	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "float32", "float64":
-		return fmt.Sprintf("uint64(%s)", dataValue)
+	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "byte", "uint16", "uint32", "float32", "float64":
+		return "", fmt.Sprintf("uint64(%s)", dataValue)
 	case "string":
-		return fmt.Sprintf("crc64.Checksum([]byte(%s), tableECMA)", dataValue)
+		return "", fmt.Sprintf("crc64.Checksum([]byte(%s), tableECMA)", dataValue)
 	case "bool":
-		return fmt.Sprintf("hashBool(%s)", dataValue)
+		return "", fmt.Sprintf("hashBool(%s)", dataValue)
 	default:
-		return dataValue
+		return "", dataValue
 	}
 }

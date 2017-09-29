@@ -174,16 +174,21 @@ if count > 1 {
 
 	buildPath := ""
 	for _, f := range s.Fields {
-		dataValue := fmt.Sprintf("*f.%s", f.Name)
-		wrappedHash := hashFn(f.Type, dataValue)
+		var star string
+		if !f.Slice {
+			star = "*"
+		}
+		dataValue := fmt.Sprintf("%sf.%s", star, f.Name)
+		hashCalc, hashValue := hashSplitFn(f.Type, dataValue, f.Slice)
 
 		buildPath += fmt.Sprintf(`
 if f.%s != nil {
+	%s
 	path = append(path, %s)
 }else{
 	path = append(path, 0)
 }
-`, f.Name, wrappedHash)
+`, f.Name, hashCalc, hashValue)
 	}
 
 	src += fmt.Sprintf(`
@@ -212,6 +217,11 @@ func (g PathGenerator) genStruct(
 
 	var fields string
 	for _, f := range s.Fields {
+		if f.Slice {
+			fields += fmt.Sprintf("%s []%s\n", f.Name, f.Type)
+			continue
+		}
+
 		fields += fmt.Sprintf("%s *%s\n", f.Name, f.Type)
 	}
 

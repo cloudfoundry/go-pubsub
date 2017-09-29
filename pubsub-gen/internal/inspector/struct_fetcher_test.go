@@ -140,6 +140,54 @@ type x struct {
 	})
 }
 
+func TestStructFetcherWithSlices(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	o.BeforeEach(func(t *testing.T) TSF {
+		return TSF{
+			T: t,
+		}
+	})
+
+	o.Spec("it parses and returns a field that is a slice of a basic type", func(t TSF) {
+		src := `
+package p
+type x struct {
+	a []int
+	b []int8
+	c []int32
+	d []int64
+	e []uint
+	f []uint8
+	g []uint32
+	h []uint64
+	i []string
+	j []float32
+	k []float64
+	l []bool
+	m []byte
+}
+`
+
+		fset := token.NewFileSet()
+		n, err := parser.ParseFile(fset, "src.go", src, 0)
+		Expect(t, err == nil).To(BeTrue())
+
+		s, err := t.f.Parse(n)
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, s).To(HaveLen(1))
+		Expect(t, s[0].Name).To(Equal("x"))
+		Expect(t, s[0].Fields).To(HaveLen(13))
+
+		for _, f := range s[0].Fields {
+			Expect(t, f.Slice).To(BeTrue())
+			Expect(t, f.Ptr).To(BeFalse())
+		}
+	})
+}
+
 func TestStructFetcherWithBlacklist(t *testing.T) {
 	t.Parallel()
 	o := onpar.New()

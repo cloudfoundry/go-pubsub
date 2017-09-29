@@ -32,6 +32,7 @@ func _I(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(_J), true
 		case 1:
+
 			return uint64(data.(*end2end.X).I), pubsub.TreeTraverser(_J), true
 		default:
 			return 0, nil, false
@@ -44,12 +45,46 @@ func _J(data interface{}) pubsub.Paths {
 	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
+			return 0, pubsub.TreeTraverser(_Repeated), true
+		case 1:
+
+			return crc64.Checksum([]byte(data.(*end2end.X).J), tableECMA), pubsub.TreeTraverser(_Repeated), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func _Repeated(data interface{}) pubsub.Paths {
+
+	if data.(*end2end.X).Repeated == nil {
+		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+			switch idx {
+			case 0:
+				return 0,
+					pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
+						return __Y1_Y2_M
+					}), true
+			default:
+				return 0, nil, false
+			}
+		})
+	}
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
 			return 0,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 					return __Y1_Y2_M
 				}), true
 		case 1:
-			return crc64.Checksum([]byte(data.(*end2end.X).J), tableECMA),
+
+			var total uint64
+			for _, x := range data.(*end2end.X).Repeated {
+				total += crc64.Checksum([]byte(x), tableECMA)
+			}
+			return total,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 					return __Y1_Y2_M
 				}), true
@@ -110,6 +145,7 @@ func _Y1_I(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(_Y1_J), true
 		case 1:
+
 			return uint64(data.(*end2end.X).Y1.I), pubsub.TreeTraverser(_Y1_J), true
 		default:
 			return 0, nil, false
@@ -124,6 +160,7 @@ func _Y1_J(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
+
 			return crc64.Checksum([]byte(data.(*end2end.X).Y1.J), tableECMA), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
@@ -161,6 +198,7 @@ func _Y2_I(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(_Y2_J), true
 		case 1:
+
 			return uint64(data.(*end2end.X).Y2.I), pubsub.TreeTraverser(_Y2_J), true
 		default:
 			return 0, nil, false
@@ -175,6 +213,7 @@ func _Y2_J(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
+
 			return crc64.Checksum([]byte(data.(*end2end.X).Y2.J), tableECMA), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
@@ -201,6 +240,7 @@ func _M_M1_A(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
+
 			return uint64(data.(*end2end.X).M.(end2end.M1).A), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
@@ -227,6 +267,7 @@ func _M_M2_A(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(_M_M2_B), true
 		case 1:
+
 			return uint64(data.(*end2end.X).M.(end2end.M2).A), pubsub.TreeTraverser(_M_M2_B), true
 		default:
 			return 0, nil, false
@@ -241,6 +282,7 @@ func _M_M2_B(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
+
 			return uint64(data.(*end2end.X).M.(end2end.M2).B), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
@@ -249,12 +291,13 @@ func _M_M2_B(data interface{}) pubsub.Paths {
 }
 
 type XFilter struct {
-	I    *int
-	J    *string
-	Y1   *YFilter
-	Y2   *YFilter
-	M_M1 *M1Filter
-	M_M2 *M2Filter
+	I        *int
+	J        *string
+	Repeated []string
+	Y1       *YFilter
+	Y2       *YFilter
+	M_M1     *M1Filter
+	M_M2     *M2Filter
 }
 
 type YFilter struct {
@@ -299,13 +342,26 @@ func StructTraverserCreatePath(f *XFilter) []uint64 {
 	}
 
 	if f.I != nil {
+
 		path = append(path, uint64(*f.I))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.J != nil {
+
 		path = append(path, crc64.Checksum([]byte(*f.J), tableECMA))
+	} else {
+		path = append(path, 0)
+	}
+
+	if f.Repeated != nil {
+
+		var total uint64
+		for _, x := range f.Repeated {
+			total += crc64.Checksum([]byte(x), tableECMA)
+		}
+		path = append(path, total)
 	} else {
 		path = append(path, 0)
 	}
@@ -342,12 +398,14 @@ func createPath_Y1(f *YFilter) []uint64 {
 	}
 
 	if f.I != nil {
+
 		path = append(path, uint64(*f.I))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.J != nil {
+
 		path = append(path, crc64.Checksum([]byte(*f.J), tableECMA))
 	} else {
 		path = append(path, 0)
@@ -370,12 +428,14 @@ func createPath_Y2(f *YFilter) []uint64 {
 	}
 
 	if f.I != nil {
+
 		path = append(path, uint64(*f.I))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.J != nil {
+
 		path = append(path, crc64.Checksum([]byte(*f.J), tableECMA))
 	} else {
 		path = append(path, 0)
@@ -398,6 +458,7 @@ func createPath_M_M1(f *M1Filter) []uint64 {
 	}
 
 	if f.A != nil {
+
 		path = append(path, uint64(*f.A))
 	} else {
 		path = append(path, 0)
@@ -420,12 +481,14 @@ func createPath_M_M2(f *M2Filter) []uint64 {
 	}
 
 	if f.A != nil {
+
 		path = append(path, uint64(*f.A))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.B != nil {
+
 		path = append(path, uint64(*f.B))
 	} else {
 		path = append(path, 0)

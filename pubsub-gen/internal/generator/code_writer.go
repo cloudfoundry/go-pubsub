@@ -123,9 +123,9 @@ default:
 	`, selectorName, body)
 }
 
-func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashType string, isPtr bool) string {
+func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashType string, isPtr, isSlice bool) string {
 	var nilCheck string
-	if isPtr {
+	if isPtr || isSlice {
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
     return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
@@ -146,7 +146,7 @@ func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, 
 	}
 
 	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
-	wrappedHash := hashFn(hashType, dataValue)
+	hashCalc, hashValue := hashSplitFn(hashType, dataValue, isSlice)
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
@@ -156,18 +156,19 @@ func %s_%s(data interface{}) pubsub.Paths {
 			case 0:
 				return 0, pubsub.TreeTraverser(%s_%s), true
 			case 1:
+				%s
 				return %s, pubsub.TreeTraverser(%s_%s), true
 			default:
 				return 0, nil, false
 			}
 		})
 }
-`, prefix, fieldName, nilCheck, prefix, nextFieldName, wrappedHash, prefix, nextFieldName)
+`, prefix, fieldName, nilCheck, prefix, nextFieldName, hashCalc, hashValue, prefix, nextFieldName)
 }
 
-func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashType string, isPtr bool) string {
+func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashType string, isPtr, isSlice bool) string {
 	var nilCheck string
-	if isPtr {
+	if isPtr || isSlice {
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
     return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
@@ -188,7 +189,7 @@ func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeNam
 	}
 
 	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
-	wrappedHash := hashFn(hashType, dataValue)
+	hashCalc, hashValue := hashSplitFn(hashType, dataValue, isSlice)
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
@@ -198,23 +199,24 @@ func %s_%s(data interface{}) pubsub.Paths {
 			case 0:
 				return 0, pubsub.TreeTraverser(done), true
 			case 1:
+				%s
 				return %s, pubsub.TreeTraverser(done), true
 			default:
 				return 0, nil, false
 			}
 		})
 }
-`, prefix, fieldName, nilCheck, wrappedHash)
+`, prefix, fieldName, nilCheck, hashCalc, hashValue)
 }
 
-func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashType string, names []string, isPtr bool) string {
+func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashType string, names []string, isPtr, isSlice bool) string {
 	travFunc := fmt.Sprintf(`
     pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 			return __%s
  		})`, strings.Join(names, "_"))
 
 	var nilCheck string
-	if isPtr {
+	if isPtr || isSlice {
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
     return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
@@ -235,7 +237,7 @@ func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, ha
 	}
 
 	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
-	wrappedHash := hashFn(hashType, dataValue)
+	hashCalc, hashValue := hashSplitFn(hashType, dataValue, isSlice)
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
@@ -245,13 +247,14 @@ func %s_%s(data interface{}) pubsub.Paths {
 		case 0:
 				return 0, %s, true
 		case 1:
+				%s
 				return %s, %s, true
 	  default:
 			return 0, nil, false
 		}
 	})
 }
-`, prefix, fieldName, nilCheck, travFunc, wrappedHash, travFunc)
+`, prefix, fieldName, nilCheck, travFunc, hashCalc, hashValue, travFunc)
 }
 
 func (w CodeWriter) InterfaceSelector(prefix, castTypeName, fieldName, structPkgPrefix string, implementers map[string]string, startIdx int) string {

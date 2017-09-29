@@ -6,9 +6,10 @@ import (
 )
 
 type Field struct {
-	Name string
-	Type string
-	Ptr  bool
+	Name  string
+	Type  string
+	Ptr   bool
+	Slice bool
 }
 
 type Struct struct {
@@ -53,11 +54,12 @@ func (f StructFetcher) extractFields(parentName string, n ast.Node) []Field {
 	ast.Inspect(n, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.Field:
-			name, ptr := f.extractType(x.Type)
+			name, ptr, slice := f.extractType(x.Type)
 			ff := Field{
-				Name: f.firstName(x.Names),
-				Type: name,
-				Ptr:  ptr,
+				Name:  f.firstName(x.Names),
+				Type:  name,
+				Ptr:   ptr,
+				Slice: slice,
 			}
 
 			if ff.Name != "" && ff.Type != "" && !f.inBlacklist(ff.Name, parentName) {
@@ -92,24 +94,27 @@ func (f StructFetcher) firstName(names []*ast.Ident) string {
 	return names[0].Name
 }
 
-func (f StructFetcher) extractType(n ast.Node) (string, bool) {
+func (f StructFetcher) extractType(n ast.Node) (name string, ptr, slice bool) {
 	switch x := n.(type) {
 	case *ast.Ident:
-		return x.Name, false
+		return x.Name, false, false
 	case *ast.StarExpr:
-		name, _ := f.extractType(x.X)
-		return name, true
+		name, _, _ := f.extractType(x.X)
+		return name, true, false
 	case *ast.SelectorExpr:
-		pkg, _ := f.extractType(x.X)
-		name, _ := f.extractType(x.Sel)
+		pkg, _, _ := f.extractType(x.X)
+		name, _, _ := f.extractType(x.Sel)
 		fullName := fmt.Sprintf("%s.%s", pkg, name)
 
 		if _, ok := f.knownTypes[fullName]; !ok {
-			return "", false
+			return "", false, false
 		}
 
-		return fullName, false
+		return fullName, false, false
+	case *ast.ArrayType:
+		name, _, _ := f.extractType(x.Elt)
+		return name, false, true
 	}
 
-	return "", false
+	return "", false, false
 }

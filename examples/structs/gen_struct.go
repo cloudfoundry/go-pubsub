@@ -31,6 +31,7 @@ func _a(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(_b), true
 		case 1:
+
 			return crc64.Checksum([]byte(data.(*someType).a), tableECMA), pubsub.TreeTraverser(_b), true
 		default:
 			return 0, nil, false
@@ -48,6 +49,7 @@ func _b(data interface{}) pubsub.Paths {
 					return __w_x
 				}), true
 		case 1:
+
 			return crc64.Checksum([]byte(data.(*someType).b), tableECMA),
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 					return __w_x
@@ -112,6 +114,7 @@ func _w_i(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(_w_j), true
 		case 1:
+
 			return crc64.Checksum([]byte(data.(*someType).w.i), tableECMA), pubsub.TreeTraverser(_w_j), true
 		default:
 			return 0, nil, false
@@ -126,6 +129,7 @@ func _w_j(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
+
 			return crc64.Checksum([]byte(data.(*someType).w.j), tableECMA), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
@@ -163,6 +167,7 @@ func _x_i(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(_x_j), true
 		case 1:
+
 			return crc64.Checksum([]byte(data.(*someType).x.i), tableECMA), pubsub.TreeTraverser(_x_j), true
 		default:
 			return 0, nil, false
@@ -177,6 +182,7 @@ func _x_j(data interface{}) pubsub.Paths {
 		case 0:
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
+
 			return crc64.Checksum([]byte(data.(*someType).x.j), tableECMA), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
@@ -221,12 +227,14 @@ func StructTravCreatePath(f *someTypeFilter) []uint64 {
 	}
 
 	if f.a != nil {
+
 		path = append(path, crc64.Checksum([]byte(*f.a), tableECMA))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.b != nil {
+
 		path = append(path, crc64.Checksum([]byte(*f.b), tableECMA))
 	} else {
 		path = append(path, 0)
@@ -260,12 +268,14 @@ func createPath_w(f *wFilter) []uint64 {
 	}
 
 	if f.i != nil {
+
 		path = append(path, crc64.Checksum([]byte(*f.i), tableECMA))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.j != nil {
+
 		path = append(path, crc64.Checksum([]byte(*f.j), tableECMA))
 	} else {
 		path = append(path, 0)
@@ -288,12 +298,14 @@ func createPath_x(f *xFilter) []uint64 {
 	}
 
 	if f.i != nil {
+
 		path = append(path, crc64.Checksum([]byte(*f.i), tableECMA))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.j != nil {
+
 		path = append(path, crc64.Checksum([]byte(*f.j), tableECMA))
 	} else {
 		path = append(path, 0)
