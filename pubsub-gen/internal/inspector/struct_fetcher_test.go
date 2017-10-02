@@ -24,7 +24,7 @@ func TestStructFetcher(t *testing.T) {
 	o.BeforeEach(func(t *testing.T) TSF {
 		return TSF{
 			T: t,
-			f: inspector.NewStructFetcher(nil, map[string]string{"other.Type": "xx"}),
+			f: inspector.NewStructFetcher(nil, map[string]string{"other.Type": "xx"}, nil),
 		}
 	})
 
@@ -140,7 +140,7 @@ type x struct {
 	})
 }
 
-func TestStructFetcherWithSlices(t *testing.T) {
+func TestStructFetcherWithBasicSlices(t *testing.T) {
 	t.Parallel()
 	o := onpar.New()
 	defer o.Run(t)
@@ -148,6 +148,7 @@ func TestStructFetcherWithSlices(t *testing.T) {
 	o.BeforeEach(func(t *testing.T) TSF {
 		return TSF{
 			T: t,
+			f: inspector.NewStructFetcher(nil, nil, nil),
 		}
 	})
 
@@ -168,6 +169,7 @@ type x struct {
 	k []float64
 	l []bool
 	m []byte
+	x []unknown
 }
 `
 
@@ -182,9 +184,49 @@ type x struct {
 		Expect(t, s[0].Fields).To(HaveLen(13))
 
 		for _, f := range s[0].Fields {
-			Expect(t, f.Slice).To(BeTrue())
+			Expect(t, f.Slice.IsSlice).To(BeTrue())
+			Expect(t, f.Slice.IsBasicType).To(BeTrue())
 			Expect(t, f.Ptr).To(BeFalse())
 		}
+	})
+}
+
+func TestStructFetcherWithNonBasicSlices(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	o.BeforeEach(func(t *testing.T) TSF {
+		return TSF{
+			T: t,
+			f: inspector.NewStructFetcher(nil, nil, map[string]string{"x.a": "myField"}),
+		}
+	})
+
+	o.Spec("it parses and returns a field that is a slice of a basic type", func(t TSF) {
+		src := `
+package p
+type x struct {
+	a []known
+	b []unknown
+}
+`
+
+		fset := token.NewFileSet()
+		n, err := parser.ParseFile(fset, "src.go", src, 0)
+		Expect(t, err == nil).To(BeTrue())
+
+		s, err := t.f.Parse(n)
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, s).To(HaveLen(1))
+		Expect(t, s[0].Name).To(Equal("x"))
+		Expect(t, s[0].Fields).To(HaveLen(1))
+
+		Expect(t, s[0].Fields[0].Slice.IsSlice).To(BeTrue())
+		Expect(t, s[0].Fields[0].Slice.IsBasicType).To(BeFalse())
+		Expect(t, s[0].Fields[0].Slice.FieldName).To(Equal("myField"))
+		Expect(t, s[0].Fields[0].Ptr).To(BeFalse())
+		Expect(t, s[0].Fields[0].Type).To(Equal("known"))
 	})
 }
 
@@ -202,7 +244,7 @@ func TestStructFetcherWithBlacklist(t *testing.T) {
 	o.Spec("blacklists the given struct.field combo", func(t TSF) {
 		f := inspector.NewStructFetcher(map[string][]string{
 			"x": {"a", "b"},
-		}, nil)
+		}, nil, nil)
 		src := `
 package p
 type x struct {
@@ -232,7 +274,7 @@ type x struct {
 	o.Spec("blacklists the given struct.field combo with wildcard structname", func(t TSF) {
 		f := inspector.NewStructFetcher(map[string][]string{
 			"*": {"a", "b"},
-		}, nil)
+		}, nil, nil)
 		src := `
 package p
 type x struct {

@@ -22,6 +22,7 @@ func main() {
 	isPtr := flag.Bool("pointer", false, "Will the struct be a pointer when being published?")
 	includePkgName := flag.Bool("include-pkg-name", false, "Prefix the struct type with the package name?")
 	interfaces := flag.String("interfaces", "{}", "A map (map[string][]string encoded in JSON) mapping interface types to implementing structs")
+	slices := flag.String("slices", "{}", "A map (map[string][]string encoded in JSON) mapping types to field names for slices")
 	subStructs := flag.String("sub-structs", "{}", "A map (map[string]string encoded in JSON) mapping names to package locations")
 	imports := flag.String("imports", "", "A comma separated list of imports required in the generated file")
 	blacklist := flag.String("blacklist-fields", "", `A comma separated list of struct name and field
@@ -66,6 +67,11 @@ func main() {
 		log.Fatalf("Invalid sub-structs (%s): %s", *subStructs, err)
 	}
 
+	sliceM := make(map[string]string)
+	if err := json.Unmarshal([]byte(*slices), &sliceM); err != nil {
+		log.Fatalf("Invalid slices (%s): %s", *slices, err)
+	}
+
 	importList := strings.Split(*imports, ",")
 
 	structName := (*structPath)[idx+1:]
@@ -78,7 +84,7 @@ func main() {
 
 	fieldBlacklist := buildBlacklist(*blacklist)
 
-	sf := inspector.NewStructFetcher(fieldBlacklist, ms)
+	sf := inspector.NewStructFetcher(fieldBlacklist, ms, sliceM)
 	pp := inspector.NewPackageParser(sf)
 
 	mm := make(map[string]inspector.Struct)

@@ -61,6 +61,36 @@ func _Repeated(data interface{}) pubsub.Paths {
 		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 			switch idx {
 			case 0:
+				return 0, pubsub.TreeTraverser(_RepeatedY), true
+			default:
+				return 0, nil, false
+			}
+		})
+	}
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 0, pubsub.TreeTraverser(_RepeatedY), true
+		case 1:
+
+			var total uint64
+			for _, x := range data.(*end2end.X).Repeated {
+				total += crc64.Checksum([]byte(x), tableECMA)
+			}
+			return total, pubsub.TreeTraverser(_RepeatedY), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func _RepeatedY(data interface{}) pubsub.Paths {
+
+	if data.(*end2end.X).RepeatedY == nil {
+		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+			switch idx {
+			case 0:
 				return 0,
 					pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 						return __Y1_Y2_M
@@ -81,8 +111,8 @@ func _Repeated(data interface{}) pubsub.Paths {
 		case 1:
 
 			var total uint64
-			for _, x := range data.(*end2end.X).Repeated {
-				total += crc64.Checksum([]byte(x), tableECMA)
+			for _, x := range data.(*end2end.X).RepeatedY {
+				total += uint64(x.I)
 			}
 			return total,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
@@ -291,13 +321,14 @@ func _M_M2_B(data interface{}) pubsub.Paths {
 }
 
 type XFilter struct {
-	I        *int
-	J        *string
-	Repeated []string
-	Y1       *YFilter
-	Y2       *YFilter
-	M_M1     *M1Filter
-	M_M2     *M2Filter
+	I         *int
+	J         *string
+	Repeated  []string
+	RepeatedY []int
+	Y1        *YFilter
+	Y2        *YFilter
+	M_M1      *M1Filter
+	M_M2      *M2Filter
 }
 
 type YFilter struct {
@@ -360,6 +391,17 @@ func StructTraverserCreatePath(f *XFilter) []uint64 {
 		var total uint64
 		for _, x := range f.Repeated {
 			total += crc64.Checksum([]byte(x), tableECMA)
+		}
+		path = append(path, total)
+	} else {
+		path = append(path, 0)
+	}
+
+	if f.RepeatedY != nil {
+
+		var total uint64
+		for _, x := range f.RepeatedY {
+			total += uint64(x)
 		}
 		path = append(path, total)
 	} else {

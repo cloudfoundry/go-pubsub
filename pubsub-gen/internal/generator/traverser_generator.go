@@ -19,9 +19,9 @@ type TraverserWriter interface {
 	SelectorFunc(travName, selectorName string, fields []string) string
 
 	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string
-	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashFn string, isPtr, isSlice bool) string
-	FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashFn string, isPtr, isSlice bool) string
-	FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashFn string, names []string, isPtr, isSlice bool) string
+	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashFn string, isPtr bool, slice inspector.Slice) string
+	FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashFn string, isPtr bool, slice inspector.Slice) string
+	FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashFn string, names []string, isPtr bool, slice inspector.Slice) string
 }
 
 type TraverserGenerator struct {
@@ -244,16 +244,21 @@ func (g TraverserGenerator) generateStructFns(
 	return src, nil
 }
 
-func hashFn(t, dataValue string, isSlice bool) string {
-	calc, value := hashSplitFn(t, dataValue, isSlice)
-	return fmt.Sprintf(`
-		%s
-		return %s`, calc, value)
-}
+// func hashFn(t, dataValue string, isSlice bool) string {
+// 	calc, value := hashSplitFn(t, dataValue, isSlice)
+// 	return fmt.Sprintf(`
+// 		%s
+// 		return %s`, calc, value)
+// }
 
-func hashSplitFn(t, dataValue string, isSlice bool) (calc, value string) {
-	if isSlice {
-		_, value := hashSplitFn(t, "x", false)
+func hashSplitFn(t, dataValue string, slice inspector.Slice) (calc, value string) {
+	if slice.IsSlice {
+		x := "x"
+		if !slice.IsBasicType {
+			x = fmt.Sprintf("x.%s", slice.FieldName)
+		}
+
+		_, value := hashSplitFn(t, x, inspector.Slice{})
 		return fmt.Sprintf(`
 	var total uint64
 	for _, x := range %s{ 

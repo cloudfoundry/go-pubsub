@@ -9,7 +9,13 @@ type Field struct {
 	Name  string
 	Type  string
 	Ptr   bool
-	Slice bool
+	Slice Slice
+}
+
+type Slice struct {
+	IsSlice     bool
+	IsBasicType bool
+	FieldName   string
 }
 
 type Struct struct {
@@ -22,12 +28,14 @@ type Struct struct {
 type StructFetcher struct {
 	blacklist  map[string][]string
 	knownTypes map[string]string
+	sliceTypes map[string]string
 }
 
-func NewStructFetcher(blacklist map[string][]string, knownTypes map[string]string) StructFetcher {
+func NewStructFetcher(blacklist map[string][]string, knownTypes, sliceTypes map[string]string) StructFetcher {
 	return StructFetcher{
 		blacklist:  blacklist,
 		knownTypes: knownTypes,
+		sliceTypes: sliceTypes,
 	}
 }
 
@@ -55,11 +63,26 @@ func (f StructFetcher) extractFields(parentName string, n ast.Node) []Field {
 		switch x := n.(type) {
 		case *ast.Field:
 			name, ptr, slice := f.extractType(x.Type)
+
+			var basicSliceType bool
+			var sliceFieldName string
+			if slice {
+				var ok bool
+				ok, basicSliceType, sliceFieldName = f.isOKSliceType(name, parentName, f.firstName(x.Names))
+				if !ok {
+					return true
+				}
+			}
+
 			ff := Field{
-				Name:  f.firstName(x.Names),
-				Type:  name,
-				Ptr:   ptr,
-				Slice: slice,
+				Name: f.firstName(x.Names),
+				Type: name,
+				Ptr:  ptr,
+				Slice: Slice{
+					IsSlice:     slice,
+					IsBasicType: basicSliceType,
+					FieldName:   sliceFieldName,
+				},
 			}
 
 			if ff.Name != "" && ff.Type != "" && !f.inBlacklist(ff.Name, parentName) {
@@ -69,6 +92,29 @@ func (f StructFetcher) extractFields(parentName string, n ast.Node) []Field {
 		return true
 	})
 	return fields
+}
+
+func (f StructFetcher) isOKSliceType(name, structName, fieldName string) (ok, basicType bool, getFieldName string) {
+	switch name {
+	case
+		"int",
+		"int8",
+		"int32",
+		"int64",
+		"uint",
+		"uint8",
+		"uint32",
+		"uint64",
+		"string",
+		"float32",
+		"float64",
+		"bool",
+		"byte":
+		return true, true, ""
+	default:
+		fn, ok := f.sliceTypes[fmt.Sprintf("%s.%s", structName, fieldName)]
+		return ok, false, fn
+	}
 }
 
 func (f StructFetcher) inBlacklist(name, parentType string) bool {

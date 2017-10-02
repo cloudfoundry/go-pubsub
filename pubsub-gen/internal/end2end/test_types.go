@@ -1,12 +1,13 @@
 package end2end
 
 type X struct {
-	I        int
-	J        string
-	Y1       Y
-	Y2       *Y
-	M        message
-	Repeated []string
+	I         int
+	J         string
+	Y1        Y
+	Y2        *Y
+	M         message
+	Repeated  []string
+	RepeatedY []Y
 }
 
 type Y struct {

@@ -175,10 +175,11 @@ if count > 1 {
 	buildPath := ""
 	for _, f := range s.Fields {
 		var star string
-		if !f.Slice {
+		if !f.Slice.IsSlice {
 			star = "*"
 		}
 		dataValue := fmt.Sprintf("%sf.%s", star, f.Name)
+		f.Slice.IsBasicType = true
 		hashCalc, hashValue := hashSplitFn(f.Type, dataValue, f.Slice)
 
 		buildPath += fmt.Sprintf(`
@@ -217,7 +218,7 @@ func (g PathGenerator) genStruct(
 
 	var fields string
 	for _, f := range s.Fields {
-		if f.Slice {
+		if f.Slice.IsSlice {
 			fields += fmt.Sprintf("%s []%s\n", f.Name, f.Type)
 			continue
 		}
