@@ -8,7 +8,7 @@ import (
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
-	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/inspector"
 )
 
 type TSF struct {

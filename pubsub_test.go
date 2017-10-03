@@ -7,8 +7,8 @@ import (
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
-	"github.com/apoydence/pubsub"
-	"github.com/apoydence/pubsub/pubsub-gen/setters"
+	"code.cloudfoundry.org/go-pubsub"
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/setters"
 )
 
 type TPS struct {
@@ -19,8 +19,8 @@ type TPS struct {
 	sub          func(interface{})
 }
 
-//go:generate go install github.com/apoydence/pubsub/pubsub-gen
-//go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/github.com/apoydence/pubsub/gen_struct_test.go --pointer --struct-name=github.com/apoydence/pubsub.testStruct --traverser=testStructTrav --package=pubsub_test
+//go:generate go install code.cloudfoundry.org/go-pubsub/pubsub-gen
+//go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/code.cloudfoundry.org/go-pubsub/gen_struct_test.go --pointer --struct-name=github.com/apoydence/pubsub.testStruct --traverser=testStructTrav --package=pubsub_test
 type testStruct struct {
 	a  int
 	b  int

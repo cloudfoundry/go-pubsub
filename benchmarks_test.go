@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/apoydence/pubsub"
+	"code.cloudfoundry.org/go-pubsub"
 )
 
 func BenchmarkPublishing(b *testing.B) {

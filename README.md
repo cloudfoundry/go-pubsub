@@ -1,10 +1,16 @@
 # pubsub
 [![GoDoc][go-doc-badge]][go-doc] [![travis][travis-badge]][travis]
 
-PubSub publishes data to subscriptions. However, it can do so much more than just push some data to a subscription.  Each subscription is placed in a tree. When data is published, it traverses the tree and finds each interested subscription. This allows for sophisticated filters and routing.
+PubSub publishes data to subscriptions. However, it can do so much more than
+just push some data to a subscription.  Each subscription is placed in a tree.
+When data is published, it traverses the tree and finds each interested
+subscription. This allows for sophisticated filters and routing.
 
 ### Subscription Trees
-A subscription tree is a collection of subscriptions that are organized based on what data they want published to     them. When subscribing, a path is provided to give directions to PubSub about where to store the subscription and     what data should be published to it.
+A subscription tree is a collection of subscriptions that are organized based
+on what data they want published to     them. When subscribing, a path is
+provided to give directions to PubSub about where to store the subscription
+and what data should be published to it.
 
 So for example, say there are three subscriptions with the following paths:
 
@@ -14,7 +20,8 @@ So for example, say there are three subscriptions with the following paths:
 | sub-2 | `["a", "b", "d"]` |
 | sub-3 | `["a", "b"]`      |
 
-After both subscriptions have been registered PubSub will have the following subscription tree:
+After both subscriptions have been registered PubSub will have the following
+subscription tree:
 ```
               a
               |
@@ -66,7 +73,8 @@ In this example both `sub-2` and `sub-3` would have the data written to it.
              / \
 (sub-1)->   c   d   <-(sub-2)
 ```
-In this example all `sub-1`, `sub-2` and `sub-3` would have the data written to it.
+In this example all `sub-1`, `sub-2` and `sub-3` would have the data written
+to it.
 
 ##### Shorter Path
 ```
@@ -107,20 +115,35 @@ ps.Publish("data-3", pubsub.LinearTreeTraverser([]string{"x", "y"}))
 // sub-2 -> data-3
 ```
 
-In this example the `LinearTreeTraverser` is used to traverse the tree of subscriptions. When an interested subscription is found (in this case `sub-1` and `sub-2` for `data-2` and `data-3` respectively), the subscription is handed the data.
+In this example the `LinearTreeTraverser` is used to traverse the tree of
+subscriptions. When an interested subscription is found (in this case `sub-1`
+and `sub-2` for `data-2` and `data-3` respectively), the subscription is
+handed the data.
 
-More complex examples can be found in the [examples](https://github.com/apoydence/pubsub/tree/master/examples) directory.
+More complex examples can be found in the
+[examples](https://code.cloudfoundry.org/go-pubsub/tree/master/examples)
+directory.
 
 ### TreeTraversers
-A `TreeTraverser` is used to traverse the subscription tree and find what subscriptions should have the data published to them. There are a few implementations provided, however it is likely a user will need to implement their own to suit their data.
+A `TreeTraverser` is used to traverse the subscription tree and find what
+subscriptions should have the data published to them. There are a few
+implementations provided, however it is likely a user will need to implement
+their own to suit their data.
 
-When creating a `TreeTraverser` it is important to note how the data is structured. A `TreeTraverser` must be deterministic and ideally stateless. The order the data is parsed and returned (via `Traverse()`) must align with the given path of `Subscribe()`.
-This means if the `TreeTraverser` intends to look at field A, then B, and then finally C, then the subscription path must be A, B and then C (and not B, A, C or something).
+When creating a `TreeTraverser` it is important to note how the data is
+structured. A `TreeTraverser` must be deterministic and ideally stateless. The
+order the data is parsed and returned (via `Traverse()`) must align with the
+given path of `Subscribe()`.
+
+This means if the `TreeTraverser` intends to look at field A, then B, and then
+finally C, then the subscription path must be A, B and then C (and not B, A, C
+or something).
 
 ### Subscriptions
-A `Subscription` is used when publishing data. The given path is used to determine it's placement in the subscription tree.
+A `Subscription` is used when publishing data. The given path is used to
+determine it's placement in the subscription tree.
 
-[go-doc-badge]:             https://godoc.org/github.com/apoydence/pubsub?status.svg
-[go-doc]:                   https://godoc.org/github.com/apoydence/pubsub
-[travis-badge]:             https://travis-ci.org/apoydence/pubsub.svg?branch=master
-[travis]:                   https://travis-ci.org/apoydence/pubsub?branch=master
+[go-doc-badge]:             https://godoc.org/code.cloudfoundry.org/go-pubsub?status.svg
+[go-doc]:                   https://godoc.org/code.cloudfoundry.org/go-pubsub
+[travis-badge]:             https://travis-ci.org/cloudfoundry-incubator/pubsub.svg?branch=master
+[travis]:                   https://travis-ci.org/cloudfoundry-incubator/pubsub?branch=master

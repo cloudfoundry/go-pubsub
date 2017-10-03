@@ -16,7 +16,7 @@ import (
 	"math/rand"
 	"sync"
 
-	"github.com/apoydence/pubsub/internal/node"
+	"code.cloudfoundry.org/go-pubsub/internal/node"
 )
 
 // PubSub uses the given SubscriptionEnroller to  create the subscription

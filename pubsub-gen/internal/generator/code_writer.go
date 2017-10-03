@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/inspector"
 )
 
 type CodeWriter struct{}

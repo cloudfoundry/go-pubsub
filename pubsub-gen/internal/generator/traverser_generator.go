@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/inspector"
 )
 
 type TraverserWriter interface {
@@ -44,7 +44,7 @@ func (g TraverserGenerator) Generate(
 	imports []string,
 ) (string, error) {
 	src := g.writer.Package(packageName)
-	src += g.writer.Imports(append([]string{"github.com/apoydence/pubsub", "hash/crc64"}, imports...))
+	src += g.writer.Imports(append([]string{"code.cloudfoundry.org/go-pubsub", "hash/crc64"}, imports...))
 
 	s, ok := m[structName]
 	if !ok {

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/apoydence/pubsub"
-	"github.com/apoydence/pubsub/pubsub-gen/setters"
+	"code.cloudfoundry.org/go-pubsub"
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/setters"
 )
 
-//go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/github.com/apoydence/pubsub/examples/structs/gen_struct.go --pointer --struct-name=github.com/apoydence/pubsub/examples/structs.someType --traverser=StructTrav --package=main
+//go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/code.cloudfoundry.org/go-pubsub/examples/structs/gen_struct.go --pointer --struct-name=github.com/apoydence/pubsub/examples/structs.someType --traverser=StructTrav --package=main
 
 type someType struct {
 	a string

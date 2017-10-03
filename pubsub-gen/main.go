@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/apoydence/pubsub/pubsub-gen/internal/generator"
-	"github.com/apoydence/pubsub/pubsub-gen/internal/inspector"
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/generator"
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/inspector"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
-	"github.com/apoydence/pubsub/internal/node"
+	"code.cloudfoundry.org/go-pubsub/internal/node"
 )
 
 type TN struct {

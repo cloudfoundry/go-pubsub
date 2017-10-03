@@ -1,7 +1,7 @@
 package pubsub_test
 
 import (
-	"github.com/apoydence/pubsub"
+	"code.cloudfoundry.org/go-pubsub"
 	"hash/crc64"
 )
 

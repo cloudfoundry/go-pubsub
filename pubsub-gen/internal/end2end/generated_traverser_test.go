@@ -1,8 +1,8 @@
 package end2end_test
 
 import (
-	"github.com/apoydence/pubsub"
-	"github.com/apoydence/pubsub/pubsub-gen/internal/end2end"
+	"code.cloudfoundry.org/go-pubsub"
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/end2end"
 	"hash/crc64"
 )
 
