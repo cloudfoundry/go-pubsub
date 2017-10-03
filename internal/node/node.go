@@ -64,8 +64,7 @@ func (n *Node) AddSubscription(s func(interface{}), shardID string) int64 {
 		return 0
 	}
 
-	id := n.rand(0x7FFFFFFFFFFFFFFF)
-	n.shards[id] = shardID
+	id := n.createAndSetID(shardID)
 	n.subscriptions[shardID] = append(n.subscriptions[shardID], SubscriptionEnvelope{
 		Subscription: s,
 		id:           id,
@@ -110,5 +109,17 @@ func (n *Node) ForEachSubscription(f func(shardID string, s []SubscriptionEnvelo
 
 	for shardID, s := range n.subscriptions {
 		f(shardID, s)
+	}
+}
+
+func (n *Node) createAndSetID(shardID string) int64 {
+	id := n.rand(0x7FFFFFFFFFFFFFFF)
+	for {
+		if _, ok := n.shards[id]; ok {
+			id++
+			continue
+		}
+		n.shards[id] = shardID
+		return id
 	}
 }

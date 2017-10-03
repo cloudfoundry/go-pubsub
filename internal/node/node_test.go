@@ -65,6 +65,14 @@ func TestNode(t *testing.T) {
 		Expect(t, ss).To(HaveLen(2))
 		Expect(t, t.n.SubscriptionLen()).To(Equal(2))
 	})
+
+	o.Spec("it handles ID collisions", func(t TN) {
+		n := node.New(func(int64) int64 { return 0 })
+		id1 := n.AddSubscription(func(interface{}) {}, "")
+		id2 := n.AddSubscription(func(interface{}) {}, "")
+
+		Expect(t, id1).To(Not(Equal(id2)))
+	})
 }
 
 type spySubscription struct {
