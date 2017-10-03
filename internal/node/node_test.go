@@ -1,12 +1,13 @@
 package node_test
 
 import (
+	"math/rand"
 	"testing"
 
+	"code.cloudfoundry.org/go-pubsub/internal/node"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
-	"code.cloudfoundry.org/go-pubsub/internal/node"
 )
 
 type TN struct {
@@ -22,7 +23,7 @@ func TestNode(t *testing.T) {
 	o.BeforeEach(func(t *testing.T) TN {
 		return TN{
 			T: t,
-			n: node.New(),
+			n: node.New(rand.Int63n),
 		}
 	})
 

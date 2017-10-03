@@ -1,13 +1,10 @@
 package node
 
-import (
-	"math/rand"
-)
-
 type Node struct {
 	children      map[uint64]*Node
 	subscriptions map[string][]SubscriptionEnvelope
 	shards        map[int64]string
+	rand          func(int64) int64
 }
 
 type SubscriptionEnvelope struct {
@@ -15,11 +12,12 @@ type SubscriptionEnvelope struct {
 	id           int64
 }
 
-func New() *Node {
+func New(int63n func(n int64) int64) *Node {
 	return &Node{
 		children:      make(map[uint64]*Node),
 		subscriptions: make(map[string][]SubscriptionEnvelope),
 		shards:        make(map[int64]string),
+		rand:          int63n,
 	}
 }
 
@@ -32,7 +30,7 @@ func (n *Node) AddChild(key uint64) *Node {
 		return child
 	}
 
-	child := New()
+	child := New(n.rand)
 	n.children[key] = child
 	return child
 }
@@ -66,7 +64,7 @@ func (n *Node) AddSubscription(s func(interface{}), shardID string) int64 {
 		return 0
 	}
 
-	id := rand.Int63()
+	id := n.rand(0x7FFFFFFFFFFFFFFF)
 	n.shards[id] = shardID
 	n.subscriptions[shardID] = append(n.subscriptions[shardID], SubscriptionEnvelope{
 		Subscription: s,

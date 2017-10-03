@@ -1,14 +1,15 @@
 package pubsub_test
 
 import (
+	"math/rand"
 	"sync"
 	"testing"
 
+	"code.cloudfoundry.org/go-pubsub"
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/setters"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
-	"code.cloudfoundry.org/go-pubsub"
-	"code.cloudfoundry.org/go-pubsub/pubsub-gen/setters"
 )
 
 type TPS struct {
@@ -116,7 +117,7 @@ func TestPubSubWithShardID(t *testing.T) {
 			T:            t,
 			subscription: s,
 			sub:          f,
-			p:            pubsub.New(),
+			p:            pubsub.New(pubsub.WithRand(rand.Int63n)),
 		}
 	})
 

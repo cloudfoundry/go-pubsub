@@ -24,20 +24,23 @@ import (
 // of PubSub's methods safe to access concurrently. PubSub should be
 // constructed with New().
 type PubSub struct {
-	mu rlocker
-	n  *node.Node
+	mu   rlocker
+	n    *node.Node
+	rand func(n int64) int64
 }
 
 // New constructs a new PubSub.
 func New(opts ...PubSubOption) *PubSub {
 	p := &PubSub{
-		n:  node.New(),
-		mu: &sync.RWMutex{},
+		mu:   &sync.RWMutex{},
+		rand: rand.Int63n,
 	}
 
 	for _, o := range opts {
 		o.configure(p)
 	}
+
+	p.n = node.New(p.rand)
 
 	return p
 }
@@ -59,6 +62,15 @@ func (f pubsubConfigFunc) configure(p *PubSub) {
 func WithNoMutex() PubSubOption {
 	return pubsubConfigFunc(func(p *PubSub) {
 		p.mu = nopLock{}
+	})
+}
+
+// WithRand configures a PubSub that will use the given function to make
+// sharding decisions. The given function has to match the symantics of
+// math/rand.Int63n.
+func WithRand(int63 func(max int64) int64) PubSubOption {
+	return pubsubConfigFunc(func(p *PubSub) {
+		p.rand = int63
 	})
 }
 
@@ -257,7 +269,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 			return
 		}
 
-		idx := rand.Intn(len(ss))
+		idx := s.rand(int64(len(ss)))
 		ss[idx].Subscription(d)
 	})
 
