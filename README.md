@@ -145,5 +145,5 @@ determine it's placement in the subscription tree.
 
 [go-doc-badge]:             https://godoc.org/code.cloudfoundry.org/go-pubsub?status.svg
 [go-doc]:                   https://godoc.org/code.cloudfoundry.org/go-pubsub
-[travis-badge]:             https://travis-ci.org/cloudfoundry-incubator/pubsub.svg?branch=master
-[travis]:                   https://travis-ci.org/cloudfoundry-incubator/pubsub?branch=master
+[travis-badge]:             https://travis-ci.org/cloudfoundry-incubator/go-pubsub.svg?branch=master
+[travis]:                   https://travis-ci.org/cloudfoundry-incubator/go-pubsub?branch=master
