@@ -177,12 +177,20 @@ if count > 1 {
 	buildPath := ""
 	for _, f := range s.Fields {
 		var star string
-		if !f.Slice.IsSlice {
+		if !f.Slice.IsSlice && !f.Map.IsMap {
 			star = "*"
 		}
+
+		// We convert maps to slices for the path. This allows users to enter the
+		// desired keys more easily.
+		if f.Map.IsMap {
+			f.Map.IsMap = false
+			f.Slice.IsSlice = true
+		}
+
 		dataValue := fmt.Sprintf("%sf.%s", star, f.Name)
 		f.Slice.IsBasicType = true
-		hashCalc, hashValue := hashSplitFn(f.Type, dataValue, f.Slice)
+		hashCalc, hashValue := hashSplitFn(f.Type, dataValue, f.Slice, inspector.Map{})
 
 		buildPath += fmt.Sprintf(`
 if f.%s != nil {
@@ -220,7 +228,7 @@ func (g PathGenerator) genStruct(
 
 	var fields string
 	for _, f := range s.Fields {
-		if f.Slice.IsSlice {
+		if f.Slice.IsSlice || f.Map.IsMap {
 			fields += fmt.Sprintf("%s []%s\n", f.Name, f.Type)
 			continue
 		}

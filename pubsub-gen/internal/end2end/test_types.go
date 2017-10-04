@@ -1,15 +1,17 @@
 package end2end
 
 type X struct {
-	I         int
-	J         string
-	Y1        Y
-	Y2        *Y
-	E1        Empty
-	E2        *Empty
-	M         message
-	Repeated  []string
-	RepeatedY []Y
+	I             int
+	J             string
+	Y1            Y
+	Y2            *Y
+	E1            Empty
+	E2            *Empty
+	M             message
+	Repeated      []string
+	RepeatedY     []Y
+	RepeatedEmpty []Empty
+	MapY          map[string]Y
 }
 
 type Y struct {

@@ -11,6 +11,6 @@ $GOPATH/bin/pubsub-gen \
   --interfaces='{"message":["M1","M2","M3"]}' \
   --include-pkg-name=true \
   --imports=code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/end2end \
-  --slices='{"X.RepeatedY":"I"}'
+  --slices='{"X.RepeatedY":"I","RepeatedEmpty":""}'
 
 gofmt -s -w .

@@ -47,9 +47,9 @@ func (w CodeWriter) Hashers(travName string) string {
 	return `
 func hashBool(data bool) uint64 {
 	if data {
-		return 1
+		return 2
 	}
-	return 0
+	return 1
 }
 
 var tableECMA = crc64.MakeTable(crc64.ECMA)
@@ -149,7 +149,7 @@ default:
 	`, prefix, selectorName, body)
 }
 
-func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashType string, isPtr bool, slice inspector.Slice) string {
+func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashType string, isPtr bool, slice inspector.Slice, m inspector.Map) string {
 	var nilCheck string
 	if isPtr || slice.IsSlice {
 
@@ -173,7 +173,7 @@ func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, 
 	}
 
 	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
-	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice)
+	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice, m)
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
@@ -193,7 +193,7 @@ func %s_%s(data interface{}) pubsub.Paths {
 `, prefix, fieldName, nilCheck, prefix, nextFieldName, hashCalc, hashValue, prefix, nextFieldName)
 }
 
-func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashType string, isPtr bool, slice inspector.Slice) string {
+func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashType string, isPtr bool, slice inspector.Slice, m inspector.Map) string {
 	var nilCheck string
 	if isPtr || slice.IsSlice {
 		nilCheck = fmt.Sprintf(`
@@ -216,7 +216,7 @@ func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeNam
 	}
 
 	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
-	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice)
+	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice, m)
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
@@ -236,7 +236,7 @@ func %s_%s(data interface{}) pubsub.Paths {
 `, prefix, fieldName, nilCheck, hashCalc, hashValue)
 }
 
-func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashType string, names []string, isPtr bool, slice inspector.Slice) string {
+func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashType string, names []string, isPtr bool, slice inspector.Slice, m inspector.Map) string {
 	travFunc := fmt.Sprintf(`
     pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 			return __%s_%s
@@ -264,7 +264,7 @@ func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, ha
 	}
 
 	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
-	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice)
+	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice, m)
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {

@@ -10,12 +10,17 @@ type Field struct {
 	Type  string
 	Ptr   bool
 	Slice Slice
+	Map   Map
 }
 
 type Slice struct {
 	IsSlice     bool
 	IsBasicType bool
 	FieldName   string
+}
+
+type Map struct {
+	IsMap bool
 }
 
 type Struct struct {
@@ -48,8 +53,13 @@ func (f StructFetcher) Parse(n ast.Node) ([]Struct, error) {
 		case *ast.Ident:
 			name = x.Name
 		case *ast.StructType:
+			if name == "" {
+				return true
+			}
+
 			fields := f.extractFields(name, x.Fields)
 			structs = append(structs, Struct{Name: name, Fields: fields})
+			name = ""
 		}
 		return true
 	})
@@ -62,7 +72,7 @@ func (f StructFetcher) extractFields(parentName string, n ast.Node) []Field {
 	ast.Inspect(n, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.Field:
-			name, ptr, slice := f.extractType(x.Type)
+			name, ptr, slice, isMap := f.extractType(x.Type)
 
 			var basicSliceType bool
 			var sliceFieldName string
@@ -70,6 +80,12 @@ func (f StructFetcher) extractFields(parentName string, n ast.Node) []Field {
 				var ok bool
 				ok, basicSliceType, sliceFieldName = f.isOKSliceType(name, parentName, f.firstName(x.Names))
 				if !ok {
+					return true
+				}
+			}
+
+			if isMap {
+				if !f.isBasicType(name) {
 					return true
 				}
 			}
@@ -83,6 +99,9 @@ func (f StructFetcher) extractFields(parentName string, n ast.Node) []Field {
 					IsBasicType: basicSliceType,
 					FieldName:   sliceFieldName,
 				},
+				Map: Map{
+					IsMap: isMap,
+				},
 			}
 
 			if ff.Name != "" && ff.Type != "" && !f.inBlacklist(ff.Name, parentName) {
@@ -94,7 +113,7 @@ func (f StructFetcher) extractFields(parentName string, n ast.Node) []Field {
 	return fields
 }
 
-func (f StructFetcher) isOKSliceType(name, structName, fieldName string) (ok, basicType bool, getFieldName string) {
+func (f StructFetcher) isBasicType(name string) bool {
 	switch name {
 	case
 		"int",
@@ -110,11 +129,19 @@ func (f StructFetcher) isOKSliceType(name, structName, fieldName string) (ok, ba
 		"float64",
 		"bool",
 		"byte":
-		return true, true, ""
+		return true
 	default:
-		fn, ok := f.sliceTypes[fmt.Sprintf("%s.%s", structName, fieldName)]
-		return ok, false, fn
+		return false
 	}
+}
+
+func (f StructFetcher) isOKSliceType(name, structName, fieldName string) (ok, basicType bool, getFieldName string) {
+	if f.isBasicType(name) {
+		return true, true, ""
+	}
+
+	fn, ok := f.sliceTypes[fmt.Sprintf("%s.%s", structName, fieldName)]
+	return ok, false, fn
 }
 
 func (f StructFetcher) inBlacklist(name, parentType string) bool {
@@ -140,27 +167,30 @@ func (f StructFetcher) firstName(names []*ast.Ident) string {
 	return names[0].Name
 }
 
-func (f StructFetcher) extractType(n ast.Node) (name string, ptr, slice bool) {
+func (f StructFetcher) extractType(n ast.Node) (name string, ptr, slice, isMap bool) {
 	switch x := n.(type) {
 	case *ast.Ident:
-		return x.Name, false, false
+		return x.Name, false, false, false
 	case *ast.StarExpr:
-		name, _, _ := f.extractType(x.X)
-		return name, true, false
+		name, _, _, _ := f.extractType(x.X)
+		return name, true, false, false
 	case *ast.SelectorExpr:
-		pkg, _, _ := f.extractType(x.X)
-		name, _, _ := f.extractType(x.Sel)
+		pkg, _, _, _ := f.extractType(x.X)
+		name, _, _, _ := f.extractType(x.Sel)
 		fullName := fmt.Sprintf("%s.%s", pkg, name)
 
 		if _, ok := f.knownTypes[fullName]; !ok {
-			return "", false, false
+			return "", false, false, false
 		}
 
-		return fullName, false, false
+		return fullName, false, false, false
 	case *ast.ArrayType:
-		name, _, _ := f.extractType(x.Elt)
-		return name, false, true
+		name, _, _, _ := f.extractType(x.Elt)
+		return name, false, true, false
+	case *ast.MapType:
+		name, _, _, _ := f.extractType(x.Key)
+		return name, false, false, true
 	}
 
-	return "", false, false
+	return "", false, false, false
 }

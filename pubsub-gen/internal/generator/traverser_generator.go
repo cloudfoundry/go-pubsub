@@ -19,9 +19,9 @@ type TraverserWriter interface {
 	SelectorFunc(travName, prefix, selectorName string, fields []string) string
 
 	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string
-	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashFn string, isPtr bool, slice inspector.Slice) string
-	FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashFn string, isPtr bool, slice inspector.Slice) string
-	FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashFn string, names []string, isPtr bool, slice inspector.Slice) string
+	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashFn string, isPtr bool, slice inspector.Slice, m inspector.Map) string
+	FieldStructFuncLast(travName, prefix, fieldName, castTypeName, hashFn string, isPtr bool, slice inspector.Slice, m inspector.Map) string
+	FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashFn string, names []string, isPtr bool, slice inspector.Slice, m inspector.Map) string
 }
 
 type TraverserGenerator struct {
@@ -122,6 +122,7 @@ func (g TraverserGenerator) generateStructFns(
 				f.Type,
 				f.Ptr,
 				f.Slice,
+				f.Map,
 			)
 		}
 
@@ -134,6 +135,7 @@ func (g TraverserGenerator) generateStructFns(
 				s.Fields[len(s.Fields)-1].Type,
 				s.Fields[len(s.Fields)-1].Ptr,
 				s.Fields[len(s.Fields)-1].Slice,
+				s.Fields[len(s.Fields)-1].Map,
 			), nil
 		}
 	}
@@ -215,6 +217,7 @@ func (g TraverserGenerator) generateStructFns(
 			fieldNames,
 			s.Fields[len(s.Fields)-1].Ptr,
 			s.Fields[len(s.Fields)-1].Slice,
+			s.Fields[len(s.Fields)-1].Map,
 		)
 	}
 
@@ -263,33 +266,35 @@ func (g TraverserGenerator) generateStructFns(
 	return src, nil
 }
 
-// func hashFn(t, dataValue string, isSlice bool) string {
-// 	calc, value := hashSplitFn(t, dataValue, isSlice)
-// 	return fmt.Sprintf(`
-// 		%s
-// 		return %s`, calc, value)
-// }
-
-func hashSplitFn(t, dataValue string, slice inspector.Slice) (calc, value string) {
+func hashSplitFn(t, dataValue string, slice inspector.Slice, m inspector.Map) (calc, value string) {
 	if slice.IsSlice {
 		x := "x"
 		if !slice.IsBasicType {
 			x = fmt.Sprintf("x.%s", slice.FieldName)
 		}
 
-		_, value := hashSplitFn(t, x, inspector.Slice{})
+		_, value := hashSplitFn(t, x, inspector.Slice{}, inspector.Map{})
 		return fmt.Sprintf(`
-	var total uint64
+	var total uint64 = 1
 	for _, x := range %s{ 
+		total += %s
+	}`, dataValue, value), "total"
+	}
+
+	if m.IsMap {
+		_, value := hashSplitFn(t, "x", inspector.Slice{}, inspector.Map{})
+		return fmt.Sprintf(`
+	var total uint64 = 1
+	for x := range %s{ 
 		total += %s
 	}`, dataValue, value), "total"
 	}
 
 	switch t {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "byte", "uint16", "uint32", "float32", "float64":
-		return "", fmt.Sprintf("uint64(%s)", dataValue)
+		return "", fmt.Sprintf("uint64(%s)+1", dataValue)
 	case "string":
-		return "", fmt.Sprintf("crc64.Checksum([]byte(%s), tableECMA)", dataValue)
+		return "", fmt.Sprintf("crc64.Checksum([]byte(%s), tableECMA)+1", dataValue)
 	case "bool":
 		return "", fmt.Sprintf("hashBool(%s)", dataValue)
 	default:

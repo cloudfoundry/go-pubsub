@@ -199,16 +199,17 @@ func TestStructFetcherWithNonBasicSlices(t *testing.T) {
 	o.BeforeEach(func(t *testing.T) TSF {
 		return TSF{
 			T: t,
-			f: inspector.NewStructFetcher(nil, nil, map[string]string{"x.a": "myField"}),
+			f: inspector.NewStructFetcher(nil, nil, map[string]string{"x.a": "myField", "x.c": ""}),
 		}
 	})
 
-	o.Spec("it parses and returns a field that is a slice of a basic type", func(t TSF) {
+	o.Spec("it parses and returns a field that is a slice of a non-basic type", func(t TSF) {
 		src := `
 package p
 type x struct {
 	a []known
 	b []unknown
+	c []known
 }
 `
 
@@ -220,13 +221,69 @@ type x struct {
 		Expect(t, err == nil).To(BeTrue())
 		Expect(t, s).To(HaveLen(1))
 		Expect(t, s[0].Name).To(Equal("x"))
-		Expect(t, s[0].Fields).To(HaveLen(1))
+		Expect(t, s[0].Fields).To(HaveLen(2))
 
 		Expect(t, s[0].Fields[0].Slice.IsSlice).To(BeTrue())
 		Expect(t, s[0].Fields[0].Slice.IsBasicType).To(BeFalse())
 		Expect(t, s[0].Fields[0].Slice.FieldName).To(Equal("myField"))
 		Expect(t, s[0].Fields[0].Ptr).To(BeFalse())
 		Expect(t, s[0].Fields[0].Type).To(Equal("known"))
+
+		Expect(t, s[0].Fields[1].Slice.IsSlice).To(BeTrue())
+		Expect(t, s[0].Fields[1].Slice.IsBasicType).To(BeFalse())
+		Expect(t, s[0].Fields[1].Slice.FieldName).To(Equal(""))
+		Expect(t, s[0].Fields[1].Ptr).To(BeFalse())
+		Expect(t, s[0].Fields[1].Type).To(Equal("known"))
+	})
+}
+
+func TestStructFetcherWithMapsWithBasicKeys(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+
+	o.BeforeEach(func(t *testing.T) TSF {
+		return TSF{
+			T: t,
+			f: inspector.NewStructFetcher(nil, nil, nil),
+		}
+	})
+
+	o.Spec("it parses and returns a field that is a map with a basic key type", func(t TSF) {
+		src := `
+package p
+type x struct {
+	a map[int]bool
+	b map[int8]bool
+	c map[int32]bool
+	d map[int64]bool
+	e map[uint]bool
+	f map[uint8]bool
+	g map[uint32]bool
+	h map[uint64]bool
+	i map[string]bool
+	j map[float32]bool
+	k map[float64]bool
+	l map[bool]bool
+	m map[byte]bool
+	x map[unknown]bool
+}
+`
+
+		fset := token.NewFileSet()
+		n, err := parser.ParseFile(fset, "src.go", src, 0)
+		Expect(t, err == nil).To(BeTrue())
+
+		s, err := t.f.Parse(n)
+		Expect(t, err == nil).To(BeTrue())
+		Expect(t, s).To(HaveLen(1))
+		Expect(t, s[0].Name).To(Equal("x"))
+		Expect(t, s[0].Fields).To(HaveLen(13))
+
+		for _, f := range s[0].Fields {
+			Expect(t, f.Map.IsMap).To(BeTrue())
+			Expect(t, f.Ptr).To(BeFalse())
+		}
 	})
 }
 
