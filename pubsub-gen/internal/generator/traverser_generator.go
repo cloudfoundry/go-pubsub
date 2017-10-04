@@ -16,7 +16,7 @@ type TraverserWriter interface {
 
 	FieldSelector(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string
 	InterfaceSelector(prefix, castTypeName, fieldName, structPkgPrefix string, implementers map[string]string, startIdx int) string
-	SelectorFunc(travName, selectorName string, fields []string) string
+	SelectorFunc(travName, prefix, selectorName string, fields []string) string
 
 	FieldStartStruct(travName, prefix, fieldName, parentFieldName, castTypeName string, isPtr bool, enumValue int) string
 	FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashFn string, isPtr bool, slice inspector.Slice) string
@@ -51,12 +51,12 @@ func (g TraverserGenerator) Generate(
 		return "", fmt.Errorf("unknown struct %s", structName)
 	}
 
-	if len(s.Fields) == 0 {
-		s.Fields = append(s.Fields, inspector.Field{Name: "empty", Type: "int"})
-		m[structName] = s
+	var name string
+	if len(s.Fields) > 0 {
+		name = s.Fields[0].Name
 	}
 
-	src += g.writer.Traverse(traverserName, s.Fields[0].Name)
+	src += g.writer.Traverse(traverserName, name)
 	src += g.writer.Done(traverserName)
 	src += g.writer.Hashers(traverserName)
 
@@ -94,16 +94,16 @@ func (g TraverserGenerator) generateStructFns(
 		return "", fmt.Errorf("unknown struct %s", structName)
 	}
 
-	if len(s.Fields) == 0 {
-		s.Fields = append(s.Fields, inspector.Field{Name: "empty", Type: "int"})
-		m[structName] = s
-	}
-
 	if parentFieldName != "" {
+		var name string
+		if len(s.Fields) > 0 {
+			name = s.Fields[0].Name
+		}
+
 		src += g.writer.FieldStartStruct(
 			traverserName,
 			prefix,
-			s.Fields[0].Name,
+			name,
 			parentFieldName,
 			castTypeName,
 			isPtr,
@@ -111,29 +111,31 @@ func (g TraverserGenerator) generateStructFns(
 		)
 	}
 
-	for i, f := range s.Fields[:len(s.Fields)-1] {
-		src += g.writer.FieldStructFunc(
-			traverserName,
-			prefix,
-			f.Name,
-			s.Fields[i+1].Name,
-			castTypeName,
-			f.Type,
-			f.Ptr,
-			f.Slice,
-		)
-	}
+	if len(s.Fields) > 0 {
+		for i, f := range s.Fields[:len(s.Fields)-1] {
+			src += g.writer.FieldStructFunc(
+				traverserName,
+				prefix,
+				f.Name,
+				s.Fields[i+1].Name,
+				castTypeName,
+				f.Type,
+				f.Ptr,
+				f.Slice,
+			)
+		}
 
-	if len(s.PeerTypeFields) == 0 && len(s.InterfaceTypeFields) == 0 {
-		return src + g.writer.FieldStructFuncLast(
-			traverserName,
-			prefix,
-			s.Fields[len(s.Fields)-1].Name,
-			castTypeName,
-			s.Fields[len(s.Fields)-1].Type,
-			s.Fields[len(s.Fields)-1].Ptr,
-			s.Fields[len(s.Fields)-1].Slice,
-		), nil
+		if len(s.PeerTypeFields) == 0 && len(s.InterfaceTypeFields) == 0 {
+			return src + g.writer.FieldStructFuncLast(
+				traverserName,
+				prefix,
+				s.Fields[len(s.Fields)-1].Name,
+				castTypeName,
+				s.Fields[len(s.Fields)-1].Type,
+				s.Fields[len(s.Fields)-1].Ptr,
+				s.Fields[len(s.Fields)-1].Slice,
+			), nil
+		}
 	}
 
 	var names []string
@@ -156,11 +158,16 @@ func (g TraverserGenerator) generateStructFns(
 			continue
 		}
 
+		var name string
+		if len(x.Fields) > 0 {
+			name = x.Fields[0].Name
+		}
+
 		fieldNames = append(fieldNames, f.Name)
 		peerFields = append(peerFields, g.writer.FieldSelector(
 			traverserName,
 			fmt.Sprintf("%s_%s", prefix, f.Name),
-			x.Fields[0].Name,
+			name,
 			f.Name,
 			castTypeName,
 			f.Ptr,
@@ -173,7 +180,17 @@ func (g TraverserGenerator) generateStructFns(
 	for field, implementers := range s.InterfaceTypeFields {
 		implementersWithFields := make(map[string]string)
 		for _, impl := range implementers {
-			implementersWithFields[impl] = m[impl].Fields[0].Name
+			if len(m[impl].Fields) == 0 {
+				implementersWithFields[impl] = ""
+				continue
+			}
+
+			var name string
+			if len(m[impl].Fields) > 0 {
+				name = m[impl].Fields[0].Name
+			}
+
+			implementersWithFields[impl] = name
 		}
 
 		fieldNames = append(fieldNames, field.Name)
@@ -188,19 +205,21 @@ func (g TraverserGenerator) generateStructFns(
 		))
 	}
 
-	src += g.writer.FieldPeersFunc(
-		traverserName,
-		prefix,
-		castTypeName,
-		s.Fields[len(s.Fields)-1].Name,
-		s.Fields[len(s.Fields)-1].Type,
-		fieldNames,
-		s.Fields[len(s.Fields)-1].Ptr,
-		s.Fields[len(s.Fields)-1].Slice,
-	)
+	if len(s.Fields) > 0 {
+		src += g.writer.FieldPeersFunc(
+			traverserName,
+			prefix,
+			castTypeName,
+			s.Fields[len(s.Fields)-1].Name,
+			s.Fields[len(s.Fields)-1].Type,
+			fieldNames,
+			s.Fields[len(s.Fields)-1].Ptr,
+			s.Fields[len(s.Fields)-1].Slice,
+		)
+	}
 
 	if len(peerFields) != 0 {
-		src += g.writer.SelectorFunc(traverserName, strings.Join(fieldNames, "_"), peerFields)
+		src += g.writer.SelectorFunc(traverserName, prefix, strings.Join(fieldNames, "_"), peerFields)
 	}
 
 	for _, field := range s.PeerTypeFields {

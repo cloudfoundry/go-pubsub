@@ -46,13 +46,13 @@ func _b(data interface{}) pubsub.Paths {
 		case 0:
 			return 0,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return __w_x
+					return ___w_x
 				}), true
 		case 1:
 
 			return crc64.Checksum([]byte(data.(*someType).b), tableECMA),
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return __w_x
+					return ___w_x
 				}), true
 		default:
 			return 0, nil, false
@@ -60,7 +60,7 @@ func _b(data interface{}) pubsub.Paths {
 	})
 }
 
-func __w_x(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+func ___w_x(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 	switch idx {
 
 	case 0:
@@ -240,9 +240,9 @@ func StructTravCreatePath(f *someTypeFilter) []uint64 {
 		path = append(path, 0)
 	}
 
-	path = append(path, createPath_w(f.w)...)
+	path = append(path, createPath__w(f.w)...)
 
-	path = append(path, createPath_x(f.x)...)
+	path = append(path, createPath__x(f.x)...)
 
 	for i := len(path) - 1; i >= 1; i-- {
 		if path[i] != 0 {
@@ -254,7 +254,7 @@ func StructTravCreatePath(f *someTypeFilter) []uint64 {
 	return path
 }
 
-func createPath_w(f *wFilter) []uint64 {
+func createPath__w(f *wFilter) []uint64 {
 	if f == nil {
 		return nil
 	}
@@ -284,7 +284,7 @@ func createPath_w(f *wFilter) []uint64 {
 	return path
 }
 
-func createPath_x(f *xFilter) []uint64 {
+func createPath__x(f *xFilter) []uint64 {
 	if f == nil {
 		return nil
 	}

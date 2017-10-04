@@ -26,7 +26,7 @@ func (g PathGenerator) Generate(
 		return "", err
 	}
 
-	src, err = g.genPath(src, m, genName, structName, genName+"CreatePath", true, 0)
+	src, err = g.genPath(src, "", m, genName, structName, genName+"CreatePath", true, 0)
 	if err != nil {
 		return "", err
 	}
@@ -36,6 +36,7 @@ func (g PathGenerator) Generate(
 
 func (g PathGenerator) genPath(
 	src string,
+	prefix string,
 	m map[string]inspector.Struct,
 	genName string,
 	structName string,
@@ -59,12 +60,12 @@ func (g PathGenerator) genPath(
 
 	var next string
 	for _, pf := range s.PeerTypeFields {
-		next += g.genPathNextFunc(m, pf.Name)
+		next += g.genPathNextFunc(m, prefix, pf.Name)
 	}
 
 	for f, implementers := range s.InterfaceTypeFields {
 		for _, i := range implementers {
-			next += g.genPathNextFunc(m, fmt.Sprintf("%s_%s", f.Name, i))
+			next += g.genPathNextFunc(m, prefix, fmt.Sprintf("%s_%s", f.Name, i))
 		}
 	}
 
@@ -106,14 +107,14 @@ return path
 
 	var idx int
 	for _, pf := range s.PeerTypeFields {
-		src, err = g.genPath(src, m, genName, pf.Type, fmt.Sprintf("createPath_%s", pf.Name), false, idx+1)
+		src, err = g.genPath(src, fmt.Sprintf("%s_%s", prefix, pf.Name), m, genName, pf.Type, fmt.Sprintf("createPath_%s_%s", prefix, pf.Name), false, idx+1)
 		idx++
 	}
 
 	for f, implementers := range s.InterfaceTypeFields {
 		sort.Strings(implementers)
 		for j, i := range implementers {
-			src, err = g.genPath(src, m, genName, i, fmt.Sprintf("createPath_%s_%s", f.Name, i), false, j+idx+1)
+			src, err = g.genPath(src, fmt.Sprintf("%s_%s", prefix, i), m, genName, i, fmt.Sprintf("createPath_%s_%s_%s", prefix, f.Name, i), false, j+idx+1)
 			if err != nil {
 				return "", err
 			}
@@ -129,11 +130,12 @@ func (g PathGenerator) sanitizeName(name string) string {
 
 func (g PathGenerator) genPathNextFunc(
 	m map[string]inspector.Struct,
+	prefix string,
 	structName string,
 ) string {
 	return fmt.Sprintf(`
-path = append(path, createPath_%s(f.%s)...)
-`, structName, structName)
+path = append(path, createPath_%s_%s(f.%s)...)
+`, prefix, structName, structName)
 }
 
 func (g PathGenerator) genPathBody(

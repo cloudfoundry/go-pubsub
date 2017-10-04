@@ -46,13 +46,13 @@ func _b(data interface{}) pubsub.Paths {
 		case 0:
 			return 0,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return __aa_bb
+					return ___aa_bb
 				}), true
 		case 1:
 
 			return uint64(data.(*testStruct).b),
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return __aa_bb
+					return ___aa_bb
 				}), true
 		default:
 			return 0, nil, false
@@ -60,7 +60,7 @@ func _b(data interface{}) pubsub.Paths {
 	})
 }
 
-func __aa_bb(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+func ___aa_bb(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 	switch idx {
 
 	case 0:
@@ -208,9 +208,9 @@ func testStructTravCreatePath(f *testStructFilter) []uint64 {
 		path = append(path, 0)
 	}
 
-	path = append(path, createPath_aa(f.aa)...)
+	path = append(path, createPath__aa(f.aa)...)
 
-	path = append(path, createPath_bb(f.bb)...)
+	path = append(path, createPath__bb(f.bb)...)
 
 	for i := len(path) - 1; i >= 1; i-- {
 		if path[i] != 0 {
@@ -222,7 +222,7 @@ func testStructTravCreatePath(f *testStructFilter) []uint64 {
 	return path
 }
 
-func createPath_aa(f *testStructAFilter) []uint64 {
+func createPath__aa(f *testStructAFilter) []uint64 {
 	if f == nil {
 		return nil
 	}
@@ -245,7 +245,7 @@ func createPath_aa(f *testStructAFilter) []uint64 {
 	return path
 }
 
-func createPath_bb(f *testStructBFilter) []uint64 {
+func createPath__bb(f *testStructBFilter) []uint64 {
 	if f == nil {
 		return nil
 	}

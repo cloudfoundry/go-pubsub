@@ -74,6 +74,22 @@ func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldNam
 		`, castTypeName)
 	}
 
+	if fieldName == "" {
+		return fmt.Sprintf(`
+func %s(data interface{}) pubsub.Paths {
+	%s
+  return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
+			switch idx {
+			case 0:
+				return %d, pubsub.TreeTraverser(done), true
+			default:
+				return 0, nil, false
+			}
+		})
+}
+`, prefix, nilCheck, enumValue)
+	}
+
 	return fmt.Sprintf(`
 func %s(data interface{}) pubsub.Paths {
 	%s
@@ -99,13 +115,21 @@ func (w CodeWriter) FieldSelector(travName, prefix, fieldName, parentFieldName, 
 		`, castTypeName, parentFieldName)
 	}
 
+	if fieldName == "" {
+		return fmt.Sprintf(`
+	%s
+	return %d, pubsub.TreeTraverser(done), true
+`, nilCheck, enumValue)
+
+	}
+
 	return fmt.Sprintf(`
 	%s
 	return %d, pubsub.TreeTraverser(%s_%s), true
 `, nilCheck, enumValue, prefix, fieldName)
 }
 
-func (w CodeWriter) SelectorFunc(travName, selectorName string, fields []string) string {
+func (w CodeWriter) SelectorFunc(travName, prefix, selectorName string, fields []string) string {
 	var body string
 	for i, f := range fields {
 		body += fmt.Sprintf(`
@@ -115,19 +139,20 @@ func (w CodeWriter) SelectorFunc(travName, selectorName string, fields []string)
 	}
 
 	return fmt.Sprintf(`
-	func __%s (idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
+	func __%s_%s (idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
 		switch idx{
 	%s
 default:
 	return 0, nil, false
 }
 	}
-	`, selectorName, body)
+	`, prefix, selectorName, body)
 }
 
 func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, castTypeName, hashType string, isPtr bool, slice inspector.Slice) string {
 	var nilCheck string
 	if isPtr || slice.IsSlice {
+
 		nilCheck = fmt.Sprintf(`
   if %s.%s == nil {
     return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
@@ -214,8 +239,8 @@ func %s_%s(data interface{}) pubsub.Paths {
 func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, hashType string, names []string, isPtr bool, slice inspector.Slice) string {
 	travFunc := fmt.Sprintf(`
     pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-			return __%s
- 		})`, strings.Join(names, "_"))
+			return __%s_%s
+ 		})`, prefix, strings.Join(names, "_"))
 
 	var nilCheck string
 	if isPtr || slice.IsSlice {
@@ -263,6 +288,15 @@ func (w CodeWriter) InterfaceSelector(prefix, castTypeName, fieldName, structPkg
 	idxs := orderImpls(implementers)
 	body := fmt.Sprintf("switch %s.%s.(type) {", castTypeName, fieldName)
 	for i, f := range implementers {
+		if f == "" {
+			body += fmt.Sprintf(`
+case %s%s:
+	// Interface implementation with no fields
+	return 0, pubsub.TreeTraverser(done), true
+`, structPkgPrefix, i)
+			continue
+		}
+
 		body += fmt.Sprintf(`
 case %s%s:
 	return %d, %s_%s_%s_%s, true

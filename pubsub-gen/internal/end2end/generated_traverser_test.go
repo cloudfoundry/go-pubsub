@@ -93,7 +93,7 @@ func _RepeatedY(data interface{}) pubsub.Paths {
 			case 0:
 				return 0,
 					pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-						return __Y1_Y2_M
+						return ___Y1_Y2_E1_E2_M
 					}), true
 			default:
 				return 0, nil, false
@@ -106,7 +106,7 @@ func _RepeatedY(data interface{}) pubsub.Paths {
 		case 0:
 			return 0,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return __Y1_Y2_M
+					return ___Y1_Y2_E1_E2_M
 				}), true
 		case 1:
 
@@ -116,7 +116,7 @@ func _RepeatedY(data interface{}) pubsub.Paths {
 			}
 			return total,
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
-					return __Y1_Y2_M
+					return ___Y1_Y2_E1_E2_M
 				}), true
 		default:
 			return 0, nil, false
@@ -124,7 +124,7 @@ func _RepeatedY(data interface{}) pubsub.Paths {
 	})
 }
 
-func __Y1_Y2_M(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+func ___Y1_Y2_E1_E2_M(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 	switch idx {
 
 	case 0:
@@ -140,12 +140,28 @@ func __Y1_Y2_M(idx int, data interface{}) (path uint64, nextTraverser pubsub.Tre
 		return 2, pubsub.TreeTraverser(_Y2_I), true
 
 	case 2:
+
+		return 3, pubsub.TreeTraverser(done), true
+
+	case 3:
+
+		if data.(*end2end.X).E2 == nil {
+			return 0, pubsub.TreeTraverser(done), true
+		}
+
+		return 4, pubsub.TreeTraverser(done), true
+
+	case 4:
 		switch data.(*end2end.X).M.(type) {
 		case end2end.M1:
-			return 3, _M_M1_A, true
+			return 5, _M_M1_A, true
 
 		case end2end.M2:
-			return 4, _M_M2_A, true
+			return 6, _M_M2_A, true
+
+		case end2end.M3:
+			// Interface implementation with no fields
+			return 0, pubsub.TreeTraverser(done), true
 
 		default:
 			return 0, pubsub.TreeTraverser(done), true
@@ -188,10 +204,71 @@ func _Y1_J(data interface{}) pubsub.Paths {
 	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
-			return 0, pubsub.TreeTraverser(done), true
+			return 0,
+				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
+					return ___Y1_E1_E2
+				}), true
 		case 1:
 
-			return crc64.Checksum([]byte(data.(*end2end.X).Y1.J), tableECMA), pubsub.TreeTraverser(done), true
+			return crc64.Checksum([]byte(data.(*end2end.X).Y1.J), tableECMA),
+				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
+					return ___Y1_E1_E2
+				}), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func ___Y1_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+	switch idx {
+
+	case 0:
+
+		return 1, pubsub.TreeTraverser(done), true
+
+	case 1:
+
+		if data.(*end2end.X).Y1.E2 == nil {
+			return 0, pubsub.TreeTraverser(done), true
+		}
+
+		return 2, pubsub.TreeTraverser(done), true
+
+	default:
+		return 0, nil, false
+	}
+}
+
+func _Y1_E1(data interface{}) pubsub.Paths {
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 1, pubsub.TreeTraverser(done), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func _Y1_E2(data interface{}) pubsub.Paths {
+
+	if data.(*end2end.X).Y1.E2 == nil {
+		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+			switch idx {
+			case 0:
+				return 0, pubsub.TreeTraverser(done), true
+			default:
+				return 0, nil, false
+			}
+		})
+	}
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 1, pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
 		}
@@ -241,10 +318,106 @@ func _Y2_J(data interface{}) pubsub.Paths {
 	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
 		switch idx {
 		case 0:
-			return 0, pubsub.TreeTraverser(done), true
+			return 0,
+				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
+					return ___Y2_E1_E2
+				}), true
 		case 1:
 
-			return crc64.Checksum([]byte(data.(*end2end.X).Y2.J), tableECMA), pubsub.TreeTraverser(done), true
+			return crc64.Checksum([]byte(data.(*end2end.X).Y2.J), tableECMA),
+				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
+					return ___Y2_E1_E2
+				}), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func ___Y2_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+	switch idx {
+
+	case 0:
+
+		return 1, pubsub.TreeTraverser(done), true
+
+	case 1:
+
+		if data.(*end2end.X).Y2.E2 == nil {
+			return 0, pubsub.TreeTraverser(done), true
+		}
+
+		return 2, pubsub.TreeTraverser(done), true
+
+	default:
+		return 0, nil, false
+	}
+}
+
+func _Y2_E1(data interface{}) pubsub.Paths {
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 1, pubsub.TreeTraverser(done), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func _Y2_E2(data interface{}) pubsub.Paths {
+
+	if data.(*end2end.X).Y2.E2 == nil {
+		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+			switch idx {
+			case 0:
+				return 0, pubsub.TreeTraverser(done), true
+			default:
+				return 0, nil, false
+			}
+		})
+	}
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 1, pubsub.TreeTraverser(done), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func _E1(data interface{}) pubsub.Paths {
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 1, pubsub.TreeTraverser(done), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func _E2(data interface{}) pubsub.Paths {
+
+	if data.(*end2end.X).E2 == nil {
+		return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+			switch idx {
+			case 0:
+				return 0, pubsub.TreeTraverser(done), true
+			default:
+				return 0, nil, false
+			}
+		})
+	}
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 1, pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
 		}
@@ -320,6 +493,18 @@ func _M_M2_B(data interface{}) pubsub.Paths {
 	})
 }
 
+func _M_M3(data interface{}) pubsub.Paths {
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 1, pubsub.TreeTraverser(done), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
 type XFilter struct {
 	I         *int
 	J         *string
@@ -327,13 +512,21 @@ type XFilter struct {
 	RepeatedY []int
 	Y1        *YFilter
 	Y2        *YFilter
+	E1        *EmptyFilter
+	E2        *EmptyFilter
 	M_M1      *M1Filter
 	M_M2      *M2Filter
+	M_M3      *M3Filter
 }
 
 type YFilter struct {
-	I *int
-	J *string
+	I  *int
+	J  *string
+	E1 *EmptyFilter
+	E2 *EmptyFilter
+}
+
+type EmptyFilter struct {
 }
 
 type M1Filter struct {
@@ -343,6 +536,9 @@ type M1Filter struct {
 type M2Filter struct {
 	A *int
 	B *int
+}
+
+type M3Filter struct {
 }
 
 func StructTraverserCreatePath(f *XFilter) []uint64 {
@@ -360,11 +556,23 @@ func StructTraverserCreatePath(f *XFilter) []uint64 {
 		count++
 	}
 
+	if f.E1 != nil {
+		count++
+	}
+
+	if f.E2 != nil {
+		count++
+	}
+
 	if f.M_M1 != nil {
 		count++
 	}
 
 	if f.M_M2 != nil {
+		count++
+	}
+
+	if f.M_M3 != nil {
 		count++
 	}
 
@@ -408,13 +616,19 @@ func StructTraverserCreatePath(f *XFilter) []uint64 {
 		path = append(path, 0)
 	}
 
-	path = append(path, createPath_Y1(f.Y1)...)
+	path = append(path, createPath__Y1(f.Y1)...)
 
-	path = append(path, createPath_Y2(f.Y2)...)
+	path = append(path, createPath__Y2(f.Y2)...)
 
-	path = append(path, createPath_M_M1(f.M_M1)...)
+	path = append(path, createPath__E1(f.E1)...)
 
-	path = append(path, createPath_M_M2(f.M_M2)...)
+	path = append(path, createPath__E2(f.E2)...)
+
+	path = append(path, createPath__M_M1(f.M_M1)...)
+
+	path = append(path, createPath__M_M2(f.M_M2)...)
+
+	path = append(path, createPath__M_M3(f.M_M3)...)
 
 	for i := len(path) - 1; i >= 1; i-- {
 		if path[i] != 0 {
@@ -426,7 +640,49 @@ func StructTraverserCreatePath(f *XFilter) []uint64 {
 	return path
 }
 
-func createPath_Y1(f *YFilter) []uint64 {
+func createPath__Y1(f *YFilter) []uint64 {
+	if f == nil {
+		return nil
+	}
+	var path []uint64
+
+	path = append(path, 1)
+
+	var count int
+	if f.E1 != nil {
+		count++
+	}
+
+	if f.E2 != nil {
+		count++
+	}
+
+	if count > 1 {
+		panic("Only one field can be set")
+	}
+
+	if f.I != nil {
+
+		path = append(path, uint64(*f.I))
+	} else {
+		path = append(path, 0)
+	}
+
+	if f.J != nil {
+
+		path = append(path, crc64.Checksum([]byte(*f.J), tableECMA))
+	} else {
+		path = append(path, 0)
+	}
+
+	path = append(path, createPath__Y1_E1(f.E1)...)
+
+	path = append(path, createPath__Y1_E2(f.E2)...)
+
+	return path
+}
+
+func createPath__Y1_E1(f *EmptyFilter) []uint64 {
 	if f == nil {
 		return nil
 	}
@@ -439,24 +695,10 @@ func createPath_Y1(f *YFilter) []uint64 {
 		panic("Only one field can be set")
 	}
 
-	if f.I != nil {
-
-		path = append(path, uint64(*f.I))
-	} else {
-		path = append(path, 0)
-	}
-
-	if f.J != nil {
-
-		path = append(path, crc64.Checksum([]byte(*f.J), tableECMA))
-	} else {
-		path = append(path, 0)
-	}
-
 	return path
 }
 
-func createPath_Y2(f *YFilter) []uint64 {
+func createPath__Y1_E2(f *EmptyFilter) []uint64 {
 	if f == nil {
 		return nil
 	}
@@ -465,6 +707,30 @@ func createPath_Y2(f *YFilter) []uint64 {
 	path = append(path, 2)
 
 	var count int
+	if count > 1 {
+		panic("Only one field can be set")
+	}
+
+	return path
+}
+
+func createPath__Y2(f *YFilter) []uint64 {
+	if f == nil {
+		return nil
+	}
+	var path []uint64
+
+	path = append(path, 2)
+
+	var count int
+	if f.E1 != nil {
+		count++
+	}
+
+	if f.E2 != nil {
+		count++
+	}
+
 	if count > 1 {
 		panic("Only one field can be set")
 	}
@@ -483,16 +749,84 @@ func createPath_Y2(f *YFilter) []uint64 {
 		path = append(path, 0)
 	}
 
+	path = append(path, createPath__Y2_E1(f.E1)...)
+
+	path = append(path, createPath__Y2_E2(f.E2)...)
+
 	return path
 }
 
-func createPath_M_M1(f *M1Filter) []uint64 {
+func createPath__Y2_E1(f *EmptyFilter) []uint64 {
+	if f == nil {
+		return nil
+	}
+	var path []uint64
+
+	path = append(path, 1)
+
+	var count int
+	if count > 1 {
+		panic("Only one field can be set")
+	}
+
+	return path
+}
+
+func createPath__Y2_E2(f *EmptyFilter) []uint64 {
+	if f == nil {
+		return nil
+	}
+	var path []uint64
+
+	path = append(path, 2)
+
+	var count int
+	if count > 1 {
+		panic("Only one field can be set")
+	}
+
+	return path
+}
+
+func createPath__E1(f *EmptyFilter) []uint64 {
 	if f == nil {
 		return nil
 	}
 	var path []uint64
 
 	path = append(path, 3)
+
+	var count int
+	if count > 1 {
+		panic("Only one field can be set")
+	}
+
+	return path
+}
+
+func createPath__E2(f *EmptyFilter) []uint64 {
+	if f == nil {
+		return nil
+	}
+	var path []uint64
+
+	path = append(path, 4)
+
+	var count int
+	if count > 1 {
+		panic("Only one field can be set")
+	}
+
+	return path
+}
+
+func createPath__M_M1(f *M1Filter) []uint64 {
+	if f == nil {
+		return nil
+	}
+	var path []uint64
+
+	path = append(path, 5)
 
 	var count int
 	if count > 1 {
@@ -509,13 +843,13 @@ func createPath_M_M1(f *M1Filter) []uint64 {
 	return path
 }
 
-func createPath_M_M2(f *M2Filter) []uint64 {
+func createPath__M_M2(f *M2Filter) []uint64 {
 	if f == nil {
 		return nil
 	}
 	var path []uint64
 
-	path = append(path, 4)
+	path = append(path, 6)
 
 	var count int
 	if count > 1 {
@@ -534,6 +868,22 @@ func createPath_M_M2(f *M2Filter) []uint64 {
 		path = append(path, uint64(*f.B))
 	} else {
 		path = append(path, 0)
+	}
+
+	return path
+}
+
+func createPath__M_M3(f *M3Filter) []uint64 {
+	if f == nil {
+		return nil
+	}
+	var path []uint64
+
+	path = append(path, 7)
+
+	var count int
+	if count > 1 {
+		panic("Only one field can be set")
 	}
 
 	return path
