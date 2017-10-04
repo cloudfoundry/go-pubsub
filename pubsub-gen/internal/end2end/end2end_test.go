@@ -4,12 +4,12 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
 	"code.cloudfoundry.org/go-pubsub"
 	. "code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/end2end"
 	"code.cloudfoundry.org/go-pubsub/pubsub-gen/setters"
+	"github.com/apoydence/onpar"
+	. "github.com/apoydence/onpar/expect"
+	. "github.com/apoydence/onpar/matchers"
 )
 
 func TestEnd2End(t *testing.T) {
@@ -76,4 +76,4 @@ func (m *mockSubscription) write(data interface{}) {
 }
 
 //go:generate go install code.cloudfoundry.org/go-pubsub/pubsub-gen
-//go:generate $GOPATH/bin/pubsub-gen --struct-name=code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/end2end.X --package=end2end_test --traverser=StructTraverser --output=$GOPATH/src/github.com/apoydence/pubsub/pubsub-gen/internal/end2end/generated_traverser_test.go --pointer --interfaces={"message":["M1","M2"]} --include-pkg-name=true --imports=github.com/apoydence/pubsub/pubsub-gen/internal/end2end --slices={"X.RepeatedY":"I"}
+//go:generate $GOPATH/bin/pubsub-gen --struct-name=code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/end2end.X --package=end2end_test --traverser=StructTraverser --output=$GOPATH/src/code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/end2end/generated_traverser_test.go --pointer --interfaces={"message":["M1","M2"]} --include-pkg-name=true --imports=code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/end2end --slices={"X.RepeatedY":"I"}

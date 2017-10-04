@@ -3,10 +3,10 @@ package inspector_test
 import (
 	"testing"
 
+	"code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/inspector"
 	"github.com/apoydence/onpar"
 	. "github.com/apoydence/onpar/expect"
 	. "github.com/apoydence/onpar/matchers"
-	"code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/inspector"
 )
 
 type TL struct {
