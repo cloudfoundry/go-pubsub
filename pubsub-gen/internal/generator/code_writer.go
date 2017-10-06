@@ -121,9 +121,9 @@ func (w CodeWriter) FieldSelector(travName, prefix, fieldName, parentFieldName, 
 	if fieldName == "" {
 		return fmt.Sprintf(`
 	%s
-	// Empty field name
+	// Empty field name (%s.%s)
 	return %d, pubsub.TreeTraverser(done), true
-`, nilCheck, enumValue)
+`, nilCheck, castTypeName, parentFieldName, enumValue)
 
 	}
 

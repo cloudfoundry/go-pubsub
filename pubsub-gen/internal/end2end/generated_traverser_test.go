@@ -157,7 +157,7 @@ func ___Y1_Y2_E1_E2_M(idx int, data interface{}) (path uint64, nextTraverser pub
 
 	case 2:
 
-		// Empty field name
+		// Empty field name (data.(*end2end.X).E1)
 		return 3, pubsub.TreeTraverser(done), true
 
 	case 3:
@@ -166,20 +166,20 @@ func ___Y1_Y2_E1_E2_M(idx int, data interface{}) (path uint64, nextTraverser pub
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
-		// Empty field name
+		// Empty field name (data.(*end2end.X).E2)
 		return 4, pubsub.TreeTraverser(done), true
 
 	case 4:
 		switch data.(*end2end.X).M.(type) {
-		case end2end.M1:
-			return 5, _M_M1_A, true
-
 		case *end2end.M2:
 			return 6, _M_M2_A, true
 
 		case *end2end.M3:
 			// Interface implementation with no fields
 			return 0, pubsub.TreeTraverser(done), true
+
+		case end2end.M1:
+			return 5, _M_M1_A, true
 
 		default:
 			return 0, pubsub.TreeTraverser(done), true
@@ -243,7 +243,7 @@ func ___Y1_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.T
 
 	case 0:
 
-		// Empty field name
+		// Empty field name (data.(*end2end.X).Y1.E1)
 		return 1, pubsub.TreeTraverser(done), true
 
 	case 1:
@@ -252,7 +252,7 @@ func ___Y1_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.T
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
-		// Empty field name
+		// Empty field name (data.(*end2end.X).Y1.E2)
 		return 2, pubsub.TreeTraverser(done), true
 
 	default:
@@ -359,7 +359,7 @@ func ___Y2_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.T
 
 	case 0:
 
-		// Empty field name
+		// Empty field name (data.(*end2end.X).Y2.E1)
 		return 1, pubsub.TreeTraverser(done), true
 
 	case 1:
@@ -368,7 +368,7 @@ func ___Y2_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.T
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
-		// Empty field name
+		// Empty field name (data.(*end2end.X).Y2.E2)
 		return 2, pubsub.TreeTraverser(done), true
 
 	default:

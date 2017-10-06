@@ -30,6 +30,7 @@ func TestEnd2End(t *testing.T) {
 		sub6 := &mockSubscription{}
 		sub7 := &mockSubscription{}
 		sub8 := &mockSubscription{}
+		sub9 := &mockSubscription{}
 
 		ps.Subscribe(sub1.write, pubsub.WithPath(StructTraverserCreatePath(nil)))
 		ps.Subscribe(sub2.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{
@@ -56,10 +57,12 @@ func TestEnd2End(t *testing.T) {
 		ps.Subscribe(sub6.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{Repeated: []string{"a", "b", "c"}})))
 		ps.Subscribe(sub7.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{RepeatedY: nil})))
 		ps.Subscribe(sub8.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{MapY: []string{"a", "b"}})))
+		ps.Subscribe(sub9.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{E2: &EmptyFilter{}})))
 
 		ps.Publish(&X{
 			I:         1,
 			J:         "a",
+			E2:        &Empty{},
 			Repeated:  []string{"a", "b", "c"},
 			RepeatedY: []Y{{I: 99, J: "a"}, {I: 99, J: "b"}, {I: 99, J: "c"}},
 			Y1:        Y{I: 1, J: "a"}, Y2: &Y{I: 1, J: "a"},
@@ -79,6 +82,7 @@ func TestEnd2End(t *testing.T) {
 		Expect(t, sub6.callCount).To(Equal(1))
 		Expect(t, sub7.callCount).To(Equal(4))
 		Expect(t, sub8.callCount).To(Equal(1))
+		Expect(t, sub9.callCount).To(Equal(1))
 	})
 }
 
