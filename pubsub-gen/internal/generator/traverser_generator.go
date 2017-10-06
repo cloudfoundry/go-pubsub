@@ -9,7 +9,7 @@ import (
 
 type TraverserWriter interface {
 	Package(name string) string
-	Imports(names []string) string
+	Imports(names map[string]string) string
 	Done(travName string) string
 	Traverse(travName, name string) string
 	Hashers(travName string) string
@@ -41,10 +41,14 @@ func (g TraverserGenerator) Generate(
 	structName string,
 	isPtr bool,
 	structPkgPrefix string,
-	imports []string,
+	imports map[string]string,
 ) (string, error) {
 	src := g.writer.Package(packageName)
-	src += g.writer.Imports(append([]string{"code.cloudfoundry.org/go-pubsub", "hash/crc64"}, imports...))
+
+	imports["code.cloudfoundry.org/go-pubsub"] = ""
+	imports["hash/crc64"] = ""
+
+	src += g.writer.Imports(imports)
 
 	structName = strings.Trim(structName, "*")
 	s, ok := m[structName]

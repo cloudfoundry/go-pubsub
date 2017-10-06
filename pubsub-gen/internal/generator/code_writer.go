@@ -14,13 +14,18 @@ func (w CodeWriter) Package(name string) string {
 	return fmt.Sprintf("package %s\n\n", name)
 }
 
-func (w CodeWriter) Imports(names []string) string {
+func (w CodeWriter) Imports(names map[string]string) string {
 	result := "import (\n"
-	for _, n := range names {
+	for n, x := range names {
 		if n == "" {
 			continue
 		}
-		result += fmt.Sprintf("  \"%s\"\n", n)
+		if x == "" {
+			result += fmt.Sprintf("  \"%s\"\n", n)
+			continue
+		}
+
+		result += fmt.Sprintf("  %s \"%s\"\n", x, n)
 	}
 	return fmt.Sprintf("%s)\n", result)
 }

@@ -24,7 +24,7 @@ func main() {
 	interfaces := flag.String("interfaces", "{}", "A map (map[string][]string encoded in JSON) mapping interface types to implementing structs")
 	slices := flag.String("slices", "{}", "A map (map[string][]string encoded in JSON) mapping types to field names for slices")
 	subStructs := flag.String("sub-structs", "{}", "A map (map[string]string encoded in JSON) mapping names to package locations")
-	imports := flag.String("imports", "", "A comma separated list of imports required in the generated file")
+	imports := flag.String("imports", "{}", "A map (map[string]string) of imports required in the generated file")
 	blacklist := flag.String("blacklist-fields", "", `A comma separated list of struct name and field
 	combos to not include (e.g., mystruct.myfield,otherthing.otherfield).
 	A wildcard (*) can be provided for the struct name (e.g., *.fieldname).`)
@@ -72,7 +72,10 @@ func main() {
 		log.Fatalf("Invalid slices (%s): %s", *slices, err)
 	}
 
-	importList := strings.Split(*imports, ",")
+	importM := make(map[string]string)
+	if err := json.Unmarshal([]byte(*imports), &importM); err != nil {
+		log.Fatalf("Invalid imports (%s): %s", *imports, err)
+	}
 
 	structName := (*structPath)[idx+1:]
 
@@ -133,7 +136,7 @@ func main() {
 		structName,
 		*isPtr,
 		pkgName,
-		importList,
+		importM,
 	)
 	if err != nil {
 		log.Fatal(err)
