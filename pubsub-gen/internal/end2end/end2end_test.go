@@ -69,7 +69,7 @@ func TestEnd2End(t *testing.T) {
 		)
 		ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 2, J: "b"}, Y2: &Y{I: 1, J: "a"}}, StructTraverserTraverse)
 		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}}, StructTraverserTraverse)
-		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}, M: M2{A: 1, B: 2}}, StructTraverserTraverse)
+		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}, M: &M2{A: 1, B: 2}}, StructTraverserTraverse)
 
 		Expect(t, sub1.callCount).To(Equal(4))
 		Expect(t, sub2.callCount).To(Equal(1))

@@ -38,8 +38,8 @@ type M2 struct {
 	B int
 }
 
-func (m M2) message() {}
+func (m *M2) message() {}
 
 type M3 struct{}
 
-func (m M3) message() {}
+func (m *M3) message() {}

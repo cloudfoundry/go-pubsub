@@ -1,6 +1,8 @@
 package inspector
 
-import "log"
+import (
+	"log"
+)
 
 type Linker struct{}
 

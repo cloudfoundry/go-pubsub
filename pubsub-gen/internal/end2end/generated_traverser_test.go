@@ -157,6 +157,7 @@ func ___Y1_Y2_E1_E2_M(idx int, data interface{}) (path uint64, nextTraverser pub
 
 	case 2:
 
+		// Empty field name
 		return 3, pubsub.TreeTraverser(done), true
 
 	case 3:
@@ -165,6 +166,7 @@ func ___Y1_Y2_E1_E2_M(idx int, data interface{}) (path uint64, nextTraverser pub
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
+		// Empty field name
 		return 4, pubsub.TreeTraverser(done), true
 
 	case 4:
@@ -172,10 +174,10 @@ func ___Y1_Y2_E1_E2_M(idx int, data interface{}) (path uint64, nextTraverser pub
 		case end2end.M1:
 			return 5, _M_M1_A, true
 
-		case end2end.M2:
+		case *end2end.M2:
 			return 6, _M_M2_A, true
 
-		case end2end.M3:
+		case *end2end.M3:
 			// Interface implementation with no fields
 			return 0, pubsub.TreeTraverser(done), true
 
@@ -241,6 +243,7 @@ func ___Y1_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.T
 
 	case 0:
 
+		// Empty field name
 		return 1, pubsub.TreeTraverser(done), true
 
 	case 1:
@@ -249,6 +252,7 @@ func ___Y1_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.T
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
+		// Empty field name
 		return 2, pubsub.TreeTraverser(done), true
 
 	default:
@@ -355,6 +359,7 @@ func ___Y2_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.T
 
 	case 0:
 
+		// Empty field name
 		return 1, pubsub.TreeTraverser(done), true
 
 	case 1:
@@ -363,6 +368,7 @@ func ___Y2_E1_E2(idx int, data interface{}) (path uint64, nextTraverser pubsub.T
 			return 0, pubsub.TreeTraverser(done), true
 		}
 
+		// Empty field name
 		return 2, pubsub.TreeTraverser(done), true
 
 	default:
@@ -487,7 +493,7 @@ func _M_M2_A(data interface{}) pubsub.Paths {
 			return 0, pubsub.TreeTraverser(_M_M2_B), true
 		case 1:
 
-			return uint64(data.(*end2end.X).M.(end2end.M2).A) + 1, pubsub.TreeTraverser(_M_M2_B), true
+			return uint64(data.(*end2end.X).M.(*end2end.M2).A) + 1, pubsub.TreeTraverser(_M_M2_B), true
 		default:
 			return 0, nil, false
 		}
@@ -502,7 +508,7 @@ func _M_M2_B(data interface{}) pubsub.Paths {
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
 
-			return uint64(data.(*end2end.X).M.(end2end.M2).B) + 1, pubsub.TreeTraverser(done), true
+			return uint64(data.(*end2end.X).M.(*end2end.M2).B) + 1, pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
 		}

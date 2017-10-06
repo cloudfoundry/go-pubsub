@@ -74,6 +74,9 @@ func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldNam
 		`, castTypeName)
 	}
 
+	// Remove any * that may have been added
+	prefix = strings.Replace(prefix, "*", "", -1)
+
 	if fieldName == "" {
 		return fmt.Sprintf(`
 func %s(data interface{}) pubsub.Paths {
@@ -118,6 +121,7 @@ func (w CodeWriter) FieldSelector(travName, prefix, fieldName, parentFieldName, 
 	if fieldName == "" {
 		return fmt.Sprintf(`
 	%s
+	// Empty field name
 	return %d, pubsub.TreeTraverser(done), true
 `, nilCheck, enumValue)
 
@@ -137,6 +141,9 @@ func (w CodeWriter) SelectorFunc(travName, prefix, selectorName string, fields [
 	%s
 		`, i, f)
 	}
+
+	// Remove any * that may have been added
+	prefix = strings.Replace(prefix, "*", "", -1)
 
 	return fmt.Sprintf(`
 	func __%s_%s (idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
@@ -174,6 +181,9 @@ func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, 
 
 	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
 	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice, m)
+
+	// Remove any * that may have been added
+	prefix = strings.Replace(prefix, "*", "", -1)
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
@@ -217,6 +227,9 @@ func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeNam
 
 	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
 	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice, m)
+
+	// Remove any * that may have been added
+	prefix = strings.Replace(prefix, "*", "", -1)
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
@@ -266,6 +279,9 @@ func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, ha
 	dataValue := fmt.Sprintf("%s%s.%s", star, castTypeName, fieldName)
 	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice, m)
 
+	// Remove any * that may have been added
+	prefix = strings.Replace(prefix, "*", "", -1)
+
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
 	%s
@@ -288,19 +304,25 @@ func (w CodeWriter) InterfaceSelector(prefix, castTypeName, fieldName, structPkg
 	idxs := orderImpls(implementers)
 	body := fmt.Sprintf("switch %s.%s.(type) {", castTypeName, fieldName)
 	for i, f := range implementers {
+		var star string
+		if strings.HasPrefix(i, "*") {
+			star = "*"
+		}
+		i = strings.Trim(i, "*")
+
 		if f == "" {
 			body += fmt.Sprintf(`
-case %s%s:
+case %s%s%s:
 	// Interface implementation with no fields
 	return 0, pubsub.TreeTraverser(done), true
-`, structPkgPrefix, i)
+`, star, structPkgPrefix, i)
 			continue
 		}
 
 		body += fmt.Sprintf(`
-case %s%s:
+case %s%s%s:
 	return %d, %s_%s_%s_%s, true
-`, structPkgPrefix, i, idxs[i]+startIdx, prefix, fieldName, i, f)
+`, star, structPkgPrefix, i, idxs[i]+startIdx, prefix, fieldName, i, f)
 	}
 	body += `
 default:
@@ -315,7 +337,7 @@ func orderImpls(impls map[string]string) map[string]int {
 
 	var names []string
 	for k := range impls {
-		names = append(names, k)
+		names = append(names, strings.Trim(k, "*"))
 	}
 
 	sort.Strings(names)

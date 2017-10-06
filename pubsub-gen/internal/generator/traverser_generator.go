@@ -46,6 +46,7 @@ func (g TraverserGenerator) Generate(
 	src := g.writer.Package(packageName)
 	src += g.writer.Imports(append([]string{"code.cloudfoundry.org/go-pubsub", "hash/crc64"}, imports...))
 
+	structName = strings.Trim(structName, "*")
 	s, ok := m[structName]
 	if !ok {
 		return "", fmt.Errorf("unknown struct %s", structName)
@@ -89,6 +90,7 @@ func (g TraverserGenerator) generateStructFns(
 	structPkgPrefix string,
 	m map[string]inspector.Struct,
 ) (string, error) {
+	structName = strings.Trim(structName, "*")
 	s, ok := m[structName]
 	if !ok {
 		return "", fmt.Errorf("unknown struct %s", structName)
@@ -182,14 +184,15 @@ func (g TraverserGenerator) generateStructFns(
 	for field, implementers := range s.InterfaceTypeFields {
 		implementersWithFields := make(map[string]string)
 		for _, impl := range implementers {
-			if len(m[impl].Fields) == 0 {
+			trimmedImpl := strings.Trim(impl, "*")
+			if len(m[trimmedImpl].Fields) == 0 {
 				implementersWithFields[impl] = ""
 				continue
 			}
 
 			var name string
-			if len(m[impl].Fields) > 0 {
-				name = m[impl].Fields[0].Name
+			if len(m[trimmedImpl].Fields) > 0 {
+				name = m[trimmedImpl].Fields[0].Name
 			}
 
 			implementersWithFields[impl] = name
@@ -245,6 +248,13 @@ func (g TraverserGenerator) generateStructFns(
 
 	for field, implementers := range s.InterfaceTypeFields {
 		for _, i := range implementers {
+			var name string
+			if strings.HasPrefix(i, "*") {
+				name = fmt.Sprintf("%s.%s.(%s%s)", castTypeName, field.Name, "*"+structPkgPrefix, strings.Trim(i, "*"))
+			} else {
+				name = fmt.Sprintf("%s.%s.(%s%s)", castTypeName, field.Name, structPkgPrefix, i)
+			}
+
 			var err error
 			src, err = g.generateStructFns(
 				src,
@@ -252,7 +262,7 @@ func (g TraverserGenerator) generateStructFns(
 				traverserName,
 				fmt.Sprintf("%s_%s_%s", prefix, field.Name, i),
 				i,
-				fmt.Sprintf("%s.%s.(%s%s)", castTypeName, field.Name, structPkgPrefix, i),
+				name,
 				false,
 				structPkgPrefix,
 				m,
