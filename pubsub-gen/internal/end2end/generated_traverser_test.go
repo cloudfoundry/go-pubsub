@@ -179,7 +179,7 @@ func ___Y1_Y2_E1_E2_M(idx int, data interface{}) (path uint64, nextTraverser pub
 
 		case *end2end.M3:
 			// Interface implementation with no fields
-			return 0, pubsub.TreeTraverser(done), true
+			return 7, pubsub.TreeTraverser(done), true
 
 		default:
 			return 0, pubsub.TreeTraverser(done), true

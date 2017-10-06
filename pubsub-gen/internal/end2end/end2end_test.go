@@ -31,6 +31,7 @@ func TestEnd2End(t *testing.T) {
 		sub7 := &mockSubscription{}
 		sub8 := &mockSubscription{}
 		sub9 := &mockSubscription{}
+		sub10 := &mockSubscription{}
 
 		ps.Subscribe(sub1.write, pubsub.WithPath(StructTraverserCreatePath(nil)))
 		ps.Subscribe(sub2.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{
@@ -58,6 +59,9 @@ func TestEnd2End(t *testing.T) {
 		ps.Subscribe(sub7.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{RepeatedY: nil})))
 		ps.Subscribe(sub8.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{MapY: []string{"a", "b"}})))
 		ps.Subscribe(sub9.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{E2: &EmptyFilter{}})))
+		ps.Subscribe(sub10.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{
+			M_M3: &M3Filter{},
+		})))
 
 		ps.Publish(&X{
 			I:         1,
@@ -73,16 +77,18 @@ func TestEnd2End(t *testing.T) {
 		ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 2, J: "b"}, Y2: &Y{I: 1, J: "a"}}, StructTraverserTraverse)
 		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}}, StructTraverserTraverse)
 		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}, M: &M2{A: 1, B: 2}}, StructTraverserTraverse)
+		ps.Publish(&X{M: &M3{}}, StructTraverserTraverse)
 
-		Expect(t, sub1.callCount).To(Equal(4))
+		Expect(t, sub1.callCount).To(Equal(5))
 		Expect(t, sub2.callCount).To(Equal(1))
 		Expect(t, sub3.callCount).To(Equal(3))
 		Expect(t, sub4.callCount).To(Equal(2))
 		Expect(t, sub5.callCount).To(Equal(1))
 		Expect(t, sub6.callCount).To(Equal(1))
-		Expect(t, sub7.callCount).To(Equal(4))
+		Expect(t, sub7.callCount).To(Equal(5))
 		Expect(t, sub8.callCount).To(Equal(1))
 		Expect(t, sub9.callCount).To(Equal(1))
+		Expect(t, sub10.callCount).To(Equal(1))
 	})
 }
 

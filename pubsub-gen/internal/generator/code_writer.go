@@ -319,8 +319,8 @@ func (w CodeWriter) InterfaceSelector(prefix, castTypeName, fieldName, structPkg
 			body += fmt.Sprintf(`
 case %s%s%s:
 	// Interface implementation with no fields
-	return 0, pubsub.TreeTraverser(done), true
-`, star, structPkgPrefix, i)
+	return %d, pubsub.TreeTraverser(done), true
+`, star, structPkgPrefix, i, idxs[i]+startIdx)
 			continue
 		}
 
