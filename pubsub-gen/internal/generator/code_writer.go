@@ -142,6 +142,7 @@ func (w CodeWriter) FieldSelector(travName, prefix, fieldName, parentFieldName, 
 
 	}
 
+	prefix = strings.Replace(prefix, "*", "", -1)
 	return fmt.Sprintf(`
 	%s
 	return %d, pubsub.TreeTraverser(%s_%s), true
