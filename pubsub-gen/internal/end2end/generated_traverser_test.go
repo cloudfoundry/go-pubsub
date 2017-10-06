@@ -84,11 +84,11 @@ func _Repeated(data interface{}) pubsub.Paths {
 			return 0, pubsub.TreeTraverser(_RepeatedY), true
 		case 1:
 
-			var total uint64 = 1
+			var total uint64
 			for _, x := range data.(*end2end.X).Repeated {
 				total += hashUint64(crc64.Checksum([]byte(x), tableECMA))
 			}
-			return total, pubsub.TreeTraverser(_RepeatedY), true
+			return hashUint64(total), pubsub.TreeTraverser(_RepeatedY), true
 		default:
 			return 0, nil, false
 		}
@@ -114,11 +114,11 @@ func _RepeatedY(data interface{}) pubsub.Paths {
 			return 0, pubsub.TreeTraverser(_MapY), true
 		case 1:
 
-			var total uint64 = 1
+			var total uint64
 			for _, x := range data.(*end2end.X).RepeatedY {
 				total += hashUint64(uint64(x.I))
 			}
-			return total, pubsub.TreeTraverser(_MapY), true
+			return hashUint64(total), pubsub.TreeTraverser(_MapY), true
 		default:
 			return 0, nil, false
 		}
@@ -136,11 +136,11 @@ func _MapY(data interface{}) pubsub.Paths {
 				}), true
 		case 1:
 
-			var total uint64 = 1
+			var total uint64
 			for x := range data.(*end2end.X).MapY {
 				total += hashUint64(crc64.Checksum([]byte(x), tableECMA))
 			}
-			return total,
+			return hashUint64(total),
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 					return ___Y1_Y2_E1_E2_M
 				}), true
@@ -181,15 +181,15 @@ func ___Y1_Y2_E1_E2_M(idx int, data interface{}) (path uint64, nextTraverser pub
 
 	case 4:
 		switch data.(*end2end.X).M.(type) {
-		case end2end.M1:
-			return 5, _M_M1_A, true
-
 		case *end2end.M2:
 			return 6, _M_M2_A, true
 
 		case *end2end.M3:
 			// Interface implementation with no fields
 			return 7, pubsub.TreeTraverser(done), true
+
+		case end2end.M1:
+			return 5, _M_M1_A, true
 
 		default:
 			return 0, pubsub.TreeTraverser(done), true
@@ -629,33 +629,33 @@ func StructTraverserCreatePath(f *XFilter) []uint64 {
 
 	if f.Repeated != nil {
 
-		var total uint64 = 1
+		var total uint64
 		for _, x := range f.Repeated {
 			total += hashUint64(crc64.Checksum([]byte(x), tableECMA))
 		}
-		path = append(path, total)
+		path = append(path, hashUint64(total))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.RepeatedY != nil {
 
-		var total uint64 = 1
+		var total uint64
 		for _, x := range f.RepeatedY {
 			total += hashUint64(uint64(x))
 		}
-		path = append(path, total)
+		path = append(path, hashUint64(total))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.MapY != nil {
 
-		var total uint64 = 1
+		var total uint64
 		for _, x := range f.MapY {
 			total += hashUint64(crc64.Checksum([]byte(x), tableECMA))
 		}
-		path = append(path, total)
+		path = append(path, hashUint64(total))
 	} else {
 		path = append(path, 0)
 	}

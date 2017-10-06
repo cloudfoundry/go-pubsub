@@ -289,19 +289,19 @@ func hashSplitFn(t, dataValue string, slice inspector.Slice, m inspector.Map) (c
 
 		_, value := hashSplitFn(t, x, inspector.Slice{}, inspector.Map{})
 		return fmt.Sprintf(`
-	var total uint64 = 1
+	var total uint64
 	for _, x := range %s{ 
 		total += %s
-	}`, dataValue, value), "total"
+	}`, dataValue, value), "hashUint64(total)"
 	}
 
 	if m.IsMap {
 		_, value := hashSplitFn(t, "x", inspector.Slice{}, inspector.Map{})
 		return fmt.Sprintf(`
-	var total uint64 = 1
+	var total uint64
 	for x := range %s{ 
 		total += %s
-	}`, dataValue, value), "total"
+	}`, dataValue, value), "hashUint64(total)"
 	}
 
 	switch t {
