@@ -51,10 +51,20 @@ func (w CodeWriter) Done(travName string) string {
 func (w CodeWriter) Hashers(travName string) string {
 	return `
 func hashBool(data bool) uint64 {
+	// 0 is reserved
 	if data {
 		return 2
 	}
 	return 1
+}
+
+func hashUint64(data uint64) uint64 {
+	// 0 is reserved
+	if data == 0{
+		return 1
+	}
+
+	return data
 }
 
 var tableECMA = crc64.MakeTable(crc64.ECMA)

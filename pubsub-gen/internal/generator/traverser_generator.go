@@ -306,9 +306,9 @@ func hashSplitFn(t, dataValue string, slice inspector.Slice, m inspector.Map) (c
 
 	switch t {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "byte", "uint16", "uint32", "float32", "float64":
-		return "", fmt.Sprintf("uint64(%s)+1", dataValue)
+		return "", fmt.Sprintf("hashUint64(uint64(%s))", dataValue)
 	case "string":
-		return "", fmt.Sprintf("crc64.Checksum([]byte(%s), tableECMA)+1", dataValue)
+		return "", fmt.Sprintf("hashUint64(crc64.Checksum([]byte(%s), tableECMA))", dataValue)
 	case "bool":
 		return "", fmt.Sprintf("hashBool(%s)", dataValue)
 	default:

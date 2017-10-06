@@ -16,10 +16,20 @@ func done(data interface{}) pubsub.Paths {
 }
 
 func hashBool(data bool) uint64 {
+	// 0 is reserved
 	if data {
 		return 2
 	}
 	return 1
+}
+
+func hashUint64(data uint64) uint64 {
+	// 0 is reserved
+	if data == 0 {
+		return 1
+	}
+
+	return data
 }
 
 var tableECMA = crc64.MakeTable(crc64.ECMA)
@@ -32,7 +42,7 @@ func _a(data interface{}) pubsub.Paths {
 			return 0, pubsub.TreeTraverser(_b), true
 		case 1:
 
-			return uint64(data.(*testStruct).a) + 1, pubsub.TreeTraverser(_b), true
+			return hashUint64(uint64(data.(*testStruct).a)), pubsub.TreeTraverser(_b), true
 		default:
 			return 0, nil, false
 		}
@@ -50,7 +60,7 @@ func _b(data interface{}) pubsub.Paths {
 				}), true
 		case 1:
 
-			return uint64(data.(*testStruct).b) + 1,
+			return hashUint64(uint64(data.(*testStruct).b)),
 				pubsub.TreeTraverser(func(data interface{}) pubsub.Paths {
 					return ___aa_bb
 				}), true
@@ -115,7 +125,7 @@ func _aa_a(data interface{}) pubsub.Paths {
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
 
-			return uint64(data.(*testStruct).aa.a) + 1, pubsub.TreeTraverser(done), true
+			return hashUint64(uint64(data.(*testStruct).aa.a)), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
 		}
@@ -153,7 +163,7 @@ func _bb_b(data interface{}) pubsub.Paths {
 			return 0, pubsub.TreeTraverser(done), true
 		case 1:
 
-			return uint64(data.(*testStruct).bb.b) + 1, pubsub.TreeTraverser(done), true
+			return hashUint64(uint64(data.(*testStruct).bb.b)), pubsub.TreeTraverser(done), true
 		default:
 			return 0, nil, false
 		}
@@ -196,14 +206,14 @@ func testStructTravCreatePath(f *testStructFilter) []uint64 {
 
 	if f.a != nil {
 
-		path = append(path, uint64(*f.a)+1)
+		path = append(path, hashUint64(uint64(*f.a)))
 	} else {
 		path = append(path, 0)
 	}
 
 	if f.b != nil {
 
-		path = append(path, uint64(*f.b)+1)
+		path = append(path, hashUint64(uint64(*f.b)))
 	} else {
 		path = append(path, 0)
 	}
@@ -237,7 +247,7 @@ func createPath__aa(f *testStructAFilter) []uint64 {
 
 	if f.a != nil {
 
-		path = append(path, uint64(*f.a)+1)
+		path = append(path, hashUint64(uint64(*f.a)))
 	} else {
 		path = append(path, 0)
 	}
@@ -260,7 +270,7 @@ func createPath__bb(f *testStructBFilter) []uint64 {
 
 	if f.b != nil {
 
-		path = append(path, uint64(*f.b)+1)
+		path = append(path, hashUint64(uint64(*f.b)))
 	} else {
 		path = append(path, 0)
 	}
