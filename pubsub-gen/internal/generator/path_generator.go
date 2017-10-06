@@ -65,7 +65,16 @@ func (g PathGenerator) genPath(
 	}
 
 	for f, implementers := range s.InterfaceTypeFields {
-		for _, i := range implementers {
+		ii := make([]string, len(implementers))
+		copy(ii, implementers)
+
+		for i, v := range ii {
+			ii[i] = strings.Trim(v, "*")
+		}
+
+		sort.Strings(ii)
+
+		for _, i := range ii {
 			next += g.genPathNextFunc(m, prefix, fmt.Sprintf("%s_%s", f.Name, i))
 		}
 	}
