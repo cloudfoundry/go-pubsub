@@ -21,7 +21,7 @@ type TPS struct {
 }
 
 //go:generate go install code.cloudfoundry.org/go-pubsub/pubsub-gen
-//go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/code.cloudfoundry.org/go-pubsub/gen_struct_test.go --pointer --struct-name=github.com/apoydence/pubsub.testStruct --traverser=testStructTrav --package=pubsub_test
+//go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/code.cloudfoundry.org/go-pubsub/gen_struct_test.go --pointer --struct-name=code.cloudfoundry.org/go-pubsub.testStruct --traverser=testStructTrav --package=pubsub_test
 type testStruct struct {
 	a  int
 	b  int

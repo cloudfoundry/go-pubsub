@@ -8,7 +8,7 @@ import (
 	"code.cloudfoundry.org/go-pubsub/pubsub-gen/setters"
 )
 
-//go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/code.cloudfoundry.org/go-pubsub/examples/structs/gen_struct.go --pointer --struct-name=github.com/apoydence/pubsub/examples/structs.someType --traverser=StructTrav --package=main
+//go:generate $GOPATH/bin/pubsub-gen --output=$GOPATH/src/code.cloudfoundry.org/go-pubsub/examples/structs/gen_struct.go --pointer --struct-name=code.cloudfoundry.org/go-pubsub/examples/structs.someType --traverser=StructTrav --package=main
 
 type someType struct {
 	a string
