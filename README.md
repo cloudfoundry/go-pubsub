@@ -143,6 +143,16 @@ or something).
 A `Subscription` is used when publishing data. The given path is used to
 determine it's placement in the subscription tree.
 
+### Code Generation
+The tree traversers and subscriptions are quite complicated. Laying out a tree
+structure is not something humans are going to find natural. Therefore a
+[generator](https://github.com/cloudfoundry-incubator/go-pubsub/tree/master/pubsub-gen)
+is provided for structs.
+
+The struct is inspected (at `go generate` time) and creates the tree layout
+code. There is a provided
+[example](https://github.com/cloudfoundry-incubator/go-pubsub/tree/master/examples/structs).
+
 [go-doc-badge]:             https://godoc.org/code.cloudfoundry.org/go-pubsub?status.svg
 [go-doc]:                   https://godoc.org/code.cloudfoundry.org/go-pubsub
 [travis-badge]:             https://travis-ci.org/cloudfoundry-incubator/go-pubsub.svg?branch=master
