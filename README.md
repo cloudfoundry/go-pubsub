@@ -1,4 +1,6 @@
-# pubsub
+
+![pubsub][pubsub-logo]
+
 [![GoDoc][go-doc-badge]][go-doc] [![travis][travis-badge]][travis]
 
 PubSub publishes data to subscriptions. However, it can do so much more than
@@ -7,6 +9,7 @@ When data is published, it traverses the tree and finds each interested
 subscription. This allows for sophisticated filters and routing.
 
 ### Subscription Trees
+
 A subscription tree is a collection of subscriptions that are organized based
 on what data they want published to     them. When subscribing, a path is
 provided to give directions to PubSub about where to store the subscription
@@ -31,7 +34,9 @@ subscription tree:
 ```
 
 To better draw out each's subscriptions view of the tree:
+
 ##### Sub-1
+
 ```
               a
               |
@@ -39,7 +44,9 @@ To better draw out each's subscriptions view of the tree:
              /
 (sub-1)->   c
 ```
+
 ##### Sub-2
+
 ```
               a
               |
@@ -47,15 +54,19 @@ To better draw out each's subscriptions view of the tree:
                \
                 d   <-(sub-2)
 ```
+
 ##### Sub-3
+
 ```
               a
               |
               b   <-(sub-3)
 ```
+
 So to give a few exapmles of how data could be published:
 
 ###### Single path
+
 ```
               a
               |
@@ -63,9 +74,11 @@ So to give a few exapmles of how data could be published:
                \
                 d   <-(sub-2)
 ```
+
 In this example both `sub-2` and `sub-3` would have the data written to it.
 
 ###### Multi-Path
+
 ```
               a
               |
@@ -73,26 +86,32 @@ In this example both `sub-2` and `sub-3` would have the data written to it.
              / \
 (sub-1)->   c   d   <-(sub-2)
 ```
+
 In this example all `sub-1`, `sub-2` and `sub-3` would have the data written
 to it.
 
 ##### Shorter Path
+
 ```
               a
               |
               b   <-(sub-3)
 ```
+
 In this example only `sub-3` would have the data written to it.
 
 ##### Other Path
+
 ```
               x
               |
               y
 ```
+
 In this example, no subscriptions would have data written to them.
 
 ### Simple Example:
+
 ```go
 ps := pubsub.New()
 subscription := func(name string) pubsub.SubscriptionFunc {
@@ -125,6 +144,7 @@ More complex examples can be found in the
 directory.
 
 ### TreeTraversers
+
 A `TreeTraverser` is used to traverse the subscription tree and find what
 subscriptions should have the data published to them. There are a few
 implementations provided, however it is likely a user will need to implement
@@ -140,10 +160,12 @@ finally C, then the subscription path must be A, B and then C (and not B, A, C
 or something).
 
 ### Subscriptions
+
 A `Subscription` is used when publishing data. The given path is used to
 determine it's placement in the subscription tree.
 
 ### Code Generation
+
 The tree traversers and subscriptions are quite complicated. Laying out a tree
 structure is not something humans are going to find natural. Therefore a
 [generator](https://github.com/cloudfoundry-incubator/go-pubsub/tree/master/pubsub-gen)
@@ -153,7 +175,8 @@ The struct is inspected (at `go generate` time) and creates the tree layout
 code. There is a provided
 [example](https://github.com/cloudfoundry-incubator/go-pubsub/tree/master/examples/structs).
 
-[go-doc-badge]:             https://godoc.org/code.cloudfoundry.org/go-pubsub?status.svg
-[go-doc]:                   https://godoc.org/code.cloudfoundry.org/go-pubsub
-[travis-badge]:             https://travis-ci.org/cloudfoundry-incubator/go-pubsub.svg?branch=master
-[travis]:                   https://travis-ci.org/cloudfoundry-incubator/go-pubsub?branch=master
+[pubsub-logo]:  https://raw.githubusercontent.com/cloudfoundry-incubator/go-pubsub/gh-pages/pubsub-logo.png
+[go-doc-badge]: https://godoc.org/code.cloudfoundry.org/go-pubsub?status.svg
+[go-doc]:       https://godoc.org/code.cloudfoundry.org/go-pubsub
+[travis-badge]: https://travis-ci.org/cloudfoundry-incubator/go-pubsub.svg?branch=master
+[travis]:       https://travis-ci.org/cloudfoundry-incubator/go-pubsub?branch=master
