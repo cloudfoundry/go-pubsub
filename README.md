@@ -175,8 +175,8 @@ The struct is inspected (at `go generate` time) and creates the tree layout
 code. There is a provided
 [example](https://github.com/cloudfoundry-incubator/go-pubsub/tree/master/examples/structs).
 
-[pubsub-logo]:  https://raw.githubusercontent.com/cloudfoundry-incubator/go-pubsub/gh-pages/pubsub-logo.png
+[pubsub-logo]:  https://raw.githubusercontent.com/cloudfoundry/go-pubsub/gh-pages/pubsub-logo.png
 [go-doc-badge]: https://godoc.org/code.cloudfoundry.org/go-pubsub?status.svg
 [go-doc]:       https://godoc.org/code.cloudfoundry.org/go-pubsub
-[travis-badge]: https://travis-ci.org/cloudfoundry-incubator/go-pubsub.svg?branch=master
-[travis]:       https://travis-ci.org/cloudfoundry-incubator/go-pubsub?branch=master
+[travis-badge]: https://travis-ci.org/cloudfoundry/go-pubsub.svg?branch=master
+[travis]:       https://travis-ci.org/cloudfoundry/go-pubsub?branch=master
