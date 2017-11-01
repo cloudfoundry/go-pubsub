@@ -8,6 +8,12 @@ just push some data to a subscription.  Each subscription is placed in a tree.
 When data is published, it traverses the tree and finds each interested
 subscription. This allows for sophisticated filters and routing.
 
+### Installation
+
+```bash
+go get code.cloudfoundry.org/go-pubsub
+```
+
 ### Subscription Trees
 
 A subscription tree is a collection of subscriptions that are organized based
