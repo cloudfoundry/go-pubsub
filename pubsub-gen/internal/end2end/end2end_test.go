@@ -60,7 +60,11 @@ func TestEnd2End(t *testing.T) {
 		ps.Subscribe(sub8.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{MapY: []string{"a", "b"}})))
 		ps.Subscribe(sub9.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{E2: &EmptyFilter{}})))
 		ps.Subscribe(sub10.write, pubsub.WithPath(StructTraverserCreatePath(&XFilter{
-			M_M3: &M3Filter{},
+			M_M3: &M3Filter{
+				A: &M1Filter{
+					A: setters.Int(9),
+				},
+			},
 		})))
 
 		ps.Publish(&X{
@@ -77,7 +81,7 @@ func TestEnd2End(t *testing.T) {
 		ps.Publish(&X{I: 1, J: "a", Y1: Y{I: 2, J: "b"}, Y2: &Y{I: 1, J: "a"}}, StructTraverserTraverse)
 		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}}, StructTraverserTraverse)
 		ps.Publish(&X{I: 1, J: "x", Y1: Y{I: 2, J: "b"}, M: &M2{A: 1, B: 2}}, StructTraverserTraverse)
-		ps.Publish(&X{M: &M3{}}, StructTraverserTraverse)
+		ps.Publish(&X{M: &M3{A: M1{A: 9}}}, StructTraverserTraverse)
 
 		Expect(t, sub1.callCount).To(Equal(5))
 		Expect(t, sub2.callCount).To(Equal(1))

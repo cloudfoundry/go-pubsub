@@ -189,13 +189,15 @@ func (g TraverserGenerator) generateStructFns(
 		implementersWithFields := make(map[string]string)
 		for _, impl := range implementers {
 			trimmedImpl := strings.Trim(impl, "*")
-			if len(m[trimmedImpl].Fields) == 0 {
+			if len(m[trimmedImpl].Fields) == 0 && len(m[trimmedImpl].PeerTypeFields) == 0 {
 				implementersWithFields[impl] = ""
 				continue
 			}
 
 			var name string
-			if len(m[trimmedImpl].Fields) > 0 {
+			if len(m[trimmedImpl].PeerTypeFields) > 0 {
+				name = m[trimmedImpl].PeerTypeFields[0].Name
+			} else if len(m[trimmedImpl].Fields) > 0 {
 				name = m[trimmedImpl].Fields[0].Name
 			}
 
@@ -290,7 +292,7 @@ func hashSplitFn(t, dataValue string, slice inspector.Slice, m inspector.Map) (c
 		_, value := hashSplitFn(t, x, inspector.Slice{}, inspector.Map{})
 		return fmt.Sprintf(`
 	var total uint64
-	for _, x := range %s{ 
+	for _, x := range %s{
 		total += %s
 	}`, dataValue, value), "hashUint64(total)"
 	}
@@ -299,7 +301,7 @@ func hashSplitFn(t, dataValue string, slice inspector.Slice, m inspector.Map) (c
 		_, value := hashSplitFn(t, "x", inspector.Slice{}, inspector.Map{})
 		return fmt.Sprintf(`
 	var total uint64
-	for x := range %s{ 
+	for x := range %s{
 		total += %s
 	}`, dataValue, value), "hashUint64(total)"
 	}

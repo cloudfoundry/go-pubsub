@@ -40,6 +40,9 @@ type M2 struct {
 
 func (m *M2) message() {}
 
-type M3 struct{}
+type M3 struct {
+	A M1
+	//I int TODO
+}
 
 func (m *M3) message() {}

@@ -181,15 +181,14 @@ func ___Y1_Y2_E1_E2_M(idx int, data interface{}) (path uint64, nextTraverser pub
 
 	case 4:
 		switch data.(*end2end.X).M.(type) {
+		case end2end.M1:
+			return 5, _M_M1_A, true
+
 		case *end2end.M2:
 			return 6, _M_M2_A, true
 
 		case *end2end.M3:
-			// Interface implementation with no fields
-			return 7, pubsub.TreeTraverser(done), true
-
-		case end2end.M1:
-			return 5, _M_M1_A, true
+			return 7, _M_M3_A, true
 
 		default:
 			return 0, pubsub.TreeTraverser(done), true
@@ -537,6 +536,45 @@ func _M_M3(data interface{}) pubsub.Paths {
 	})
 }
 
+func ___M_M3_A(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+	switch idx {
+
+	case 0:
+
+		return 1, pubsub.TreeTraverser(_M_M3_A_A), true
+
+	default:
+		return 0, nil, false
+	}
+}
+
+func _M_M3_A(data interface{}) pubsub.Paths {
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 1, pubsub.TreeTraverser(_M_M3_A_A), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
+func _M_M3_A_A(data interface{}) pubsub.Paths {
+
+	return pubsub.Paths(func(idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool) {
+		switch idx {
+		case 0:
+			return 0, pubsub.TreeTraverser(done), true
+		case 1:
+
+			return hashUint64(uint64(data.(*end2end.X).M.(*end2end.M3).A.A)), pubsub.TreeTraverser(done), true
+		default:
+			return 0, nil, false
+		}
+	})
+}
+
 type XFilter struct {
 	I         *int
 	J         *string
@@ -572,6 +610,7 @@ type M2Filter struct {
 }
 
 type M3Filter struct {
+	A *M1Filter
 }
 
 func StructTraverserCreatePath(f *XFilter) []uint64 {
@@ -926,8 +965,37 @@ func createPath__M_M3(f *M3Filter) []uint64 {
 	path = append(path, 7)
 
 	var count int
+	if f.A != nil {
+		count++
+	}
+
 	if count > 1 {
 		panic("Only one field can be set")
+	}
+
+	path = append(path, createPath__M3_A(f.A)...)
+
+	return path
+}
+
+func createPath__M3_A(f *M1Filter) []uint64 {
+	if f == nil {
+		return nil
+	}
+	var path []uint64
+
+	path = append(path, 1)
+
+	var count int
+	if count > 1 {
+		panic("Only one field can be set")
+	}
+
+	if f.A != nil {
+
+		path = append(path, hashUint64(uint64(*f.A)))
+	} else {
+		path = append(path, 0)
 	}
 
 	return path
