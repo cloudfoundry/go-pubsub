@@ -172,6 +172,79 @@ func TestPubSubWithShardID(t *testing.T) {
 	})
 }
 
+func TestPubSubWithShardingScheme(t *testing.T) {
+	t.Parallel()
+	o := onpar.New()
+	defer o.Run(t)
+	o.BeforeEach(func(t *testing.T) TPS {
+		s, f := newSpySubscrption()
+
+		return TPS{
+			T:            t,
+			subscription: s,
+			sub:          f,
+			p: pubsub.New(pubsub.WithDeterministicHashing(func(data interface{}) uint64 {
+				return uint64(data.(*testStruct).a)
+			})),
+		}
+	})
+
+	o.Spec("it splits data between same shardIDs", func(t TPS) {
+		sub1, f1 := newSpySubscrption()
+		sub2, f2 := newSpySubscrption()
+		sub3, f3 := newSpySubscrption()
+		sub4, f4 := newSpySubscrption()
+		sub5, f5 := newSpySubscrption()
+
+		t.p.Subscribe(f1,
+			pubsub.WithShardID("1"),
+			pubsub.WithDeterministicRouting("black"),
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{})),
+		)
+
+		t.p.Subscribe(f2,
+			pubsub.WithShardID("1"),
+			pubsub.WithDeterministicRouting("blue"),
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{})),
+		)
+		t.p.Subscribe(f3,
+			pubsub.WithShardID("2"),
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{})),
+		)
+
+		t.p.Subscribe(f4,
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{})),
+		)
+
+		t.p.Subscribe(f5,
+			pubsub.WithPath(testStructTravCreatePath(&testStructFilter{})),
+		)
+
+		for i := 0; i < 100; i++ {
+			t.p.Publish(&testStruct{a: 1, b: 2}, testStructTravTraverse)
+			t.p.Publish(&testStruct{a: 2, b: 3}, testStructTravTraverse)
+		}
+
+		Expect(t, len(sub1.data)).To(Equal(100))
+		Expect(t, len(sub2.data)).To(Equal(100))
+
+		Expect(t, len(sub3.data)).To(Equal(200))
+		Expect(t, len(sub4.data)).To(Equal(200))
+		Expect(t, len(sub5.data)).To(Equal(200))
+
+		Expect(t, sub1.data[0]).To(Or(
+			Equal(&testStruct{a: 1, b: 2}),
+			Equal(&testStruct{a: 2, b: 3}),
+		))
+
+		Expect(t, sub2.data[0]).To(Or(
+			Equal(&testStruct{a: 1, b: 2}),
+			Equal(&testStruct{a: 2, b: 3}),
+		))
+		Expect(t, sub1.data[0]).To(Not(Equal(sub2.data[0])))
+	})
+}
+
 type spySubscription struct {
 	mu   sync.Mutex
 	data []interface{}

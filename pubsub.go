@@ -24,25 +24,32 @@ import (
 // of PubSub's methods safe to access concurrently. PubSub should be
 // constructed with New().
 type PubSub struct {
-	mu   rlocker
-	n    *node.Node
-	rand func(n int64) int64
+	mu                         rlocker
+	n                          *node.Node
+	rand                       func(n int64) int64
+	deterministicRoutingHasher func(interface{}) uint64
 }
 
 // New constructs a new PubSub.
 func New(opts ...PubSubOption) *PubSub {
-	p := &PubSub{
+	s := &PubSub{
 		mu:   &sync.RWMutex{},
 		rand: rand.Int63n,
 	}
 
 	for _, o := range opts {
-		o.configure(p)
+		o.configure(s)
 	}
 
-	p.n = node.New(p.rand)
+	if s.deterministicRoutingHasher == nil {
+		s.deterministicRoutingHasher = func(_ interface{}) uint64 {
+			return uint64(s.rand(0x7FFFFFFFFFFFFFFF))
+		}
+	}
 
-	return p
+	s.n = node.New(s.rand)
+
+	return s
 }
 
 // PubSubOption is used to configure a PubSub.
@@ -52,16 +59,16 @@ type PubSubOption interface {
 
 type pubsubConfigFunc func(*PubSub)
 
-func (f pubsubConfigFunc) configure(p *PubSub) {
-	f(p)
+func (f pubsubConfigFunc) configure(s *PubSub) {
+	f(s)
 }
 
 // WithNoMutex configures a PubSub that does not have any internal mutexes.
 // This is useful if more complex or custom locking is required. For example,
 // if a subscription needs to subscribe while being published to.
 func WithNoMutex() PubSubOption {
-	return pubsubConfigFunc(func(p *PubSub) {
-		p.mu = nopLock{}
+	return pubsubConfigFunc(func(s *PubSub) {
+		s.mu = nopLock{}
 	})
 }
 
@@ -69,8 +76,17 @@ func WithNoMutex() PubSubOption {
 // sharding decisions. The given function has to match the symantics of
 // math/rand.Int63n.
 func WithRand(int63 func(max int64) int64) PubSubOption {
-	return pubsubConfigFunc(func(p *PubSub) {
-		p.rand = int63
+	return pubsubConfigFunc(func(s *PubSub) {
+		s.rand = int63
+	})
+}
+
+// WithDeterministicHashing configures a PubSub that will use the given
+// function to hash each published data point. The hash is used only for a
+// subscription that has set its deterministic routing name.
+func WithDeterministicHashing(hashFunction func(interface{}) uint64) PubSubOption {
+	return pubsubConfigFunc(func(s *PubSub) {
+		s.deterministicRoutingHasher = hashFunction
 	})
 }
 
@@ -106,9 +122,19 @@ func WithPath(path []uint64) SubscribeOption {
 	})
 }
 
+// WithDeterministicRouting configures a subscription to have a deterministic
+// routing name. A PubSub configured to use deterministic hashing will use
+// this name and the subscription's shard ID to maintain consistent routing.
+func WithDeterministicRouting(name string) SubscribeOption {
+	return subscribeConfigFunc(func(c *subscribeConfig) {
+		c.deterministicRoutingName = name
+	})
+}
+
 type subscribeConfig struct {
-	shardID string
-	path    []uint64
+	shardID                  string
+	deterministicRoutingName string
+	path                     []uint64
 }
 
 type subscribeConfigFunc func(*subscribeConfig)
@@ -133,7 +159,7 @@ func (s *PubSub) Subscribe(sub Subscription, opts ...SubscribeOption) Unsubscrib
 	for _, p := range c.path {
 		n = n.AddChild(p)
 	}
-	id := n.AddSubscription(sub, c.shardID)
+	id := n.AddSubscription(sub, c.shardID, c.deterministicRoutingName)
 
 	return func() {
 		s.mu.Lock()
@@ -261,7 +287,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 	if n == nil {
 		return
 	}
-	n.ForEachSubscription(func(shardID string, ss []node.SubscriptionEnvelope) {
+	n.ForEachSubscription(func(shardID string, isDeterministic bool, ss []node.SubscriptionEnvelope) {
 		if shardID == "" {
 			for _, x := range ss {
 				x.Subscription(d)
@@ -269,7 +295,7 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 			return
 		}
 
-		idx := s.rand(int64(len(ss)))
+		idx := s.determineIdx(d, len(ss), isDeterministic)
 		ss[idx].Subscription(d)
 	})
 
@@ -289,6 +315,13 @@ func (s *PubSub) traversePublish(d, next interface{}, a TreeTraverser, n *node.N
 
 		s.traversePublish(d, next, nextA, c)
 	}
+}
+
+func (s *PubSub) determineIdx(d interface{}, l int, isDeterministic bool) int64 {
+	if isDeterministic {
+		return int64(s.deterministicRoutingHasher(d) % uint64(l))
+	}
+	return s.rand(int64(l))
 }
 
 // rlocker is used to hold either a real sync.RWMutex or a nop lock.

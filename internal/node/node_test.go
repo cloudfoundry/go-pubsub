@@ -50,26 +50,46 @@ func TestNode(t *testing.T) {
 	})
 
 	o.Spec("returns all subscriptions", func(t TN) {
-		id1 := t.n.AddSubscription(func(interface{}) {}, "")
+		id1 := t.n.AddSubscription(func(interface{}) {}, "", "")
 
-		t.n.AddSubscription(func(interface{}) {}, "")
-		t.n.AddSubscription(func(interface{}) {}, "")
+		t.n.AddSubscription(func(interface{}) {}, "", "")
+		t.n.AddSubscription(func(interface{}) {}, "", "")
 		t.n.DeleteSubscription(id1)
 
 		var ss []func(interface{})
-		t.n.ForEachSubscription(func(id string, s []node.SubscriptionEnvelope) {
+		t.n.ForEachSubscription(func(id string, isD bool, s []node.SubscriptionEnvelope) {
 			for _, x := range s {
 				ss = append(ss, x.Subscription)
 			}
+			Expect(t, isD).To(Equal(false))
 		})
 		Expect(t, ss).To(HaveLen(2))
 		Expect(t, t.n.SubscriptionLen()).To(Equal(2))
 	})
 
+	o.Spec("returns is deterministic if a single route has deterministic name", func(t TN) {
+		t.n.AddSubscription(func(interface{}) {}, "a", "")
+		t.n.AddSubscription(func(interface{}) {}, "a", "some-name")
+
+		t.n.ForEachSubscription(func(id string, isD bool, s []node.SubscriptionEnvelope) {
+			Expect(t, isD).To(Equal(true))
+		})
+	})
+
+	o.Spec("returns is not deterministic if all deterministic names have been deleted", func(t TN) {
+		t.n.AddSubscription(func(interface{}) {}, "a", "")
+		id := t.n.AddSubscription(func(interface{}) {}, "a", "some-name")
+		t.n.DeleteSubscription(id)
+
+		t.n.ForEachSubscription(func(id string, isD bool, s []node.SubscriptionEnvelope) {
+			Expect(t, isD).To(Equal(false))
+		})
+	})
+
 	o.Spec("it handles ID collisions", func(t TN) {
 		n := node.New(func(int64) int64 { return 0 })
-		id1 := n.AddSubscription(func(interface{}) {}, "")
-		id2 := n.AddSubscription(func(interface{}) {}, "")
+		id1 := n.AddSubscription(func(interface{}) {}, "", "")
+		id2 := n.AddSubscription(func(interface{}) {}, "", "")
 
 		Expect(t, id1).To(Not(Equal(id2)))
 	})
