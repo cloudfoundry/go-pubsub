@@ -2,6 +2,7 @@ package node_test
 
 import (
 	"math/rand"
+	"sort"
 	"testing"
 
 	"code.cloudfoundry.org/go-pubsub/internal/node"
@@ -84,6 +85,20 @@ func TestNode(t *testing.T) {
 		t.n.ForEachSubscription(func(id string, isD bool, s []node.SubscriptionEnvelope) {
 			Expect(t, isD).To(Equal(false))
 		})
+	})
+
+	o.Spec("returns subscriptions in order of deterministic routing name", func(t TN) {
+		var track []int
+		t.n.AddSubscription(func(interface{}) { track = append(track, 2) }, "a", "2")
+		t.n.AddSubscription(func(interface{}) { track = append(track, 1) }, "a", "1")
+
+		t.n.ForEachSubscription(func(id string, isD bool, s []node.SubscriptionEnvelope) {
+			for _, x := range s {
+				x.Subscription(nil)
+			}
+		})
+
+		Expect(t, sort.IntsAreSorted(track)).To(Equal(true))
 	})
 
 	o.Spec("it handles ID collisions", func(t TN) {

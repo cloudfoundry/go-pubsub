@@ -1,5 +1,9 @@
 package node
 
+import (
+	"sort"
+)
+
 type Node struct {
 	children      map[uint64]*Node
 	subscriptions map[string]subscriptionInfo
@@ -81,6 +85,8 @@ func (n *Node) AddSubscription(s func(interface{}), shardID, deterministicRoutin
 	if deterministicRoutingName != "" {
 		si.deterministicRoutingCount++
 	}
+
+	sort.Sort(envelopes(si.envelopes))
 	n.subscriptions[shardID] = si
 
 	return id
@@ -111,6 +117,7 @@ func (n *Node) DeleteSubscription(id int64) {
 		s.envelopes = append(s.envelopes[:i], s.envelopes[i+1:]...)
 		break
 	}
+
 	n.subscriptions[shardID] = s
 
 	if len(n.subscriptions[shardID].envelopes) == 0 {
@@ -142,4 +149,20 @@ func (n *Node) createAndSetID(shardID string) int64 {
 		n.shards[id] = shardID
 		return id
 	}
+}
+
+type envelopes []SubscriptionEnvelope
+
+func (e envelopes) Len() int {
+	return len(e)
+}
+
+func (e envelopes) Less(a, b int) bool {
+	return e[a].dName < e[b].dName
+}
+
+func (e envelopes) Swap(a, b int) {
+	tmp := e[a]
+	e[a] = e[b]
+	e[b] = tmp
 }
