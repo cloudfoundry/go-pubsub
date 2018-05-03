@@ -54,12 +54,12 @@ func (l Linker) linkSliceTypes(n string, m map[string]Struct) {
 
 		peer, ok := m[f.Type]
 		if !ok {
-			log.Fatal("Unknown type for slice: %s", f.Type)
+			log.Fatalf("Unknown type for slice: %s", f.Type)
 		}
 
 		ff, ok := l.findFieldName(f.Slice.FieldName, peer.Fields)
 		if !ok {
-			log.Fatal("Unknown field name for slice: %s %s", f.Type, f.Slice.FieldName)
+			log.Fatalf("Unknown field name for slice: %s %s", f.Type, f.Slice.FieldName)
 		}
 
 		f.Type = ff.Type
