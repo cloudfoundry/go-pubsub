@@ -69,7 +69,7 @@ To better draw out each's subscriptions view of the tree:
               b   <-(sub-3)
 ```
 
-So to give a few exapmles of how data could be published:
+So to give a few examples of how data could be published:
 
 ###### Single path
 
