@@ -1,7 +1,7 @@
 
 ![pubsub][pubsub-logo]
 
-[![GoDoc][go-doc-badge]][go-doc] [![travis][travis-badge]][travis]
+[![GoDoc][go-doc-badge]][go-doc]
 
 PubSub publishes data to subscriptions. However, it can do so much more than
 just push some data to a subscription.  Each subscription is placed in a tree.
@@ -184,5 +184,3 @@ code. There is a provided
 [pubsub-logo]:  https://raw.githubusercontent.com/cloudfoundry/go-pubsub/gh-pages/pubsub-logo.png
 [go-doc-badge]: https://godoc.org/code.cloudfoundry.org/go-pubsub?status.svg
 [go-doc]:       https://godoc.org/code.cloudfoundry.org/go-pubsub
-[travis-badge]: https://travis-ci.org/cloudfoundry/go-pubsub.svg?branch=master
-[travis]:       https://travis-ci.org/cloudfoundry/go-pubsub?branch=master
