@@ -9,9 +9,9 @@ import (
 	"code.cloudfoundry.org/go-pubsub"
 	. "code.cloudfoundry.org/go-pubsub/pubsub-gen/internal/end2end"
 	"code.cloudfoundry.org/go-pubsub/pubsub-gen/setters"
-	"github.com/apoydence/onpar"
-	. "github.com/apoydence/onpar/expect"
-	. "github.com/apoydence/onpar/matchers"
+	"github.com/poy/onpar"
+	. "github.com/poy/onpar/expect"
+	. "github.com/poy/onpar/matchers"
 )
 
 func TestEnd2End(t *testing.T) {
