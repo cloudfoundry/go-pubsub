@@ -1,0 +1,6 @@
+# github.com/poy/onpar v1.1.2
+## explicit; go 1.14
+github.com/poy/onpar
+github.com/poy/onpar/diff
+github.com/poy/onpar/expect
+github.com/poy/onpar/matchers
