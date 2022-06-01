@@ -8,6 +8,8 @@ just push some data to a subscription.  Each subscription is placed in a tree.
 When data is published, it traverses the tree and finds each interested
 subscription. This allows for sophisticated filters and routing.
 
+If you have any questions, or want to get attention for a PR or issue please reach out on the [#logging-and-metrics channel in the cloudfoundry slack](https://cloudfoundry.slack.com/archives/CUW93AF3M)
+
 ### Installation
 
 ```bash
