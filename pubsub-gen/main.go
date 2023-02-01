@@ -92,13 +92,9 @@ func main() {
 	mm := make(map[string]inspector.Struct)
 	for fullName, path := range ms {
 		splitName := strings.SplitN(fullName, ".", 2)
-		var name, pkg string
-		_ = name
-		if len(splitName) != 2 {
-			name = fullName
-		} else {
+		var pkg string
+		if len(splitName) == 2 {
 			pkg = splitName[0]
-			name = splitName[1]
 		}
 
 		m, err := pp.Parse(path, gopath)

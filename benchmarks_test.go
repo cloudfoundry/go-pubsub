@@ -1,7 +1,6 @@
 package pubsub_test
 
 import (
-	"fmt"
 	"math/rand"
 	"sync"
 	"testing"
@@ -161,17 +160,6 @@ func randPath() []uint64 {
 	var r []uint64
 	for i := 0; i < 10; i++ {
 		r = append(r, uint64(rand.Int63n(10)))
-	}
-	return r
-}
-
-func randData() [][]interface{} {
-	var r [][]interface{}
-	for i := 0; i < 100000; i++ {
-		r = append(r, nil)
-		for j := 0; j < 10; j++ {
-			r[i] = append(r[i], fmt.Sprintf("%d", rand.Intn(10)))
-		}
 	}
 	return r
 }

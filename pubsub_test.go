@@ -16,7 +16,6 @@ type TPS struct {
 	*testing.T
 	p            *pubsub.PubSub
 	subscription *spySubscription
-	spy          *spySubscription
 	sub          func(interface{})
 }
 

@@ -117,7 +117,7 @@ return path
 
 	var idx int
 	for _, pf := range s.PeerTypeFields {
-		src, err = g.genPath(src, fmt.Sprintf("%s_%s", prefix, pf.Name), m, genName, pf.Type, fmt.Sprintf("createPath_%s_%s", prefix, pf.Name), false, idx+1)
+		src, _ = g.genPath(src, fmt.Sprintf("%s_%s", prefix, pf.Name), m, genName, pf.Type, fmt.Sprintf("createPath_%s_%s", prefix, pf.Name), false, idx+1)
 		idx++
 	}
 
