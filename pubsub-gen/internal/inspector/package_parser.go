@@ -5,7 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
@@ -25,7 +25,7 @@ func NewPackageParser(s StructParser) PackageParser {
 
 func (p PackageParser) Parse(packagePath, gopath string) (map[string]Struct, error) {
 	pkgPath := filepath.Join(gopath, "src", packagePath)
-	files, err := ioutil.ReadDir(pkgPath)
+	files, err := os.ReadDir(pkgPath)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (p PackageParser) Parse(packagePath, gopath string) (map[string]Struct, err
 		}
 
 		filePath := filepath.Join(pkgPath, file.Name())
-		fileData, err := ioutil.ReadFile(filePath)
+		fileData, err := os.ReadFile(filePath)
 		if err != nil {
 			return nil, fmt.Errorf("%s -> %s", filePath, err)
 		}

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -148,7 +147,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = ioutil.WriteFile(*output, []byte(src), 420)
+	err = os.WriteFile(*output, []byte(src), 420)
 	if err != nil {
 		log.Fatal(err)
 	}
