@@ -143,7 +143,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = os.WriteFile(*output, []byte(src), 420)
+	err = os.WriteFile(*output, []byte(src), 0420)
 	if err != nil {
 		log.Fatal(err)
 	}
