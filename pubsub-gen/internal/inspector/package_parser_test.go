@@ -2,7 +2,6 @@ package inspector_test
 
 import (
 	"go/ast"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -52,14 +51,15 @@ func TestStructPackageParser(t *testing.T) {
 }
 
 func writeTestPackage() string {
-	dir, err := ioutil.TempDir("", "ast-gen")
+	dir, err := os.MkdirTemp("", "ast-gen")
 	if err != nil {
 		panic(err)
 	}
-	os.Mkdir(filepath.Join(dir, "src"), os.ModePerm)
-	os.Mkdir(filepath.Join(dir, "src", "some-package"), os.ModePerm)
+	os.Mkdir(filepath.Join(dir, "src"), os.ModePerm)                 //nolint:errcheck
+	os.Mkdir(filepath.Join(dir, "src", "some-package"), os.ModePerm) //nolint:errcheck
 
-	ioutil.WriteFile(filepath.Join(dir, "src", "some-package", "test1.go"),
+	//nolint:errcheck
+	os.WriteFile(filepath.Join(dir, "src", "some-package", "test1.go"),
 		[]byte(
 			`
 package p
@@ -67,7 +67,8 @@ package p
 		),
 		os.ModePerm)
 
-	ioutil.WriteFile(filepath.Join(dir, "src", "some-package", "test2.go"),
+	//nolint:errcheck
+	os.WriteFile(filepath.Join(dir, "src", "some-package", "test2.go"),
 		[]byte(
 			`
 package p

@@ -1,7 +1,6 @@
 package pubsub_test
 
 import (
-	"fmt"
 	"math/rand"
 	"sync"
 	"testing"
@@ -45,7 +44,7 @@ func BenchmarkSubscriptions(b *testing.B) {
 	b.StartTimer()
 
 	b.RunParallel(func(b *testing.PB) {
-		i := rand.Int()
+		i := rand.Int() //nolint:gosec
 		for b.Next() {
 			_, f := newSpySubscrption()
 			unsub := p.Subscribe(f, pubsub.WithPath(randPath()))
@@ -65,7 +64,7 @@ func BenchmarkPublishingParallel(b *testing.B) {
 	b.StartTimer()
 
 	b.RunParallel(func(b *testing.PB) {
-		i := rand.Int()
+		i := rand.Int() //nolint:gosec
 		for b.Next() {
 			p.Publish("data", pubsub.LinearTreeTraverser(randPath()))
 			i++
@@ -85,7 +84,7 @@ func BenchmarkPublishingParallelStructs(b *testing.B) {
 	b.StartTimer()
 
 	b.RunParallel(func(b *testing.PB) {
-		i := rand.Int()
+		i := rand.Int() //nolint:gosec
 		for b.Next() {
 			p.Publish(data[i%len(data)], st.traverse)
 			i++
@@ -116,7 +115,7 @@ func BenchmarkPublishingWhileSubscribing(b *testing.B) {
 	b.StartTimer()
 
 	b.RunParallel(func(b *testing.PB) {
-		i := rand.Int()
+		i := rand.Int() //nolint:gosec
 		for b.Next() {
 			p.Publish("data", pubsub.LinearTreeTraverser(randPath()))
 			i++
@@ -149,7 +148,7 @@ func BenchmarkPublishingWhileSubscribingStructs(b *testing.B) {
 	b.StartTimer()
 
 	b.RunParallel(func(b *testing.PB) {
-		i := rand.Int()
+		i := rand.Int() //nolint:gosec
 		for b.Next() {
 			p.Publish(data[i%len(data)], st.traverse)
 			i++
@@ -160,18 +159,7 @@ func BenchmarkPublishingWhileSubscribingStructs(b *testing.B) {
 func randPath() []uint64 {
 	var r []uint64
 	for i := 0; i < 10; i++ {
-		r = append(r, uint64(rand.Int63n(10)))
-	}
-	return r
-}
-
-func randData() [][]interface{} {
-	var r [][]interface{}
-	for i := 0; i < 100000; i++ {
-		r = append(r, nil)
-		for j := 0; j < 10; j++ {
-			r[i] = append(r[i], fmt.Sprintf("%d", rand.Intn(10)))
-		}
+		r = append(r, uint64(rand.Int63n(10))) //nolint:gosec
 	}
 	return r
 }
@@ -194,7 +182,7 @@ type x struct {
 }
 
 func randNum(i int64) uint64 {
-	return uint64(rand.Int63n(i))
+	return uint64(rand.Int63n(i)) //nolint:gosec
 }
 
 func randStructs() []*someType {

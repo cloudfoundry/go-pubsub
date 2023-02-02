@@ -146,15 +146,6 @@ func (g TraverserGenerator) generateStructFns(
 		}
 	}
 
-	var names []string
-	for _, pf := range s.PeerTypeFields {
-		names = append(names, pf.Name)
-	}
-
-	for field := range s.InterfaceTypeFields {
-		names = append(names, field.Name)
-	}
-
 	var peerFields []string
 	var fieldNames []string
 

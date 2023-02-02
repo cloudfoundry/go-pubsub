@@ -109,8 +109,3 @@ func TestNode(t *testing.T) {
 		Expect(t, id1).To(Not(Equal(id2)))
 	})
 }
-
-type spySubscription struct {
-	subscription func(interface{})
-	id           string
-}

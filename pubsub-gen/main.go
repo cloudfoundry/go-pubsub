@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -93,13 +92,9 @@ func main() {
 	mm := make(map[string]inspector.Struct)
 	for fullName, path := range ms {
 		splitName := strings.SplitN(fullName, ".", 2)
-		var name, pkg string
-		_ = name
-		if len(splitName) != 2 {
-			name = fullName
-		} else {
+		var pkg string
+		if len(splitName) == 2 {
 			pkg = splitName[0]
-			name = splitName[1]
 		}
 
 		m, err := pp.Parse(path, gopath)
@@ -148,7 +143,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = ioutil.WriteFile(*output, []byte(src), 420)
+	err = os.WriteFile(*output, []byte(src), 0420)
 	if err != nil {
 		log.Fatal(err)
 	}
