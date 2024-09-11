@@ -58,23 +58,29 @@ func writeTestPackage() string {
 	os.Mkdir(filepath.Join(dir, "src"), os.ModePerm)                 //nolint:errcheck
 	os.Mkdir(filepath.Join(dir, "src", "some-package"), os.ModePerm) //nolint:errcheck
 
-	//nolint:errcheck
-	os.WriteFile(filepath.Join(dir, "src", "some-package", "test1.go"),
+	// nolint:gosec
+	err = os.WriteFile(filepath.Join(dir, "src", "some-package", "test1.go"),
 		[]byte(
 			`
 package p
 		`,
 		),
 		os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 
-	//nolint:errcheck
-	os.WriteFile(filepath.Join(dir, "src", "some-package", "test2.go"),
+	// nolint:gosec
+	err = os.WriteFile(filepath.Join(dir, "src", "some-package", "test2.go"),
 		[]byte(
 			`
 package p
 		`,
 		),
 		os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 
 	return dir
 }
