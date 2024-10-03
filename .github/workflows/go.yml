@@ -32,6 +32,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - uses: golangci/golangci-lint-action@v6.1.0
+      - uses: golangci/golangci-lint-action@v6.1.1
         with:
           args: --config .golangci.yml
