@@ -90,7 +90,7 @@ func (w CodeWriter) FieldStartStruct(travName, prefix, fieldName, parentFieldNam
 	}
 
 	// Remove any * that may have been added
-	prefix = strings.Replace(prefix, "*", "", -1)
+	prefix = strings.ReplaceAll(prefix, "*", "")
 
 	if fieldName == "" {
 		return fmt.Sprintf(`
@@ -142,7 +142,7 @@ func (w CodeWriter) FieldSelector(travName, prefix, fieldName, parentFieldName, 
 
 	}
 
-	prefix = strings.Replace(prefix, "*", "", -1)
+	prefix = strings.ReplaceAll(prefix, "*", "")
 	return fmt.Sprintf(`
 	%s
 	return %d, pubsub.TreeTraverser(%s_%s), true
@@ -159,7 +159,7 @@ func (w CodeWriter) SelectorFunc(travName, prefix, selectorName string, fields [
 	}
 
 	// Remove any * that may have been added
-	prefix = strings.Replace(prefix, "*", "", -1)
+	prefix = strings.ReplaceAll(prefix, "*", "")
 
 	return fmt.Sprintf(`
 	func __%s_%s (idx int, data interface{}) (path uint64, nextTraverser pubsub.TreeTraverser, ok bool){
@@ -199,7 +199,7 @@ func (w CodeWriter) FieldStructFunc(travName, prefix, fieldName, nextFieldName, 
 	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice, m)
 
 	// Remove any * that may have been added
-	prefix = strings.Replace(prefix, "*", "", -1)
+	prefix = strings.ReplaceAll(prefix, "*", "")
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
@@ -245,7 +245,7 @@ func (w CodeWriter) FieldStructFuncLast(travName, prefix, fieldName, castTypeNam
 	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice, m)
 
 	// Remove any * that may have been added
-	prefix = strings.Replace(prefix, "*", "", -1)
+	prefix = strings.ReplaceAll(prefix, "*", "")
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
@@ -296,7 +296,7 @@ func (w CodeWriter) FieldPeersFunc(travName, prefix, castTypeName, fieldName, ha
 	hashCalc, hashValue := hashSplitFn(hashType, dataValue, slice, m)
 
 	// Remove any * that may have been added
-	prefix = strings.Replace(prefix, "*", "", -1)
+	prefix = strings.ReplaceAll(prefix, "*", "")
 
 	return fmt.Sprintf(`
 func %s_%s(data interface{}) pubsub.Paths {
