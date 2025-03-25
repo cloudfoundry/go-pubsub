@@ -132,7 +132,7 @@ return path
 		sort.Strings(ii)
 		for j, i := range ii {
 
-			i = strings.Replace(i, "*", "", -1)
+			i = strings.ReplaceAll(i, "*", "")
 
 			src, err = g.genPath(src, fmt.Sprintf("%s_%s", prefix, i), m, genName, i, fmt.Sprintf("createPath_%s_%s_%s", prefix, f.Name, i), false, j+idx+1)
 			if err != nil {
@@ -145,7 +145,7 @@ return path
 }
 
 func (g PathGenerator) sanitizeName(name string) string {
-	return strings.Replace(name, ".", "", -1)
+	return strings.ReplaceAll(name, ".", "")
 }
 
 func (g PathGenerator) genPathNextFunc(
@@ -153,7 +153,7 @@ func (g PathGenerator) genPathNextFunc(
 	prefix string,
 	structName string,
 ) string {
-	structName = strings.Replace(structName, "*", "", -1)
+	structName = strings.ReplaceAll(structName, "*", "")
 	return fmt.Sprintf(`
 path = append(path, createPath_%s_%s(f.%s)...)
 `, prefix, structName, structName)
